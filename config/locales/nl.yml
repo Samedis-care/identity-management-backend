@@ -1,0 +1,188 @@
+nl:
+  json_api:
+    record_not_found_error: Dossier niet gevonden
+    argument_error: Verkeerd aantal argumenten
+    gridfilter_error: Grid filter fout
+    general_error: Algemene fout
+    database_error: Database error
+    authorization_error: Autorisatie fout
+    object_id_invalid_error: Er is een ongeldige object-ID opgegeven
+    malformed_csv_error: >-
+      CSV is onjuist opgemaakt. Tekencodering moet UTF-8 zijn (zonder BOM). Het mag geen headers bevatten. Gebruik een puntkomma als scheidingsteken voor kolommen. Dubbele aanhalingstekens voor tekstwaarden indien nodig.
+    smtp_syntax_error: >-
+      De mail kon niet worden verzonden. Controleer het adres van de ontvanger op ongeldige tekens.
+    maintenance_readonly_error: "Systeem bevindt zich in alleen-lezen onderhoud. Probeer het later opnieuw. Reden:%{reason}"
+    maintenance_error: "Het systeem bevindt zich momenteel in de onderhoudsmodus. Probeer het later opnieuw. Reden:%{reason}"
+  auth:
+    error:
+      forbidden: Verboden.
+      grant_type_invalid: Niet bevoegd. Het subsidietype is ongeldig.
+      invalid_request: Het verzoek is ongeldig of de vereiste parameter ontbreekt.
+      login_incorrect: De ingediende referenties zijn onjuist.
+      password_token_invalid: De link om uw wachtwoord opnieuw in te stellen is niet meer geldig.
+      missing_tenant_context: Tenantcontext ontbreekt.
+      token_expired: Niet bevoegd. Het beveiligingstoken is verlopen.
+      token_invalid: Niet bevoegd. Het beveiligingstoken is ongeldig.
+      unauthenticated: Inloggen mislukt. Het beveiligingstoken is ongeldig of ontbreekt.
+      otp_required: Inloggen onvolledig. Eenmalig wachtwoord nog niet opgegeven.
+      otp_invalid: Eenmalig wachtwoord ongeldig of verlopen.
+      otp_too_many_tries: Te veel ongeldige eenmalige wachtwoordpogingen.
+      unauthorized: Onvoldoende rechten voor toegang tot deze bron.
+      unauthorized_tenant: Geen toestemming. Geen toegang tot dit account toegestaan.
+  devise:
+    mailer:
+      account_confirm: Dank je voor jouw bevestiging. Jouw toegang is geactiveerd.
+      account_confirm_resend: 'We hebben een bevestigingsmail naar uw e-mailadres gestuurd (%{email}).'
+      confirmation_instructions:
+        action: Bevestig je e-mailadres
+        subject: 'Bevestig het aanmaken van uw %{app_name} account'
+        header: 'Welkom bij %{app_name}!'
+        message: 'Klik op de volgende link om jouw e-mailadres te bevestigen:'
+      email_change:
+        subject: Jouw e-mailadres wijzigen
+        header: We hebben je aanvraag ontvangen
+        message_html: >-
+          Jouw e-mailadres wordt gewijzigd in <a href="mailto:%{email_new}">%{email_new}</a>.<br />
+
+          <br />
+
+          Heb je je e-mailadres niet gewijzigd?<br />
+
+          Neem onmiddellijk contact op met onze ondersteuning via:<a href="mailto:%{support_email}">%{support_email}</a>
+      password_change:
+        subject: Wijziging wachtwoord
+        header: Je wachtwoord is met succes veranderd.
+        message_html: >-
+          Heb jij je wachtwoord niet gewijzigd? <br /> Neem onmiddellijk contact op met onze ondersteuning via:<a href="mailto:%{support_email}">%{support_email}</a>
+      registered: >-
+        Controleer jouw e-mails om de registratie te bevestigen. Jouw account %{email} is succesvol aangemaakt en wordt na bevestiging geactiveerd.
+      reset_password_instructions:
+        subject: Instructies voor het opnieuw instellen van jouw wachtwoord
+        header: We hebben je aanvraag ontvangen
+        action: Wachtwoord wijzigen
+        validity: Deze link is 72 uur geldig
+        thanks: 'Jouw %{app_name}Team'
+        message_1_html: Je kunt jouw wachtwoord nu wijzigen
+        message_2_html: >-
+          Heb jij geen wachtwoordwijziging aangevraagd? Negeer deze e-mail dan gewoon.
+      reset_password_msg: >-
+        Een link om jouw wachtwoord opnieuw in te stellen is naar jouw e-mailadres verzonden (%{email}). Volg deze link om een nieuw wachtwoord toe te wijzen.
+      send_password:
+        link_text: Klik om naar de website te gaan.
+        message: >-
+          Je bent toegevoegd met de rol %{role_name} in %{app_name}. Hieronder vind jij de toegangsgegevens om in te loggen. Nadat je bent ingelogd, kun jij jouw wachtwoord toewijzen in jouw profiel.
+        subject: 'Toegangsgegevens gebruiker: %{user_name}'
+    user:
+      recaptcha_invalid: De vastgelegde captcha is helaas niet geldig.
+      unverified: >-
+        Deze toegang is nog niet bevestigd. Bevestig eerst jouw e-mailadres.
+  errors:
+    actor:
+      name_is_invalid: De geselecteerde naam is ongeldig
+    actor_role:
+      actor:
+        may_have_roles: >-
+          Deze soort Acteur mag geen rollen hebben. Alleen organisatie-eenheden of groepen kunnen rollen hebben.
+    email:
+      blacklisted: 'Helaas is het adres niet geldig'
+      confirmation: Herhaling is onjuist
+    missing_app: Er is geen app gedefinieerd om deze actie uit te voeren
+    user:
+      quit_failed: Er is een fout opgetreden bij het verlaten van de app.
+    invalid_app: App-context ontbreekt of is onjuist
+    undeletable:
+      one: 'Een record van %{total} kan niet worden verwijderd.'
+      other: '%{count}van %{total} records kon niet worden verwijderd.'
+  mongoid:
+    attributes:
+      actor:
+        short_name: Korte naam
+      user:
+        active: actief
+        confirmed_at: Geverifieerd op
+        created_at: Gemaakt op
+        deleted: Verwijderd
+        email: e-mail
+        first_name: Voornaam
+        gender: geslacht
+        last_name: Achternaam
+        locale: taal
+        provider: Aanbieder
+        sign_in_count: Aantal inschrijvingen
+        system: systeem
+        write_protected: Alleen lezen
+        password: Wachtwoord
+        password_confirmation: Wachtwoord herhalen
+    errors:
+      messages:
+        confirmation: is ongeldig
+        document_not_found:
+          message: Het gegevensrecord met de gevraagde ID bestaat niet.
+          resolution: Probeer het opnieuw met de juiste record-ID.
+          summary: Verkeerde record-ID.
+          summary_title: Document niet gevonden.
+        message_title: Het verzoek kon niet worden uitgevoerd
+        resolution_title: Voorgestelde oplossing
+        summary_title: De volgende problemen zijn gevonden
+      models:
+        actor:
+          attributes:
+            name:
+              uniqueness: 'De geselecteerde naam "%{value}" bestaat al op dit niveau.'
+            parent_id:
+              invalid: Ongeldig bovenliggend knooppunt.
+            short_name:
+              blank: mag niet leeg zijn.
+        content:
+          attributes:
+            name:
+              uniqueness: Er is al content met deze versie voor de applicatie.
+        functionality:
+          attributes:
+            ident:
+              taken: >-
+                De applicatie heeft al een functionaliteit voor de geselecteerde module met deze identifier.
+        role:
+          attributes:
+            description:
+              blank: Beschrijving mag niet leeg zijn.
+            title:
+              blank: Titel mag niet leeg zijn.
+              taken: Er is al een rol met die titel.
+        user:
+          attributes:
+            email:
+              already_confirmed: Het e-mailadres is al bevestigd.
+              blank: Adres mag niet leeg zijn.
+              syntax: Ongeldig e-mailadres.
+              taken: Het e-mailadres is al geregistreerd voor toegang.
+            first_name:
+              blank: mag niet leeg zijn.
+            last_name:
+              blank: mag niet leeg zijn.
+            password:
+              blank: mag niet leeg zijn.
+              too_short: is te kort.
+            password_confirmation:
+              blank: Wachtwoord is niet gelijk!
+    models:
+      actor:
+        one: Actuator
+        other: Acteurs
+      functionality:
+        one: Functionaliteit
+        other: Functionaliteiten
+      role:
+        one: rol
+        other: Rollen
+      user:
+        one: gebruikers account
+        other: Gebruikersaccounts
+  mailer:
+    greeting: 'Hallo %{user_name}.'
+    manual_link_instructions: >-
+      Als je niet op de knop kunt drukken, kopieer dan de volgende URL naar jouw browser:
+    regards: 'Jouw %{app_name}Team'
+    footer_html: |-
+      Deze mail is verstuurd door identity-management (https://github.com/Samedis-care/identity-management)
+      Configureer de voettekst in jouw app-instellingen.

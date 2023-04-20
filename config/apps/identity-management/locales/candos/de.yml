@@ -1,0 +1,95 @@
+---
+de:
+  identity-management/actors.deleter:
+    title: Ermöglicht das Löschen von Akteuren
+    description: "Erforderlich, um Akteure löschen zu können"
+  identity-management/actors.reader:
+    title: Kann die REST-Schnittstelle für Akteure lesen
+    description: Nur Übersichtsliste und Details zu einzelnen Akteuren
+  identity-management/actors.writer:
+    title: Kann die REST-Schnittstelle für Akteure schreiben
+    description: "Kann Akteure lesen, neu erstellen und aktualisieren oder zerstören"
+  identity-management/app-tenant.admin:
+    title: Mandanten-Administrator
+    description: Erforderlich als Basis zur Verwaltung der Mandanten dieser App
+  identity-management/apps.admin:
+    title: App-Administrator
+    description: Erforderlich als Basis zur Verwaltung von App-Einstellungen
+  identity-management/apps.deleter:
+    title: Anwendungen löschen
+    description: Erlaubt das Löschen von Anwendungen
+  identity-management/apps.reader:
+    title: Leseberechtigung REST interface für Anwendungen
+    description: Auflisten von allen Anwendungen und Detailanzeige einzelner Anwendungen
+  identity-management/apps.writer:
+    title: Schreibberechtigung REST interface für Anwendungen
+    description: "Lesen, anlegen und aktualiseren oder löschen bestehender Anwendungen"
+  identity-management/contents.deleter:
+    title: Ermöglicht das Löschen von Inhalten
+    description: "Erforderlich, um Akteure löschen zu können"
+  identity-management/contents.reader:
+    title: Kann die REST-Schnittstelle von Inhalten lesen
+    description: Nur Übersichtsliste und einzelne Inhaltsdetails
+  identity-management/contents.writer:
+    title: Kann die REST-Schnittstelle für Inhalte schreiben
+    description: "Kann lesen, neue erstellen und vorhandene Inhalte aktualisieren oder zerstören"
+  identity-management/email-blacklists.deleter:
+    title: Ermöglicht das Löschen von E-Mail-Blacklists
+    description: "Erforderlich, um E-Mail-Blacklists löschen zu können"
+  identity-management/email-blacklists.reader:
+    title: Kann die REST-Schnittstelle für E-Mail-Blacklists lesen
+    description: Nur Übersichtsliste und Anzeigedomänen für E-Mail-Blacklisting
+  identity-management/email-blacklists.writer:
+    title: Kann die REST-Schnittstelle für E-Mail-Blacklists schreiben
+    description: "Kann Domänen für E-Mail-Blacklists lesen, neue erstellen und aktualisieren oder zerstören"
+  identity-management/functionalities.deleter:
+    title: Ermöglicht das Löschen von Funktionalitäten
+    description: "Erforderlich, um Funktionalitäten löschen zu können"
+  identity-management/functionalities.reader:
+    title: Kann die REST-Schnittstelle für Funktionalitäten lesen
+    description: Nur Übersichtsliste und Details zu einzelnen Funktionen
+  identity-management/functionalities.writer:
+    title: Kann die REST-Schnittstelle für Funktionalitäten schreiben
+    description: "Kann lesen, neue erstellen und bestehende Funktionalitäten aktualisieren oder zerstören"
+  identity-management/global.admin:
+    title: Globaler Administrator
+    description: Kann alle Anwendungen verwalten.
+  identity-management/global-tenant.admin:
+    title: Globaler Mandantenadministrator
+    description: Kann alle Mandanten verwalten
+  identity-management/list-tenant-users.reader:
+    title: Benutzer anzeigen und suchen
+    description: "Ermöglicht das Anzeigen von Benutzern, die Gruppen zugeordnet sind"
+  identity-management/list-tenant-users.writer:
+    title: Weise Benutzer einer Gruppe zu
+    description: Ermöglicht das Hinzufügen oder Entfernen von Benutzern zu einer Gruppe
+  identity-management/roles.deleter:
+    title: Ermöglicht das Löschen von Rollen
+    description: "Erforderlich, um Rollen löschen zu können"
+  identity-management/roles.reader:
+    title: Kann die REST-Schnittstelle für Rollen lesen
+    description: Nur Übersichtsliste und Einzelrollendetails
+  identity-management/roles.writer:
+    title: Kann die REST-Schnittstelle für Rollen schreiben
+    description: "Kann lesen, neue erstellen und bestehende Rollen aktualisieren oder löschen"
+  identity-management/tenant-users.picker:
+    title: "Kann die REST-Schnittstelle lesen, um Benutzer eines bestimmten Mandanten aufzulisten/paginieren"
+    description: "Kann die REST-Schnittstelle lesen, um Benutzer eines bestimmten Mandanten für Benutzerauswahlen aufzulisten/paginieren, wenn der authentifizierte Benutzer Mitglied dieses Mandanten ist"
+  identity-management/tenants.deleter:
+    title: Ermöglicht das Löschen von Mandanten
+    description: "Erforderlich, um Mandanten-Akteure löschen zu können"
+  identity-management/tenants.reader:
+    title: Kann die REST-Schnittstelle für Mandanten lesen
+    description: Nur Übersichtsliste und Details zu einzelnen Mandanten
+  identity-management/tenants.writer:
+    title: Kann die REST-Schnittstelle für Mandanten schreiben
+    description: "Kann lesen, neue erstellen und vorhandene Mandanten aktualisieren oder löschen"
+  identity-management/users.deleter:
+    title: Ermöglicht das Löschen von Benutzern
+    description: "Erforderlich, um Benutzer löschen zu können"
+  identity-management/users.reader:
+    title: Kann die REST-Schnittstelle für Benutzer lesen
+    description: Nur Übersichtsliste und Einzelbenutzerdetails
+  identity-management/users.writer:
+    title: Kann die REST-Schnittstelle für Benutzer schreiben
+    description: "Kann lesen, neue erstellen und bestehende Benutzer aktualisieren oder löschen"

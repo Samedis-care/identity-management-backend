@@ -1,0 +1,8 @@
+---
+de:
+  identity-management-admin:
+    title: Identity Management Admin
+    description: Administrator für Identity Management mit Vollzugriff
+  identity-management-tenant-admin:
+    title: Identity Management Mandanten Admin
+    description: Administrator für Identity Management Mandanten

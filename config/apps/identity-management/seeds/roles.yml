@@ -1,0 +1,63 @@
+---
+- app: identity-management
+  name: identity-management-admin
+  title: Identity Management Admin
+  description: Administrator for Identity Management with full access
+  candos:
+  - identity-management/actors.deleter
+  - identity-management/actors.reader
+  - identity-management/actors.writer
+  - identity-management/apps.admin
+  - identity-management/apps.deleter
+  - identity-management/apps.reader
+  - identity-management/apps.writer
+  - identity-management/contents.deleter
+  - identity-management/contents.reader
+  - identity-management/contents.writer
+  - identity-management/email-blacklists.deleter
+  - identity-management/email-blacklists.reader
+  - identity-management/email-blacklists.writer
+  - identity-management/functionalities.deleter
+  - identity-management/functionalities.reader
+  - identity-management/functionalities.writer
+  - identity-management/global.admin
+  - identity-management/list-tenant-users.reader
+  - identity-management/list-tenant-users.writer
+  - identity-management/roles.deleter
+  - identity-management/roles.reader
+  - identity-management/roles.writer
+  - identity-management/tenants.deleter
+  - identity-management/tenants.reader
+  - identity-management/tenants.writer
+  - identity-management/users.deleter
+  - identity-management/users.reader
+  - identity-management/users.writer
+- app: identity-management
+  name: identity-management-tenant-admin
+  title: Identity Management Tenant Admin
+  description: Administrator for Identity Management Tenants
+  candos:
+  - identity-management/actors.deleter
+  - identity-management/actors.reader
+  - identity-management/actors.writer
+  - identity-management/app-tenant.admin
+  - identity-management/contents.deleter
+  - identity-management/contents.reader
+  - identity-management/contents.writer
+  - identity-management/email-blacklists.deleter
+  - identity-management/email-blacklists.reader
+  - identity-management/email-blacklists.writer
+  - identity-management/functionalities.deleter
+  - identity-management/functionalities.reader
+  - identity-management/functionalities.writer
+  - identity-management/list-tenant-users.reader
+  - identity-management/list-tenant-users.writer
+  - identity-management/roles.deleter
+  - identity-management/roles.reader
+  - identity-management/roles.writer
+  - identity-management/tenants.deleter
+  - identity-management/tenants.reader
+  - identity-management/tenants.writer
+  - identity-management/users.deleter
+  - identity-management/users.reader
+  - identity-management/users.writer

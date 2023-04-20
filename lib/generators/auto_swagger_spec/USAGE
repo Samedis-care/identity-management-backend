@@ -1,0 +1,11 @@
+Description:
+    Creates a swagger spec file automatically.
+    Needs a standard configured Api Controller with Serializer(s) that have a Schema defined.
+    `MODEL_BASE` constant with the main resource model needs to be defined on the Controller.
+    The internal logic will automatically figure out required params for the URL.
+
+Example:
+    bin/rails generate auto_swagger_spec v1_named_route
+
+    This will create:
+        spec/integration/v1/named_route_spec.rb

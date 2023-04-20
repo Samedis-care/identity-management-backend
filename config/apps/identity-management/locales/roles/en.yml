@@ -1,0 +1,8 @@
+---
+en:
+  identity-management-admin:
+    title: Identity Management Admin
+    description: Administrator for Identity Management with full access
+  identity-management-tenant-admin:
+    title: Identity Management Tenant Admin
+    description: Administrator for Identity Management Tenants

@@ -1,0 +1,95 @@
+---
+nl:
+  identity-management/actors.deleter:
+    title: Maakt het verwijderen van acteurs mogelijk
+    description: Vereist om acteurs te kunnen verwijderen
+  identity-management/actors.reader:
+    title: Kan de REST-interface voor actoren lezen
+    description: Alleen overzichtslijst en details van enkele actor
+  identity-management/actors.writer:
+    title: Kan de REST-interface voor actoren schrijven
+    description: "Kan nieuwe actoren lezen, creëren en bestaande actoren bijwerken of vernietigen"
+  identity-management/app-tenant.admin:
+    title: Account Beheerder
+    description: Vereist als basis om de accounts van deze app te beheren
+  identity-management/apps.admin:
+    title: App-beheerder
+    description: Vereist als basis om app-instellingen te beheren
+  identity-management/apps.deleter:
+    title: Maakt het verwijderen van apps mogelijk
+    description: Vereist om apps te kunnen verwijderen
+  identity-management/apps.reader:
+    title: Kan de REST-interface voor apps lezen
+    description: Alleen overzichtslijst en details van enkele app
+  identity-management/apps.writer:
+    title: Kan de REST-interface voor apps schrijven
+    description: "Kan bestaande apps lezen, nieuwe maken en bestaande apps bijwerken of vernietigen"
+  identity-management/contents.deleter:
+    title: Staat verwijdering van inhoud toe
+    description: Vereist om acteurs te kunnen verwijderen
+  identity-management/contents.reader:
+    title: Kan de REST-interface van inhoud lezen
+    description: Alleen overzichtslijst en afzonderlijke inhoudsdetails
+  identity-management/contents.writer:
+    title: Kan de REST-interface voor inhoud schrijven
+    description: "Kan inhoud lezen, nieuwe maken en bestaande inhoud bijwerken of vernietigen"
+  identity-management/email-blacklists.deleter:
+    title: Maakt verwijdering van e-mail-blacklists mogelijk
+    description: Vereist om e-mail-blacklists te kunnen verwijderen
+  identity-management/email-blacklists.reader:
+    title: Kan de REST-interface lezen voor zwarte lijsten voor e-mail
+    description: Alleen overzichtslijst en weergavedomeinen voor e-mail blacklisting
+  identity-management/email-blacklists.writer:
+    title: Kan de REST-interface schrijven voor zwarte lijsten voor e-mail
+    description: "Kan bestaande domeinen lezen, nieuwe maken en bijwerken of vernietigen voor e-mail blacklisting"
+  identity-management/functionalities.deleter:
+    title: Maakt het verwijderen van functionaliteiten mogelijk
+    description: Vereist om functionaliteiten te kunnen verwijderen
+  identity-management/functionalities.reader:
+    title: Kan de REST-interface lezen voor functionaliteiten
+    description: Alleen overzichtslijst en enkele functionaliteitsdetails
+  identity-management/functionalities.writer:
+    title: Kan de REST-interface schrijven voor functionaliteiten
+    description: "Kan nieuwe functionaliteiten lezen, creëren en bestaande functionaliteiten updaten of vernietigen"
+  identity-management/global.admin:
+    title: Wereldwijde beheerder
+    description: Globale beheerder kan apps beheren
+  identity-management/global-tenant.admin:
+    title: Wereldwijde tenantbeheerder
+    description: Kan alle huurders beheren
+  identity-management/list-tenant-users.reader:
+    title: Toon en zoek gebruikers
+    description: Hiermee kunnen gebruikers worden weergegeven die aan groepen zijn toegewezen
+  identity-management/list-tenant-users.writer:
+    title: Wijs gebruikers toe aan een groep
+    description: Hiermee kunnen gebruikers aan een groep worden toegevoegd of verwijderd
+  identity-management/roles.deleter:
+    title: Staat verwijdering van rollen toe
+    description: Vereist om rollen te kunnen verwijderen
+  identity-management/roles.reader:
+    title: Kan de REST-interface voor rollen lezen
+    description: Alleen overzichtslijst en details van enkele rol
+  identity-management/roles.writer:
+    title: Kan de REST-interface voor rollen schrijven
+    description: "Kan bestaande rollen lezen, nieuwe maken en bijwerken of vernietigen"
+  identity-management/tenant-users.picker:
+    title: Kan de REST-interface lezen om gebruikers van een opgegeven tenant weer te geven/pagineren
+    description: Kan de REST-interface lezen om gebruikers van een opgegeven tenant op te sommen/pagineren voor gebruikerskiezers als de geverifieerde gebruiker lid is van dat account
+  identity-management/tenants.deleter:
+    title: Staat verwijdering van accounts toe
+    description: Vereist om account actoren te kunnen verwijderen
+  identity-management/tenants.reader:
+    title: Kan de REST-interface voor accounts lezen
+    description: Alleen overzichtslijst en details van individuele accounts
+  identity-management/tenants.writer:
+    title: Kan de REST-interface voor tenants schrijven
+    description: "Kan bestaande huurders lezen, nieuwe aanmaken en bijwerken of vernietigen"
+  identity-management/users.deleter:
+    title: Staat verwijdering van gebruikers toe
+    description: Vereist om gebruikers te kunnen verwijderen
+  identity-management/users.reader:
+    title: Kan de REST-interface voor gebruikers lezen
+    description: Alleen overzichtslijst en gegevens van afzonderlijke gebruikers
+  identity-management/users.writer:
+    title: Kan de REST-interface voor gebruikers schrijven
+    description: "Kan nieuwe gebruikers lezen, maken en bestaande gebruikers updaten of vernietigen"

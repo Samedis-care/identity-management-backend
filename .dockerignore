@@ -1,0 +1,8 @@
+/.git
+/.github
+/Jenkinsfile
+/tmp
+/log
+/Dockerfile
+/build.sh
+/GeoLite2-City.mmdb

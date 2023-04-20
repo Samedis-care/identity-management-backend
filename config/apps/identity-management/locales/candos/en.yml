@@ -1,0 +1,97 @@
+---
+en:
+  identity-management/actors.deleter:
+    title: Allows deletion of actors
+    description: Required to be able to delete actors
+  identity-management/actors.reader:
+    title: Can read the REST interface for actors
+    description: Only overview listing and single actor details
+  identity-management/actors.writer:
+    title: Can write the REST interface for actors
+    description: Can read, create new and update or destroy existing actors
+  identity-management/app-tenant.admin:
+    title: Tenant Administrator
+    description: Required as base to administrate this app's tenants
+  identity-management/apps.admin:
+    title: App Administrator
+    description: Required as base to administrate app settings
+  identity-management/apps.deleter:
+    title: Allows deletion of apps
+    description: Required to be able to delete apps
+  identity-management/apps.reader:
+    title: Can read the REST interface for apps
+    description: Only overview listing and single app details
+  identity-management/apps.writer:
+    title: Can write the REST interface for apps
+    description: Can read, create new and update or destroy existing apps
+  identity-management/contents.deleter:
+    title: Allows deletion of contents
+    description: Required to be able to delete actors
+  identity-management/contents.reader:
+    title: Can read the REST interfac of contents
+    description: Only overview listing and single content details
+  identity-management/contents.writer:
+    title: Can write the REST interface for contents
+    description: Can read, create new and update or destroy existing contents
+  identity-management/email-blacklists.deleter:
+    title: Allows deletion of email-blacklists
+    description: Required to be able to delete email-blacklists
+  identity-management/email-blacklists.reader:
+    title: Can read the REST Interface for email blacklists
+    description: Only overview listing and display domains for email blacklisting
+  identity-management/email-blacklists.writer:
+    title: Can write the REST interface for email blacklists
+    description: Can read, create new and update or destroy existing domains for email
+      blacklisting
+  identity-management/functionalities.deleter:
+    title: Allows deletion of functionalities
+    description: Required to be able to delete functionalities
+  identity-management/functionalities.reader:
+    title: Can read the REST interface for functionalities
+    description: Only overview listing and single functionality details
+  identity-management/functionalities.writer:
+    title: Can write the REST interface for functionalities
+    description: Can read, create new and update or destroy existing functionalities
+  identity-management/global.admin:
+    title: Global Admin
+    description: Required as base to administrate things like E-Mail Blacklisting
+  identity-management/global-tenant.admin:
+    title: Global tenant admin
+    description: Can administrate all tenants
+  identity-management/list-tenant-users.reader:
+    title: Show and search users
+    description: Allows displaying users assigned to groups
+  identity-management/list-tenant-users.writer:
+    title: Assign users to a group
+    description: Allows adding users to a group or remove them
+  identity-management/roles.deleter:
+    title: Allows deletion of roles
+    description: Required to be able to delete roles
+  identity-management/roles.reader:
+    title: Can read the REST Interface for roles
+    description: Only overview listing and single role details
+  identity-management/roles.writer:
+    title: Can write the REST interface for roles
+    description: Can read, create new and update or destroy existing roles
+  identity-management/tenant-users.picker:
+    title: Can read the REST interface to list/paginate users of a specified tenant
+    description: Can read the REST interface to list/paginate users of a specified
+      tenant for User pickers if the authenticated user is member of that tenant
+  identity-management/tenants.deleter:
+    title: Allows deletion of tenants
+    description: Required to be able to delete tenant actors
+  identity-management/tenants.reader:
+    title: Can read the REST interface for tenants
+    description: Only overview listing and single tenants details
+  identity-management/tenants.writer:
+    title: Can write the REST interface for tenants
+    description: Can read, create new and update or destroy existing tenants
+  identity-management/users.deleter:
+    title: Allows deletion of users
+    description: Required to be able to delete users
+  identity-management/users.reader:
+    title: Can read the REST interface for users
+    description: Only overview listing and single user details
+  identity-management/users.writer:
+    title: Can write the REST interface for users
+    description: Can read, create new and update or destroy existing users

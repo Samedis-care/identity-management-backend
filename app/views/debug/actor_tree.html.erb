@@ -1,0 +1,57 @@
+<html>
+  <head>
+    <title>Actor Tree for Application <%= app.name %></title>
+    <style>
+      .hidden {
+          display: none;
+      }
+      .expander {
+          cursor: pointer;
+      }
+      @media (prefers-color-scheme: dark) {
+          html   { background: #555555; color: white; }
+          a { color: #0a94fd }
+      }
+
+      @media (prefers-color-scheme: light) {
+          html   { background: white; color:  #555555; }
+          a { color: #0869b3 }
+      }
+
+    </style>
+    <script>
+      function setExpanded(actorId, expanded) {
+          const expander = document.getElementById(actorId + "-expander");
+          const content = document.getElementById(actorId + "-children");
+          expander.innerText = expanded ? '-' : '+';
+          content.className = expanded ? 'shown' : 'hidden';
+      }
+      function isExpanded(actorId) {
+          const expander = document.getElementById(actorId + "-expander");
+          return expander.innerText === '-';
+      }
+      function handleExpanderClick(evt) {
+          const [actorId] = evt.target.id.split("-");
+          setExpanded(actorId, !isExpanded(actorId));
+      }
+      function getAllActorIds() {
+          return Array.from(document.querySelectorAll(".expander")).map(e => e.id.split("-")[0]);
+      }
+      function expandAll() {
+          getAllActorIds().forEach(actor => setExpanded(actor, true));
+      }
+      function closeAll() {
+          getAllActorIds().forEach(actor => setExpanded(actor, false));
+      }
+    </script>
+  </head>
+  <body>
+    <button onclick="expandAll()">
+      Expand all
+    </button>
+    <button onclick="closeAll()">
+      Close all
+    </button>
+    <%= render partial: 'debug/actor_tree_children', locals: { actor: app, cfg: cfg } %>
+  </body>
+</html>

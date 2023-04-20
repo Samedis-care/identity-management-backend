@@ -1,0 +1,45 @@
+development: &defaults
+  WEB_APP_HOST: 'http://dev.ident.services'
+  API_HOST: 'http://dev.ident.services'
+  SENTRY_DSN_BACKEND: https://20f6124f01774657a1b5c0a2af8cfde8@sentry.domain.local/1
+  SENTRY_DSN_FRONTEND: https://20f6124f01774657a1b5c0a2af8cfde8@sentry.domain.local/2
+  SENTRY_ENABLED: false
+  SENTRY_ENV: local-dev
+  SENTRY_PERF_SAMPLE_RATE: 0.0
+  SHRINE_STORAGE: 'aws_s3' # anyof aws_s3|azure|local
+  # if set to aws_s3
+  AWS_S3_BUCKET: bucket-name
+  AWS_ACCESS_KEY_ID: KEY-ID
+  AWS_SECRET_ACCESS_KEY: SecretAccessKey
+  AWS_S3_REGION: eu-central-1
+  AWS_S3_ENDPOINT: #optional endpoint url
+  AWS_S3_FORCE_PATH_STYLE: false # set to true for minio, false for aws
+  # if set to azure
+  AZURE_ACCOUNT_NAME: account_name
+  AZURE_ACCESS_KEY: secret_access_key
+  AZURE_CONTAINER_NAME: container_name
+  # if set to local
+  FILES_DIRECTORY: /path/to/files
+  SMTP_HOST: smtp.domain.local
+  SMTP_PORT: 587
+  SMTP_AUTH: login
+  SMTP_USER: smtp-user
+  SMTP_PASSWORD: secret-password
+  GOOGLE_OAUTH_CLIENT_ID: clientid.....apps.googleusercontent.com
+  GOOGLE_OAUTH_SECRET: GoogleOauthSecret
+  AZURE_APPLICATION_CLIENT_ID: AZURE-APPLICATION-CLIENT-ID
+  AZURE_APPLICATION_CLIENT_SECRET: AzureApplicationCLientSecret
+  FACEBOOK_KEY: "FACEBOOK-KEY"
+  FACEBOOK_SECRET: FacebookSecret
+  TWITTER_OAUTH_KEY: TwitterKey
+  TWITTER_OAUTH_SECRET: TwitterOauthSecret
+  APPLE_CLIENT_ID: AppleClientId
+  APPLE_TEAM_ID: AppleTeamId
+  APPLE_KEY_ID: AppleKeyId
+  RECAPTCHA_PUBLIC_KEY: RecaptchaPublicKey
+  RECAPTCHA_PRIVATE_KEY: RecaptchaPrivateKey
+  MAINTENANCE_STATE_URL: "https://host/maintenance.json"
+production:
+  <<: *defaults
+test:
+  <<: *defaults

@@ -1,0 +1,12 @@
+---
+identity-management:
+  children:
+  - name: identity_management_admins
+    _type: Actors::Group
+    title_translations:
+      en: Administrators
+      de: Administratoren
+      fr: Administrators
+      ru: Administrators
+      nl: Beheerders
+    roles: [identity-management-admin]

@@ -1,0 +1,37 @@
+<ul>
+  <%
+    # .slice(:_type, :short_name, :full_name, :path)
+    expanded_by_default = true
+    if expanded_by_default
+      expander_content = '-'
+      content_class = 'shown'
+    else
+      expander_content = '+'
+      content_class = 'hidden'
+    end
+    @include_mappings = (cfg[:include_mappings] || 'false').eql? 'true'
+    def filter_actors(criteria)
+      criteria = criteria.where(:_type => { '$ne' => Actors::Mapping.name }) unless @include_mappings
+      criteria
+    end
+    filter_actors(actor.children).each do |child|
+  %>
+    <li>
+      <% unless filter_actors(child.children).empty? %>
+        <span id="<%= child.id.to_s %>-expander" onclick="handleExpanderClick(event)" class="expander">
+          <%= expander_content %>
+        </span>
+      <% end %>
+      <a
+        href="#"
+        onclick="<%=
+          render plain: "alert('#{escape_javascript child.attributes.map { |k, v| "#{k}: #{v}"}.join("\n")}')"
+        %>">
+        <%= child.actor_type %>: <%= child.short_name %>
+      </a>
+      <div class="<%= content_class %>" id="<%= child.id.to_s %>-children">
+        <%= render partial: 'debug/actor_tree_children', locals: { actor: child, cfg: cfg } %>
+      </div>
+    </li>
+  <% end %>
+</ul>

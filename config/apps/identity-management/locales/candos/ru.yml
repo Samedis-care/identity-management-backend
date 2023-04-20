@@ -1,0 +1,95 @@
+---
+ru:
+  identity-management/actors.deleter:
+    title: Позволяет удалять актеров
+    description: Требуется для удаления актеров
+  identity-management/actors.reader:
+    title: Может читать интерфейс REST для актеров
+    description: Только обзорный список и сведения об одном действующем лице
+  identity-management/actors.writer:
+    title: Может написать интерфейс REST для актеров
+    description: "Может читать, создавать новых и обновлять или уничтожать существующих актеров"
+  identity-management/app-tenant.admin:
+    title: Администратор арендатора
+    description: Требуется в качестве основы для администрирования клиентов этого приложения.
+  identity-management/apps.admin:
+    title: Администратор приложений
+    description: Требуется в качестве базы для администрирования настроек приложения
+  identity-management/apps.deleter:
+    title: Позволяет удалять приложения
+    description: Требуется для удаления приложений
+  identity-management/apps.reader:
+    title: Может читать интерфейс REST для приложений
+    description: Только обзорный список и сведения об одном приложении
+  identity-management/apps.writer:
+    title: Может писать интерфейс REST для приложений
+    description: "Может читать, создавать новые и обновлять или уничтожать существующие приложения"
+  identity-management/contents.deleter:
+    title: Позволяет удалить содержимое
+    description: Требуется для удаления актеров
+  identity-management/contents.reader:
+    title: Может читать содержимое интерфейса REST
+    description: Только обзорный список и отдельные сведения о содержании
+  identity-management/contents.writer:
+    title: Может написать интерфейс REST для содержимого
+    description: "Может читать, создавать новые и обновлять или уничтожать существующее содержимое"
+  identity-management/email-blacklists.deleter:
+    title: Позволяет удалять черные списки адресов электронной почты
+    description: Требуется для удаления черных списков электронной почты
+  identity-management/email-blacklists.reader:
+    title: Может читать интерфейс REST для черных списков электронной почты
+    description: Только обзорный список и отображение доменов для занесения в черный список электронной почты
+  identity-management/email-blacklists.writer:
+    title: Может написать интерфейс REST для черных списков электронной почты
+    description: "Может читать, создавать новые и обновлять или уничтожать существующие домены для внесения в черный список электронной почты."
+  identity-management/functionalities.deleter:
+    title: Позволяет удалять функциональные возможности
+    description: Требуется для возможности удаления функций
+  identity-management/functionalities.reader:
+    title: Может читать интерфейс REST для функциональных возможностей
+    description: Только обзорный список и детали отдельных функций
+  identity-management/functionalities.writer:
+    title: Может написать интерфейс REST для функциональных возможностей
+    description: "Может читать, создавать новые и обновлять или уничтожать существующие функции"
+  identity-management/global.admin:
+    title: Глобальный администратор
+    description: Глобальный администратор может управлять приложениями
+  identity-management/global-tenant.admin:
+    title: Глобальный администратор арендатора
+    description: Может администрировать всех арендаторов
+  identity-management/list-tenant-users.reader:
+    title: Показать и найти пользователей
+    description: "Позволяет отображать пользователей, включенных в группы"
+  identity-management/list-tenant-users.writer:
+    title: Назначение пользователей в группу
+    description: Позволяет добавлять пользователей в группу или удалять их
+  identity-management/roles.deleter:
+    title: Позволяет удалять роли
+    description: Требуется для удаления ролей
+  identity-management/roles.reader:
+    title: Может читать интерфейс REST для ролей
+    description: Только обзорный список и сведения об одной роли
+  identity-management/roles.writer:
+    title: Может написать интерфейс REST для ролей
+    description: "Может читать, создавать новые и обновлять или уничтожать существующие роли"
+  identity-management/tenant-users.picker:
+    title: "Может читать интерфейс REST, чтобы перечислять/разбивать на страницы пользователей указанного арендатора."
+    description: "Может читать интерфейс REST, чтобы перечислять/разбивать на страницы пользователей указанного арендатора для средств выбора пользователей, если аутентифицированный пользователь является членом этого арендатора."
+  identity-management/tenants.deleter:
+    title: Позволяет удалять арендаторов
+    description: "Требуется, чтобы иметь возможность удалять акторы арендатора"
+  identity-management/tenants.reader:
+    title: Может читать интерфейс REST для арендаторов
+    description: Только обзорный список и сведения об отдельных арендаторах
+  identity-management/tenants.writer:
+    title: Может написать интерфейс REST для арендаторов
+    description: "Может читать, создавать новые и обновлять или уничтожать существующих арендаторов"
+  identity-management/users.deleter:
+    title: Позволяет удалять пользователей
+    description: Требуется для удаления пользователей
+  identity-management/users.reader:
+    title: Может читать интерфейс REST для пользователей
+    description: Только обзорный список и сведения об одном пользователе
+  identity-management/users.writer:
+    title: Может написать интерфейс REST для пользователей
+    description: "Может читать, создавать новых и обновлять или уничтожать существующих пользователей"

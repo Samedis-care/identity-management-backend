@@ -1,0 +1,36 @@
+# per actor _type will create groups below newly created records
+# and will mark those as system: true
+# please ensure localized names are available in the language files
+# will add/ensure the default roles are available in these groups
+# whenever the actor is saved
+:Actors::App:
+  :children:
+    # members in app-name-app-admin can manage the whole app
+    # the "~" in role name will be dynamically expanded to the parent "app-name"
+  - :name: app-admins
+    :_type: Actors::Group
+    :roles:
+    - ~-admin
+  - :name: tenant-admins
+    :_type: Actors::Group
+    :roles:
+    - ~-tenant-admin
+    # users with any rights below this app will be added to this members container
+  - :name: users
+    :_type: Actors::Group
+    :roles:
+    - ~-user
+    # tenants of the app will be created in this container
+  - :name: tenants
+    :_type: Actors::ContainerTenants
+    # enterprises of the app will be created in this container
+  - :name: enterprises
+    :_type: Actors::ContainerEnterprises
+    # contains OU > Group tree with roles that defines the default for each tenant
+  - :name: organization
+    :_type: Actors::Organization
+:Actors::Tenant:
+  :children:
+    # contains an image of App/Organization
+  - :name: organization
+    :_type: Actors::Organization

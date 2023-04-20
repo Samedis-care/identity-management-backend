@@ -1,0 +1,8 @@
+---
+nl:
+  identity-management-admin:
+    title: Beheerder identiteitsbeheer
+    description: Beheerder voor identiteitsbeheer met volledige toegang
+  identity-management-tenant-admin:
+    title: Identiteitsbeheer Account Admin
+    description: Beheerder voor Identity Management Accounts

@@ -1,0 +1,132 @@
+# Version: 1.0.6
+# auto generated test, update via: (append `-f` to force update if needed)
+#     rails g auto_swagger_spec <%= file_name %>
+require 'swagger_helper'
+
+controller = <%= controller %>
+model = <%= model %>
+serializer = <%= serializer %>
+overview_serializer = <%= serializer_overview %>
+
+tag = '<%= tag %>'
+
+describe '<%= resource_plural %> API', swagger_doc: '<%= api_version %>/swagger.json', "<%= resource_plural.downcase %>" => true  do
+
+<% if @controller.instance_methods.intersection(%i(index create)).any? -%>
+  path '<%= api_path_index %>' do
+
+  <%- if controller.instance_methods.include? :index -%>
+    get '<%= title(:index) %>' do
+      metadata[:operation]['x-candos'] = <%= candos(:index) %>
+      metadata[:operation]['x-record-type'] = '<%= serializer_overview.record_type %>'
+      <%= description(:index) -%>
+
+      tags tag
+      security [Bearer: []]
+      <%= path_parameters(singularize: false) -%>
+
+      include_examples :paging
+      include_examples :quickfilter
+      include_examples :sorting, :query
+    <%- if model.respond_to?(:gridfilter_fields) -%>
+      include_examples :gridfilter, :query, <%= gridfilter_fields(:index) %>
+      metadata[:operation]['x-gridfilter-fields'] = <%= gridfilter_fields(:index) %>
+    <%- end -%>
+
+      response '200', '<%= resource_name_index %> list' do
+        schema <%= schema(:index) %>
+        run_test!
+      end
+    end
+
+  <%- end -%>
+  <%- if controller.instance_methods.include? :create -%>
+    post '<%= title(:create) %>' do
+      metadata[:operation]['x-candos'] = <%= candos(:create) %>
+      metadata[:operation]['x-record-type'] = '<%= serializer.record_type %>'
+      <%= description(:create) -%>
+
+      tags tag
+      security [Bearer: []]
+      <%= path_parameters -%>
+
+      parameter name: :data, in: :body,
+                schema: serializer::Schema.new.rswag_schema(
+                  base_key: :data,
+                  only: <%= attributes(:create) %>,
+                  #required: []
+                )
+
+      response '200', '<%= resource_name_create %> created' do
+        schema <%= schema(:create) %>
+        run_test!
+      end
+    end
+  <%- end -%>
+  end
+
+<% end -%>
+<% if @controller.instance_methods.intersection(%i(show update destroy)).any? -%>
+  path '<%= api_path %>' do
+
+  <%- if @controller.instance_methods.include? :show -%>
+    get '<%= title(:show) %>' do
+      metadata[:operation]['x-candos'] = <%= candos(:show) %>
+      metadata[:operation]['x-record-type'] = '<%= serializer.record_type %>'
+      <%= description(:show) -%>
+
+      tags tag
+      security [Bearer: []]
+      <%= path_parameters -%>
+
+      response '200', '<%= resource_name_show %> view' do
+        schema <%= schema(:show) %>
+        run_test!
+      end
+    end
+
+  <%- end -%>
+  <%- if @controller.instance_methods.include? :update -%>
+    put '<%= title(:update) %>' do
+      metadata[:operation]['x-candos'] = <%= candos(:update) %>
+      metadata[:operation]['x-record-type'] = '<%= serializer.record_type %>'
+      <%= description(:update) -%>
+
+      tags tag
+      security [Bearer: []]
+      <%= path_parameters -%>
+
+      parameter name: :data, in: :body,
+                schema: serializer::Schema.new.rswag_schema(
+                  base_key: :data,
+                  only: <%= attributes(:update) %>,
+                  required: []
+                )
+
+      response '200', '<%= resource_name_update %> updated' do
+        schema <%= schema(:update) %>
+        run_test!
+      end
+    end
+
+  <%- end -%>
+  <%- if @controller.instance_methods.include? :destroy -%>
+    delete '<%= title(:destroy) %>' do
+      metadata[:operation]['x-candos'] = <%= candos(:destroy) %>
+      metadata[:operation]['x-record-type'] = '<%= serializer.record_type %>'
+      <%= description(:destroy) -%>
+
+      tags tag
+      security [Bearer: []]
+      <%= path_parameters -%>
+
+      response '200', '<%= resource_name_destroy %> deleted' do
+        schema <%= schema(:destroy) %>
+        run_test!
+      end
+    end
+  <%- end -%>
+  end
+<% end -%>
+
+end

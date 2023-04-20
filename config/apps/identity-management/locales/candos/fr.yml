@@ -1,0 +1,95 @@
+---
+fr:
+  identity-management/actors.deleter:
+    title: Permet la suppression d'acteurs
+    description: Nécessaire pour pouvoir supprimer des acteurs
+  identity-management/actors.reader:
+    title: Peut lire l'interface REST pour les acteurs
+    description: Uniquement la liste d'aperçu et les détails d'un seul acteur
+  identity-management/actors.writer:
+    title: Peut écrire l'interface REST pour les acteurs
+    description: "Peut lire, créer de nouveaux et mettre à jour ou détruire des acteurs existants"
+  identity-management/app-tenant.admin:
+    title: Administrateur locataire
+    description: Requis comme base pour administrer les locataires de cette application
+  identity-management/apps.admin:
+    title: Administrateur de l'application
+    description: Nécessaire comme base pour administrer les paramètres de l'application
+  identity-management/apps.deleter:
+    title: Permet la suppression d'applications
+    description: Nécessaire pour pouvoir supprimer des applications
+  identity-management/apps.reader:
+    title: Peut lire l'interface REST pour les applications
+    description: Liste d'aperçu uniquement et détails d'une seule application
+  identity-management/apps.writer:
+    title: Peut écrire l'interface REST pour les applications
+    description: "Peut lire, créer de nouvelles et mettre à jour ou détruire des applications existantes"
+  identity-management/contents.deleter:
+    title: Permet la suppression du contenu
+    description: Nécessaire pour pouvoir supprimer des acteurs
+  identity-management/contents.reader:
+    title: Peut lire l'interface REST du contenu
+    description: Uniquement une liste d'aperçu et des détails de contenu unique
+  identity-management/contents.writer:
+    title: Peut écrire l'interface REST pour le contenu
+    description: "Peut lire, créer de nouveaux contenus et mettre à jour ou détruire des contenus existants"
+  identity-management/email-blacklists.deleter:
+    title: Permet la suppression des listes noires d'e-mails
+    description: Nécessaire pour pouvoir supprimer les listes noires d'e-mails
+  identity-management/email-blacklists.reader:
+    title: Peut lire l'interface REST pour les listes noires d'e-mails
+    description: Liste d'aperçu uniquement et domaines d'affichage pour la liste noire des e-mails
+  identity-management/email-blacklists.writer:
+    title: Peut écrire l'interface REST pour les listes noires d'e-mails
+    description: "Peut lire, créer de nouveaux et mettre à jour ou détruire des domaines existants pour la liste noire des e-mails"
+  identity-management/functionalities.deleter:
+    title: Permet la suppression de fonctionnalités
+    description: Nécessaire pour pouvoir supprimer des fonctionnalités
+  identity-management/functionalities.reader:
+    title: Peut lire l'interface REST pour les fonctionnalités
+    description: Uniquement une liste d'aperçu et des détails de fonctionnalité unique
+  identity-management/functionalities.writer:
+    title: Peut écrire l'interface REST pour les fonctionnalités
+    description: "Peut lire, créer de nouvelles et mettre à jour ou détruire des fonctionnalités existantes"
+  identity-management/global.admin:
+    title: Administrateur global
+    description: L'administrateur global peut administrer des applications
+  identity-management/global-tenant.admin:
+    title: Administrateur global de locataires
+    description: Peut administrer tous les locataires
+  identity-management/list-tenant-users.reader:
+    title: Afficher et rechercher des utilisateurs
+    description: Permet d'afficher les utilisateurs affectés aux groupes
+  identity-management/list-tenant-users.writer:
+    title: Affecter des utilisateurs à un groupe
+    description: Permet d'ajouter des utilisateurs à un groupe ou de les supprimer
+  identity-management/roles.deleter:
+    title: Permet la suppression de rôles
+    description: Nécessaire pour pouvoir supprimer des rôles
+  identity-management/roles.reader:
+    title: Peut lire l'interface REST pour les rôles
+    description: Uniquement une liste d'aperçu et des détails de rôle unique
+  identity-management/roles.writer:
+    title: Peut écrire l'interface REST pour les rôles
+    description: "Peut lire, créer de nouveaux et mettre à jour ou détruire des rôles existants"
+  identity-management/tenant-users.picker:
+    title: Peut lire l'interface REST pour répertorier/paginer les utilisateurs d'un locataire spécifié
+    description: Peut lire l'interface REST pour répertorier/paginer les utilisateurs d'un locataire spécifié pour les sélecteurs d'utilisateurs si l'utilisateur authentifié est membre de ce locataire
+  identity-management/tenants.deleter:
+    title: Permet la suppression de locataires
+    description: Nécessaire pour pouvoir supprimer des acteurs locataires
+  identity-management/tenants.reader:
+    title: Peut lire l'interface REST pour les locataires
+    description: Uniquement la liste d'aperçu et les détails des locataires uniques
+  identity-management/tenants.writer:
+    title: Peut écrire l'interface REST pour les locataires
+    description: "Peut lire, créer de nouveaux et mettre à jour ou détruire les locataires existants"
+  identity-management/users.deleter:
+    title: Permet la suppression d'utilisateurs
+    description: Nécessaire pour pouvoir supprimer des utilisateurs
+  identity-management/users.reader:
+    title: Peut lire l'interface REST pour les utilisateurs
+    description: Uniquement la liste d'aperçu et les détails de l'utilisateur unique
+  identity-management/users.writer:
+    title: Peut écrire l'interface REST pour les utilisateurs
+    description: "Peut lire, créer de nouveaux utilisateurs et mettre à jour ou détruire des utilisateurs existants"

@@ -1,0 +1,6 @@
+development: &default
+  clients:
+    default:
+      uri: mongodb://user:password@cluster-shard-01.mongodb.net:27017,cluster-shard-02.mongodb.net:27017,cluster-shard-03.mongodb.net:27017/dbname?ssl=true&replicaSet=cluster-shard-01&authSource=admin&retryWrites=true&w=majority
+production:
+  <<: *default

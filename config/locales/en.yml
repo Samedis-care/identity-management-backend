@@ -1,0 +1,218 @@
+en:
+  json_api:
+    record_not_found_error: Record not found
+    argument_error: Wrong number of arguments
+    gridfilter_error: Grid filter error
+    general_error: General error
+    database_error: Database error
+    authorization_error: Authorization error
+    object_id_invalid_error: An invalid Object ID was provided
+    malformed_csv_error: >-
+      CSV is malformed. Character encoding must be UTF-8 (without BOM). It must not contain headers. Use semicolon as columns separator. Double quotes for text values if necessary.
+    smtp_syntax_error: >-
+      The mail could not be send. Please check recipient address for invalid characters.
+    maintenance_readonly_error: "System is in read-only maintenance. Please try again later. Reason: %{reason}"
+    maintenance_error: "The system is currently in maintenance mode. Please try again later. Reason: %{reason}"
+  auth:
+    error:
+      forbidden: Forbidden.
+      grant_type_invalid: Not authorised. The grant type is invalid.
+      invalid_request: The request is invalid or missing required parameter.
+      login_incorrect: The credentials submitted are incorrect.
+      password_token_invalid: The link to reset your password is no longer valid.
+      missing_tenant_context: Tenant context is missing.
+      token_expired: Not authorised. The security token has expired.
+      token_invalid: Not authorised. The security token is invalid.
+      unauthenticated: Login failed. The security token is invalid or missing.
+      otp_required: Login incomplete. One time password not yet provided.
+      otp_invalid: One time password invalid or expired.
+      otp_too_many_tries: Too many invalid one time password tries.
+      unauthorized: Insufficient rights to access this resource.
+      unauthorized_tenant: Permission denied. No access to this tenant allowed.
+  devise:
+    mailer:
+      account_confirm: Thank you for your confirmation. Your access has been activated.
+      account_confirm_resend: 'We have sent a confirmation email to your email address (%{email}).'
+      confirmation_instructions:
+        action: Confirm your email address
+        subject: 'Confirm your %{app_name} account creation'
+        header: 'Welcome to %{app_name}!'
+        message: 'To confirm your email address, please click the following link:'
+      email_change:
+        subject: Changing your email address
+        header: We have received your request
+        message_html: >-
+          Your email address will be changed to <a href="mailto:%{email_new}">%{email_new}</a>.<br />
+
+          <br />
+
+          You didn't change your email address?<br />
+
+          Please contact our support immediately at: <a href="mailto:%{support_email}">%{support_email}</a>
+      password_change:
+        subject: Password change
+        header: Your password has been changed successfully.
+        message_html: >-
+          You didn't change your password?<br /> Please contact our support immediately at: <a href="mailto:%{support_email}">%{support_email}</a>
+      registered: >-
+        Please check your e-mails to confirm the registration. Your account %{email} was created successfully and will be activated after confirmation.
+      reset_password_instructions:
+        subject: Instructions on how to reset your password
+        header: We have received your request
+        action: Change Password
+        validity: This link will be valid for 72 hours
+        thanks: 'Your %{app_name} Team'
+        message_1_html: You can change your password now
+        message_2_html: >-
+          You didn't request a password change?<br /> Then please just ignore this email.
+      reset_password_msg: >-
+        A link to reset your password has been sent to your email address (%{email}). Please follow this link to assign a new password.
+      send_password:
+        link_text: Click to go to the website.
+        message: >-
+          You were added with the role %{role_name} in %{app_name}. Below is the access information to log in. After logging in, you can assign your password in your profile.
+        subject: 'Access data user: %{user_name}'
+    user:
+      recaptcha_invalid: The captured captcha is unfortunately not valid.
+      unverified: >-
+        This access has not yet been confirmed. Please confirm your email address first.
+  errors:
+    actor:
+      name_is_invalid: The selected name is invalid
+    actor_role:
+      actor:
+        may_have_roles: >-
+          This kind of Actor isn't allowed to have Roles. Only Organizational Units or Groups may have roles.
+    email:
+      blacklisted: 'Unfortunately, the address is not valid'
+      confirmation: Repetition is incorrect
+    missing_app: No app was defined to perform this action
+    user:
+      quit_failed: There was an error leaving the app.
+    invalid_app: App context is missing or wrong
+    undeletable:
+      one: 'A record from %{total} could not be deleted.'
+      other: ' %{count} of %{total} records could not be deleted.'
+  mongoid:
+    attributes:
+      actor:
+        short_name: Short name
+      user:
+        active: active
+        confirmed_at: Verified on
+        created_at: Created on
+        deleted: Deleted
+        email: e-mail
+        first_name: First name
+        gender: gender
+        last_name: Surname
+        locale: language
+        provider: Provider
+        sign_in_count: Number of registrations
+        system: system
+        write_protected: Read only
+        password: Password
+        password_confirmation: Password repeat
+    errors:
+      messages:
+        confirmation: is invalid.
+        document_not_found:
+          message: The data record with the requested ID does not exist.
+          resolution: Try again with the correct record ID.
+          summary: Wrong record ID.
+          summary_title: Record not found.
+        message_title: The request could not be carried out
+        resolution_title: Proposed solution
+        summary_title: The following problems were found
+      models:
+        actor:
+          attributes:
+            name:
+              uniqueness: 'The selected name "%{value}" already exists in this level.'
+            parent_id:
+              invalid: Invalid parent node.
+            short_name:
+              blank: must not be empty.
+        content:
+          attributes:
+            name:
+              uniqueness: There is already content with this version for the application.
+        functionality:
+          attributes:
+            ident:
+              taken: >-
+                The application already has a functionality for the selected module with this identifier.
+        role:
+          attributes:
+            description:
+              blank: Description cannot be empty.
+            title:
+              blank: Title cannot be empty.
+              taken: There is already a role with that title.
+        user:
+          attributes:
+            email:
+              already_confirmed: The email address has already been confirmed.
+              blank: Address cannot be empty.
+              syntax: Invalid e-mail address.
+              taken: The e-mail address is already registered for access.
+            first_name:
+              blank: must not be empty.
+            last_name:
+              blank: must not be empty.
+            password:
+              blank: must not be empty.
+              too_short: is too short.
+            password_confirmation:
+              blank: Password is not equal!
+    models:
+      actor:
+        one: Actor
+        other: Actors
+      functionality:
+        one: Functionality
+        other: Functionalities
+      role:
+        one: role
+        other: Roles
+      user:
+        one: user account
+        other: User accounts
+      actors/app:
+        one: App
+        other: Apps
+      actors/container_apps:
+        one: Container for Apps
+      actors/container_enterprises:
+        one: Container for Enterprises
+      actors/container_tenants:
+        one: Container for Tenant
+      actors/container_users:
+        one: Container for Enterprises
+      actors/group:
+        one: Group
+        other: Groups
+      actors/mapping:
+        one: Mapping
+        other: Mappings
+      actors/organization:
+        one: Organization
+        other: Organizations
+      actors/ou:
+        one: OU
+        other: OUs
+      actors/tenant:
+        one: Tenant
+        other: Tenants
+      doorkeeper/access_token:
+        one: Access Token
+        other: Access Tokens
+  mailer:
+    greeting: 'Hello %{user_name}.'
+    manual_link_instructions: >-
+      In case the button is not clickable, please copy the following URL into your Browser:
+    regards: 'Your %{app_name} Team'
+    footer_html: |-
+      This mail was send by identity-management (https://github.com/Samedis-care/identity-management)<br />
+      Please configure the footer in your app-settings.
+

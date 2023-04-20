@@ -1,0 +1,32 @@
+<%= tag.h3 style: @tag_style.h3 do %>
+  <%= t('devise.mailer.confirmation_instructions.header', app_name: t("app.#{@app_context}")) %>
+<% end %>
+
+<%= tag.p style: @tag_style.p do %>
+  <%= t('mailer.greeting', user_name: @user.name) %>
+<% end %>
+
+<%= tag.p style: @tag_style.p do %>
+  <%= t('devise.mailer.confirmation_instructions.message') %>
+<% end %>
+
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse: collapse;">
+  <tr>
+    <td class="block" style="<%= @tag_style.td %>">
+      <a href="<%= @url %>" style="<%= @tag_style.a %>">
+        <strong style="color:#FFF">
+          <%= t('devise.mailer.confirmation_instructions.action') %>
+        </strong>
+      </a>
+    </td>
+  </tr>
+</table>
+
+<%= tag.p style: @tag_style.p do %>
+  <%= t('mailer.manual_link_instructions') %><br />
+  <%= @url %>
+<% end %>
+
+<%= tag.p style: @tag_style.p do %>
+  <%= t('mailer.regards', app_name: t("app.#{@app_context}")) %>
+<% end %>

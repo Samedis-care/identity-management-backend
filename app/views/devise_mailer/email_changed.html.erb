@@ -1,0 +1,15 @@
+<%= tag.h3 style: @tag_style.h3 do %>
+  <%= t('devise.mailer.email_change.header') %>
+<% end %>
+
+<%= tag.p style: @tag_style.p do %>
+  <%= t('mailer.greeting', user_name: @user.name) %>
+<% end %>
+
+<%= tag.p style: @tag_style.p do %>
+  <%= t('devise.mailer.email_change.message_html', email_old: @user.email, email_new: @user.unconfirmed_email, support_email: @user.app_context_actor.config.mailer.support_email) %>
+<% end %>
+
+<%= tag.p style: @tag_style.p do %>
+  <%= t('mailer.regards', app_name: t("app.#{@app_context}")) %>
+<% end %>

@@ -1,0 +1,8 @@
+---
+fr:
+  identity-management-admin:
+    title: Administrateur de la gestion des identités
+    description: Administrateur pour la gestion des identités avec accès complet
+  identity-management-tenant-admin:
+    title: Administrateur de locataire de gestion des identités
+    description: Administrateur pour les locataires de gestion des identités
