@@ -183,6 +183,42 @@ fr:
         one: compte d'utilisateur
         many: Comptes utilisateur
         other: Comptes utilisateur
+      actors/app:
+        one: Application
+        many: applications
+        other: applications
+      actors/container_apps:
+        one: Conteneur pour les applications
+      actors/container_enterprises:
+        one: Conteneur pour les entreprises
+      actors/container_tenants:
+        one: Conteneur pour locataire
+      actors/container_users:
+        one: Conteneur pour les entreprises
+      actors/group:
+        one: Groupe
+        many: Groupes
+        other: Groupes
+      actors/mapping:
+        one: Cartographie
+        many: Mappages
+        other: Mappages
+      actors/organization:
+        one: Organisation
+        many: Organisations
+        other: Organisations
+      actors/ou:
+        one: UO
+        many: UO
+        other: UO
+      actors/tenant:
+        one: Locataire
+        many: Locataires
+        other: Locataires
+      doorkeeper/access_token:
+        one: Jeton d'accès
+        many: Jetons d'accès
+        other: Jetons d'accès
   mailer:
     greeting: 'Bonjour %{user_name}.'
     manual_link_instructions: >-
