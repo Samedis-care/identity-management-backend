@@ -178,6 +178,35 @@ de:
       user:
         one: Benutzerkonto
         other: Benutzerkonten
+      actors/app:
+        one: Apps
+        other: Apps
+      actors/container_apps:
+        one: "Kontäner für Apps "
+      actors/container_enterprises:
+        one: Kontäner für Enterprises
+      actors/container_tenants:
+        one: Kontäner für Mandanten
+      actors/container_users:
+        one: Kontäner für Enterprises
+      actors/group:
+        one: Gruppe
+        other: Gruppen
+      actors/mapping:
+        one: Zuordnungen
+        other: Zuordnungen
+      actors/organization:
+        one: Organisationen
+        other: Organisationen
+      actors/ou:
+        one: OUs
+        other: OUs
+      actors/tenant:
+        one: Einrichtungen
+        other: Einrichtungen
+      doorkeeper/access_token:
+        one: Zugangstoken
+        other: Zugriffstoken
   mailer:
     greeting: 'Hallo %{user_name}.'
     manual_link_instructions: >-
