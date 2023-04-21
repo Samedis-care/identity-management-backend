@@ -188,6 +188,49 @@ ru:
         few: Учетные записи пользователей
         many: Учетные записи пользователей
         other: Учетные записи пользователей
+      actors/app:
+        one: Приложение
+        few: Программы
+        many: Программы
+        other: Программы
+      actors/container_apps:
+        one: Контейнер для приложений
+      actors/container_enterprises:
+        one: Контейнер для предприятий
+      actors/container_tenants:
+        one: Контейнер для арендатора
+      actors/container_users:
+        one: Контейнер для предприятий
+      actors/group:
+        one: Группа
+        few: Группы
+        many: Группы
+        other: Группы
+      actors/mapping:
+        one: Отображение
+        few: Сопоставления
+        many: Сопоставления
+        other: Сопоставления
+      actors/organization:
+        one: Организация
+        few: Организации
+        many: Организации
+        other: Организации
+      actors/ou:
+        one: ОУ
+        few: OU
+        many: OU
+        other: OU
+      actors/tenant:
+        one: Жилец
+        few: Арендаторы
+        many: Арендаторы
+        other: Арендаторы
+      doorkeeper/access_token:
+        one: Токен доступа
+        few: Токены доступа
+        many: Токены доступа
+        other: Токены доступа
   mailer:
     greeting: 'Здравствуйте, %{user_name}.'
     manual_link_instructions: >-
