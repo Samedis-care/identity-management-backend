@@ -178,6 +178,35 @@ nl:
       user:
         one: gebruikers account
         other: Gebruikersaccounts
+      actors/app:
+        one: app
+        other: Apps
+      actors/container_apps:
+        one: Container voor apps
+      actors/container_enterprises:
+        one: Container voor ondernemingen
+      actors/container_tenants:
+        one: Container voor huurder
+      actors/container_users:
+        one: Container voor ondernemingen
+      actors/group:
+        one: Groep
+        other: Groepen
+      actors/mapping:
+        one: In kaart brengen
+        other: toewijzingen
+      actors/organization:
+        one: Organisatie
+        other: Organisaties
+      actors/ou:
+        one: OU
+        other: OU's
+      actors/tenant:
+        one: Tenant
+        other: Tenants
+      doorkeeper/access_token:
+        one: Toegangstoken
+        other: Toegangstokens
   mailer:
     greeting: 'Hallo %{user_name}.'
     manual_link_instructions: >-
