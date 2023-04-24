@@ -302,9 +302,16 @@ class User < ApplicationDocument
     _host_uri.path = ''
     _host_uri.query = ''
     _host_uri.fragment = nil
-    allowed_domain = %w(
-      ident.services
-    ).include?(_host_uri.host.to_s.split('.').last(2).join('.'))
+    _app_urls = Actors::App.pluck('config.url')
+    _app_domains = _app_urls.collect do |u|
+      URI.parse(u).host rescue nil
+    end.compact
+    allowed_domain = begin
+      _app_domains.include?(_host_uri.host.to_s) || (
+        _host_uri.host.to_s.split('.').length > 2 &&
+        _app_domains.include?(_host_uri.host.to_s.split('.')[1..-1].join('.'))
+      )
+    end
     allowed_host = [
       'localhost',
       '127.0.0.1'].include?(_host_uri.host) || IPAddr.new(_host_uri.host).private? rescue false
