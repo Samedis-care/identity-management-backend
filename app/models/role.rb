@@ -25,6 +25,9 @@ class Role < ApplicationDocument
   index({ name: 1}, { background:true, unique: true, name: 'role_name_unique' })
   index deleted: 1
 
+  validates_uniqueness_of :name
+  validates_presence_of :name
+
   def validate_presence_for_languages
     [:en]
   end
@@ -175,7 +178,7 @@ class Role < ApplicationDocument
   # ensure nice names
   def safe_name!
     self.name = self.title if self.name.blank?
-    self.name = self.name.to_slug
+    self.name = self.name&.to_slug
   end
 
 end

@@ -8,7 +8,6 @@ class Content < ApplicationDocument
   belongs_to :actors_app, optional: true, class_name: 'Actors::App'
 
   field :app, type: String
-  field :actors_app_id, type: BSON::ObjectId
   enumerize :name, in: %i(tos privacy tos-privacy app-info)
   field :name, type: String
   field :content, type: String, localize: true

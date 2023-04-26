@@ -16,10 +16,6 @@ end
 
 Actor.logs! false
 
-# cleanup
-Actors::User.cleanup_orphans!
-Actors::Mapping.cleanup_orphans!
-
 # Set up default structure
 
 # Container where all users reside in
@@ -33,6 +29,9 @@ Actor.app_container.set(short_name: :apps)
 User.cache_expire!
 
 # Create Admin account
+admin_user = ::User.global_admin
+debugger unless admin_user.is_a?(::User) && admin_user.persisted?
+admin_user.reload
 Actors::User.ensure_global_admin!
 puts "=" * 80
 puts "Admin Account ensured!"
@@ -83,3 +82,11 @@ User.cache_expire!
 
 # re-populate access control cache in a single db aggregation with merge
 Actors::Mapping.merge_tenant_access_group_ids!
+
+# cleanup
+Actors::User.cleanup_orphans!
+Actors::Mapping.cleanup_orphans!
+
+puts "=" * 80
+puts "Seeding finished!"
+puts "=" * 80

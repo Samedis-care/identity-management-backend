@@ -13,7 +13,6 @@ module Actors
     belongs_to :user, class_name: '::User', optional: true, inverse_of: nil
 
     field :app_id, type: BSON::ObjectId
-    field :user_id, type: BSON::ObjectId
     field :tenant_id, type: BSON::ObjectId
     field :parent_template_actor_id, type: BSON::ObjectId
     field :cached_role_ids, type: Array

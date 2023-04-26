@@ -145,7 +145,9 @@ module Actors
           field :dark, type: String, default: nil
           field :light, type: String, default: "rgb(57, 135, 194)"
         end
-        class Secondary < Primary
+        class Secondary
+          include Mongoid::Document
+          embedded_in :theme
           field :main, type: String, default: "rgb(185, 215, 240)"
           field :dark, type: String, default: nil
           field :light, type: String, default: nil
@@ -269,7 +271,7 @@ module Actors
     # default locale with be the first
     def languages
       @languages ||= begin
-        ([default_language] + config.reload.locales.collect {|l| l.to_s.split('-').first.downcase }.sort).compact.uniq
+        ([default_language] + config.locales.collect {|l| l.to_s.split('-').first.downcase }.sort).compact.uniq
       end
     end
 

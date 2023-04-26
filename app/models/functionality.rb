@@ -13,6 +13,8 @@ class Functionality < ApplicationDocument
   field :ident, type: String
   field :quickfilter, type: Array
 
+  alias_attribute :mod, :module
+
   index actors_app_id: 1
   index({ app: 1, module: 1, ident: 1 }, { background: true, sparse: true, unique: true, name: 'functionalities' })
   index deleted: 1
@@ -94,6 +96,10 @@ class Functionality < ApplicationDocument
   # @return {String} cando format of the functionality (human readable)
   def cando
     "#{self.app.to_slug}/#{self.module}.#{self.ident}"
+  end
+  def cando=(v)
+    app, mod, ident = v.split(/[\/.]/)
+    self.attributes = { app:, mod:, ident: }
   end
 
   # Used to show selected values

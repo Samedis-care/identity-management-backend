@@ -430,16 +430,19 @@ class User < ApplicationDocument
   end
 
   def self.global_admin
-    @@global_admin ||= where(email: 'admin@ident.services').first_or_create(
+    _default_pass = ("#" * 18)
+    @@global_admin ||= where(email: 'admin@ident.services').first_or_initialize(
       system: true,
       actor: Actors::User.global_admin,
       first_name: 'Admin',
       last_name: 'Administrator',
       title: nil,
-      gender: 0,
-      confirmed_at: Time.now,
-      set_password: ("#" * 18)
+      gender: 0
     )
+    @@global_admin.confirmed_at = Time.now if @@global_admin.confirmed_at.blank?
+    @@global_admin.save validate: false unless @@global_admin.persisted?
+    @@global_admin.set_password = _default_pass if @@global_admin.encrypted_password.blank?
+    @@global_admin
   end
 
   # Filter by undeleted availabel users

@@ -58,4 +58,14 @@ RSpec.configure do |config|
   config.filter_rails_from_backtrace!
   # arbitrary gems may also be filtered via:
   # config.filter_gems_from_backtrace("gem name")
+
+  if Rails.env.test?
+    config.before(:suite) do
+      DatabaseCleaner.strategy = :deletion
+      DatabaseCleaner.clean
+      ENV['manual'] = 'true' # required to run seeds.rb
+      load Rails.root.join('db', 'seeds.rb')
+    end
+  end
+
 end
