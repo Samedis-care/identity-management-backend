@@ -41,7 +41,7 @@ class Functionality < ApplicationDocument
   }
 
   before_validation do |record|
-    self.actors_app ||= Actors::App.named(self.app).first || Actors::App.im
+    self.actors_app ||= Actors::App.named(self.app).first
     self.title ||= self.cando
     self.description ||= self.title
   end
