@@ -6,7 +6,7 @@ class InvitationSerializer
   end
 
   attribute :url do |record|
-    Rails.application.routes.url_helpers.invitation_accept_url(id: record.token)
+    Rails.application.routes.url_helpers.v1_user_invitation_accept_url(id: record.token)
   end
 
   attribute :redirect_url do |record|

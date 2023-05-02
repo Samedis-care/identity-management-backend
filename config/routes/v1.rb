@@ -114,6 +114,7 @@ namespace :v1 do
     resources :quits, only: [:destroy]
     resources :authenticate_otp, only: [:create]
     resources :tenants, path: :tenant, only: [:index, :create, :show, :update, :destroy]
+    put 'invitations/:id' => 'invitations#update', constraints: { id: /[a-z0-9]*/ }, as: 'invitation_accept', noswagger: true
   end
 
   # Maintenance checks
