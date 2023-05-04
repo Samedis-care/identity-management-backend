@@ -65,3 +65,6 @@ end
 
 # Use Oj JSON engine for best performance when calling #to_json
 Oj.optimize_rails
+
+# Mongoid migrations path
+Mongoid::Migrator.migrations_path = ['db/migrate', 'config/apps/*/migrate']
