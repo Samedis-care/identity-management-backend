@@ -102,7 +102,7 @@ namespace :v1 do
     resources :content_acceptance, param: :name, only: [:show]
     resources :content_acceptance, only: [:update]
 
-    resources :tenant, module: :tenant, only: [] do
+    scope path: ':tenant_id', module: :tenant do
       resources :invitations, only: [:create, :update, :destroy], constraints: { id: /[a-z0-9\{\}]*/ }
     end
   end
