@@ -27,7 +27,7 @@ class ApplicationController < ActionController::Base
       return
     end
 
-    if (!User.count.zero? rescue false)
+    if (!User.collection.count.zero? rescue false)
       render json: { message: 'ok', code: 200 }
     else
       render json: { message: 'error', code: 500 }, status: 500
