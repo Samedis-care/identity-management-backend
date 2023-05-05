@@ -601,7 +601,7 @@ class User < ApplicationDocument
 
   def get_tenant_candos
     self.tenant_access_group_ids = begin
-      Actors::Mapping.where(user_id: self.id).get_tenant_candos.first.dig :tenant_candos_cached
+      Actors::Mapping.where(user_id: self.id).get_tenant_candos.first.dig(:tenant_candos_cached) rescue []
     end
   end
 
@@ -630,7 +630,7 @@ class User < ApplicationDocument
 
   # simple array of cando string regardless of tenants
   def global_candos(app_name=nil)
-    @global_candos = self.candos.values.flatten.uniq.sort
+    @global_candos = self.candos.values.flatten.uniq.sort rescue []
     return @global_candos unless app_name.present?
     app_name = app_name.name if app_name.is_a?(Actors::App)
     @global_candos.select {|c| c.starts_with? app_name+'/' }

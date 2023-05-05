@@ -41,7 +41,6 @@ class Api::V1::Devise::RegistrationsController < Devise::RegistrationsController
     user.app_context = current_app
     render_jsonapi_error(I18n.t('errors.missing_app'), 'missing_app', status=400) and return if user.app_context.blank?
     user.validate
-    user = check_for_errors(user) || return
     _new_user = user.new_record?
 
     user.save!

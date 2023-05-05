@@ -61,7 +61,7 @@ class DeviseMailer < Devise::Mailer
     @app = app
     @color = OpenStruct.new(
       background: "#{@app.config.theme.background.default || '#e1e2e1' }",
-      content: "#{@app.config.theme.type.eql?('light') ? '#FFF' : '#121212'}",
+      content: "#{@app.config.theme.mode.eql?('light') ? '#FFF' : '#121212'}",
       primary: OpenStruct.new(
         main:  "#{@app.config.theme.primary.main || '#0277bc'}",
         light: "#{@app.config.theme.primary.light || '#5e91f2'}",
@@ -77,7 +77,7 @@ class DeviseMailer < Devise::Mailer
       font_family: 'font-family: sans-serif',
       font_size: 'font-size: 16px',
       line_height: 'line-height: 24px',
-      color: "#{@app.config.theme.type.eql?('light') ? '#000' : '#FFF'}",
+      color: "#{@app.config.theme.mode.eql?('light') ? '#000' : '#FFF'}",
       background: "background-color: #{@color.background};",
       content: "background-color: #{@color.content};",
       primary: OpenStruct.new(
