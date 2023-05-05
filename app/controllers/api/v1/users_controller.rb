@@ -6,7 +6,7 @@ class Api::V1::UsersController < Api::V1::JsonApiController
   SERIALIZER = UserSerializer
   OVERVIEW_SERIALIZER = UserOverviewSerializer
 
-  PARAMS_CREATE = PARAMS_UPDATE = [
+  PERMIT_CREATE = PERMIT_UPDATE = [
     :image_b64,
     :image,
     :pwd_reset_uid,

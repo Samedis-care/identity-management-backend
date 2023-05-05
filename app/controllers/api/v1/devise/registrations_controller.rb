@@ -6,7 +6,7 @@ class Api::V1::Devise::RegistrationsController < Devise::RegistrationsController
 
   MODEL_BASE = User
   SERIALIZER = OVERVIEW_SERIALIZER = AppUserSerializer
-  PARAMS_CREATE = [
+  PERMIT_CREATE = [
     :captcha,
     :email,
     :email_confirmation,
@@ -17,7 +17,7 @@ class Api::V1::Devise::RegistrationsController < Devise::RegistrationsController
     :actor_id,
     :invite_token
   ]
-  PARAMS_UPDATE = [
+  PERMIT_UPDATE = [
     :first_name,
     :last_name
   ]
