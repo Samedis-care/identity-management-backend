@@ -11,5 +11,5 @@
 <% end %>
 
 <%= tag.p style: @tag_style.p do %>
-  <%= t('mailer.regards', app_name: t("app.#{@app_context}")) %>
+  <%= t('mailer.regards', app_name: @app.full_name) %>
 <% end %>
