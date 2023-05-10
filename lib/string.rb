@@ -66,4 +66,12 @@ class String
             "AAAAAACEEEEIIIINOOOOOOUUUUYaaaaaaceeeeiiiinoooooouuuuyy")
   end
 
+  def to_clipboard
+    begin
+      Clipboard.copy self
+    rescue => e
+      raise
+    end
+  end
+
 end
