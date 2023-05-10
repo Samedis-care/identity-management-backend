@@ -1,5 +1,5 @@
 <%= tag.h3 style: @tag_style.h3 do %>
-  <%= t('devise.mailer.confirmation_instructions.header', app_name: t("app.#{@app_context}")) %>
+  <%= t('devise.mailer.confirmation_instructions.header', app_name: @app.full_name) %>
 <% end %>
 
 <%= tag.p style: @tag_style.p do %>

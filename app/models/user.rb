@@ -699,7 +699,7 @@ class User < ApplicationDocument
       @tenant_access_group_ids = tenant_access_group_ids = determine_tenant_access_group_ids
       self.save(validate: false) if self.changes.any?
     end
-    @tenant_access_group_ids
+    @tenant_access_group_ids ||= {}
   end
 
   def access_group_ids_changed
