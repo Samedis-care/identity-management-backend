@@ -18,19 +18,7 @@ class Api::V1::Apps::Picker::Roles::FunctionalitiesController < Api::V1::JsonApi
   end
 
   def functionality_ids_in_role
-    @functionality_ids_in_role ||= begin
-                             if action_name.eql?('index')
-                               RoleFunctionality.where(
-                                 role_id: params[:role_id],
-                                 :functionality_id.in => records_index_paged_to_a.pluck(:_id)
-                               ).distinct(:functionality_id)
-                             elsif action_name.eql?('show')
-                               RoleFunctionality.where(
-                                 role_id: params[:role_id],
-                                 functionality_id: params[:id]
-                               ).distinct(:functionality_id)
-                             end
-                           end
+    @functionality_ids_in_role ||= Role.where(_id: params[:role_id]).first&.functionality_ids || []
   end
 
   def cando
