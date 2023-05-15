@@ -43,8 +43,7 @@ class Api::V1::Devise::RegistrationsController < Devise::RegistrationsController
     user.validate
     _new_user = user.new_record?
 
-    user.save!
-    if user.persisted?
+    if user.save && user.persisted?
       if user.send(:confirmation_required?) && !_new_user
         # this triggers save with a fresh confirmation token
         # unless it's a new user which triggers this itself
