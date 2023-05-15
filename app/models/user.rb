@@ -304,8 +304,13 @@ class User < ApplicationDocument
     _host_uri.fragment = nil
     _app_urls = Actors::App.pluck('config.url')
     _app_domains = _app_urls.collect do |u|
-      URI.parse(u).host rescue nil
-    end.compact
+      _host = URI.parse(u).host.to_s rescue nil
+      if _host.to_s.split('.').length > 2
+        [_host, _host.split('.')[1..-1].join('.')]
+      else
+        [_host]
+      end
+    end.flatten.compact
     allowed_domain = begin
       _app_domains.include?(_host_uri.host.to_s) || (
         _host_uri.host.to_s.split('.').length > 2 &&
