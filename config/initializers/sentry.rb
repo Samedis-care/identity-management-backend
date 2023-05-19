@@ -2,6 +2,11 @@ Sentry.init do |config|
   if ENV['SENTRY_ENABLED'].present? && ENV['SENTRY_ENABLED'].to_s.downcase == "true" && ENV['SENTRY_DSN_BACKEND'].present?
     config.dsn = ENV['SENTRY_DSN_BACKEND']
   end
+
+  config.excluded_exceptions += [
+    "Puma::HttpParserError",
+  ]
+
   config.breadcrumbs_logger = [:active_support_logger]
   config.release = "identity-management-backend@#{File.read('public/version.txt').strip rescue 'dev'}"
   config.environment = ENV['SENTRY_ENV']
