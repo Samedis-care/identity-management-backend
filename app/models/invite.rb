@@ -56,7 +56,7 @@ class Invite < ApplicationDocument
 
   # max age of token
   def self.expire_time
-    3.days.from_now # 72 hours
+    30.days.from_now
   end
 
   def self.unclaimed
