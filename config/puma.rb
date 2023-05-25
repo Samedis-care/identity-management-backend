@@ -32,5 +32,17 @@ environment ENV.fetch("RAILS_ENV") { "development" }
 
 persistent_timeout 90
 
+start_time = Time.now.to_f # captured in main process (process managing workers)
+$sentry_report_worker_crash = false # global variable
+on_worker_boot do
+  # code run inside worker processes. workers are copies of the main process, so start_time is filled with the main process start time.
+  # this code runs very early. Sentry is not initialized here, so we can't report to Sentry yet.
+  now = Time.now.to_f
+  if now - start_time > 5 # if time of worker start is >5 seconds (usually < 0.1 sec) after main process start
+    puts "WORKER CRASH DETECTED"
+    $sentry_report_worker_crash = true # this will trigger a Sentry.capture_message in sentry.rb, thus reporting the issue to Sentry after init.
+  end
+end
+
 # Allow puma to be restarted by `rails restart` command.
 plugin :tmp_restart

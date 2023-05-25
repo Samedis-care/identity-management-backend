@@ -78,3 +78,7 @@ Sentry.init do |config|
     end
   end
 end
+
+if $sentry_report_worker_crash # global variable, see puma.rb
+  Sentry.capture_message("PUMA: Worker Crash detected")
+end
