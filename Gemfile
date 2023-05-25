@@ -2,10 +2,10 @@ source 'https://rubygems.org'
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
 ruby '3.2.2'
+gem 'rails', '~> 7.0.5'
 
-gem 'rails', '~> 7.0.4.3'
-gem 'bcrypt', '~> 3.1.7'
-gem 'bootsnap', '>= 1.1.0', require: false
+gem 'bcrypt'
+gem 'bootsnap', require: false
 gem 'ffaker'
 gem 'mongoid'
 # on apple m1 install manually via
@@ -17,7 +17,7 @@ gem 'mongoid_search'
 gem 'mongoid_rails_migrations'
 gem 'mongoid-locker'
 gem 'mongoid_includes'
-gem 'nokogiri', '>= 1.13.4'
+gem 'nokogiri'
 gem 'strip_attributes'
 gem 'psych', '< 4' # https://stackoverflow.com/a/71192990/9156535
 
@@ -39,7 +39,7 @@ gem "shrine"#, "~> 2.0"
 gem "shrine-mongoid"
 #gem "shrine-storage-azureblob", git: 'https://github.com/TQsoft-GmbH/shrine-storage-azureblob.git'
 # For imageprocessing in shrine uploaders
-gem "image_processing", '>= 1.12.2'
+gem 'image_processing'
 gem 'ruby-vips'
 
 # HTTP client for microservice communication
@@ -72,9 +72,9 @@ gem 'sentry-ruby'
 gem 'sentry-rails'
 
 # excel generator
-gem 'caxlsx', '~> 3.1.0'
+gem 'caxlsx'
 
-gem "rqrcode", "~> 2.0"
+gem "rqrcode"
 
 # HTTP server
 gem 'puma'
@@ -92,6 +92,5 @@ group :development, :test, :live, :local_dev, :staging do
 end
 
 group :development do
-  gem 'listen', '>= 3.0.5', '< 3.2'
-  gem 'google_drive'
+  gem 'listen'
 end
