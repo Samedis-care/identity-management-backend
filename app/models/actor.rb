@@ -87,8 +87,9 @@ class Actor < ApplicationDocument
 
   # Strategy to handle deletion of a node with children
   before_destroy :before_destroy
-  before_destroy :destroy_children
-  before_destroy :destroy_mappings
+  before_destroy :destroy_children, unless: is_mapping?
+  before_destroy :destroy_mappings, unless: is_mapping?
+  after_destroy :cache_expire!, unless: is_mapping?
   def destroy_mappings
     self.mappings.destroy_all
   end
@@ -262,7 +263,6 @@ class Actor < ApplicationDocument
       errors.add :system, 'protection flag set'
       throw(:abort)
     end
-    record.cache_expire!
   end
 
   def ensure_required_fields
@@ -310,7 +310,7 @@ class Actor < ApplicationDocument
 
     # ensure mappings are deleted
     if record.is_mapping? && record.deleted?
-      record.destroy
+      record.delete
       throw(:abort)
     end
 
@@ -577,10 +577,10 @@ class Actor < ApplicationDocument
   # Expire cached data on users (candos and tenants)
   def cache_expire!
     if self.is_mapping?
-      User.where(actor_id: map_actor_id).cache_expire!
+      ::User.where(actor_id: map_actor_id).cache_expire!
     else
       _actor_ids = Actors::Mapping.where(parent_ids: self.id).distinct(:map_actor_id)
-      User.where(:actor_id.in => _actor_ids).cache_expire! if _actor_ids.any?
+      ::User.where(:actor_id.in => _actor_ids).cache_expire! if _actor_ids.any?
     end
   end
 
