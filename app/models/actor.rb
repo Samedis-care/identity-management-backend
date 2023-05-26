@@ -82,7 +82,7 @@ class Actor < ApplicationDocument
     after_save :ensure_defaults!
     after_save :rebuilds_pathes!
     after_save :set_children_count!
-    after_save :merge_group_candos!, if: :role_ids_changed?
+    after_save :merge_group_candos!, if: :role_ids
   end
 
   # Strategy to handle deletion of a node with children
