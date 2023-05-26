@@ -87,9 +87,9 @@ class Actor < ApplicationDocument
 
   # Strategy to handle deletion of a node with children
   before_destroy :before_destroy
-  before_destroy :destroy_children, unless: is_mapping?
-  before_destroy :destroy_mappings, unless: is_mapping?
-  after_destroy :cache_expire!, unless: is_mapping?
+  before_destroy :destroy_children, unless: :is_mapping?
+  before_destroy :destroy_mappings, unless: :is_mapping?
+  after_destroy :cache_expire!, unless: :is_mapping?
   def destroy_mappings
     self.mappings.destroy_all
   end
