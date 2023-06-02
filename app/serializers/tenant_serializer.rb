@@ -18,9 +18,9 @@ class TenantSerializer
 
   attribute :image do |record|
     {
-      large: (record.image[:large].url rescue nil),
-      medium: (record.image[:medium].url rescue nil),
-      small: (record.image[:small].url rescue nil)
+      large: (record.image_url(:large) rescue nil),
+      medium: (record.image_url(:medium) rescue nil),
+      small: (record.image_url(:small) rescue nil)
     }
   end
 
