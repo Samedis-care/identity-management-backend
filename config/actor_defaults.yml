@@ -11,6 +11,7 @@
     :_type: Actors::Group
     :roles:
     - ~-admin
+    - ~-tenant-admin
   - :name: tenant-admins
     :_type: Actors::Group
     :roles:
