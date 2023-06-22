@@ -9,4 +9,6 @@ identity-management:
       fr: Administrators
       ru: Administrators
       nl: Beheerders
-    roles: [identity-management-admin]
+    roles:
+    - identity-management-admin
+    - identity-management-tenant-admin
