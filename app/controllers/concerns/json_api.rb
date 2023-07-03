@@ -12,6 +12,9 @@ module JsonApi
   end
 
   private
+  def render_jsonapi_otp_required
+    render_jsonapi_error(I18n.t('auth.error.otp_required'), 'otp_required', 401)
+  end
 
   def render_jsonapi_unauthenticated
     render_jsonapi_error(I18n.t('auth.error.unauthenticated'), 'unauthenticated', 401)
