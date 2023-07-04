@@ -47,6 +47,8 @@ class Role < ApplicationDocument
     throw(:abort)
   end
 
+  after_save :update_group_candos!, if: :functionality_ids_previously_changed?
+
   def self.system_override
     @@system_override ||= false
   end
@@ -170,6 +172,12 @@ class Role < ApplicationDocument
 
   def candos
     functionalities.collect(&:cando).sort
+  end
+
+  def update_group_candos!
+    _mappings = Actors::Mapping.where(:parent_ids.in => actors.pluck(:_id))
+    _mappings.merge_group_candos!
+    User.where(:_id.in => _mappings.distinct(:user_id)).cache_expire!
   end
 
   # ensure nice names
