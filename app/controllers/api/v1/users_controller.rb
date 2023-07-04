@@ -22,7 +22,8 @@ class Api::V1::UsersController < Api::V1::JsonApiController
     :last_name,
     :short,
     :gender,
-    :invalid_at
+    :invalid_at,
+    :mobile
   ]
 
   private
