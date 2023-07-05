@@ -20,6 +20,7 @@ class UserOverviewSerializer
     :last_name,
     :gender,
     :email,
+    :mobile,
     :locale,
     :created_at,
     :updated_at)
@@ -57,6 +58,7 @@ class UserOverviewSerializer
             string :small
           end
           string :title, description: 'an optional user title'
+          string :mobile, description: 'mobile number'
 
           boolean :active, description: 'if set false the login will be disabled'
           string :invalid_at, format: 'date-time', description: 'if set the login will be disabled after the date'

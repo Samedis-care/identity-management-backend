@@ -27,6 +27,7 @@ class UserSerializer
     :gender,
     :invalidate,
     :invalid_at,
+    :mobile,
     :locale,
     :pwd_reset_uid,
     :first_login_at,
@@ -75,6 +76,7 @@ class UserSerializer
             string :small
           end
           string :title, description: 'an optional user title'
+          string :mobile, description: 'mobile number'
 
           boolean :active, description: 'if set false the login will be disabled'
           boolean :invalidate, description: 'returns true if an invalid_at date is present'

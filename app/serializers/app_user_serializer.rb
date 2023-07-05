@@ -18,7 +18,8 @@ class AppUserSerializer
    :gender,
    :locale,
    :short,
-   :title
+   :title,
+   :mobile
   )
 
   attribute :image do |user|
@@ -109,6 +110,7 @@ class AppUserSerializer
             * 1 - Male
             * 2 - Female
           EOF
+          string :mobile, description: 'mobile number'
           string :locale, description: 'language code'
           string :current_password, description: 'the current password'
           string :password, description: 'the new password'
