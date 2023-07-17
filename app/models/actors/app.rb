@@ -195,8 +195,8 @@ module Actors
       @host ||= URI.parse(config.url).host
     end
 
-    def self.app_actor_defaults_path
-      "config/app/#{name}/actor_defaults"
+    def self.app_actor_defaults_path(app_name)
+      "config/apps/#{app_name}/actor_defaults"
     end
     def app_actor_defaults_filepath
       "config/apps/#{name}/actor_defaults/#{name}.yml"

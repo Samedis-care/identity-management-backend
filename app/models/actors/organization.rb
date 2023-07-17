@@ -25,7 +25,7 @@ module Actors
         # under "config/apps/app_name/actor_defaults/app_name.yml"
         if parent.is_a?(Tenant) && _modules_selected.try(:any?)
           _modules_selected.each do |_mod|
-            _module_file = "#{Rails.root}/#{Actors::App.app_actor_defaults_path}/#{_mod}.yml"
+            _module_file = "#{Rails.root}/#{Actors::App.app_actor_defaults_path(app.name)}/#{_mod}.yml"
             if File.exist?(_module_file)
               _selected = YAML.load_file(_module_file).dig(app.name).with_indifferent_access
               _defaults[:children] = _defaults[:children] + _selected[:children] if _selected[:children].any?
@@ -49,7 +49,7 @@ module Actors
 
     def app_defaults_dump!
       app = ancestors.find_by(_type: App)
-      FileUtils.mkdir_p(app.class.app_actor_defaults_path)
+      FileUtils.mkdir_p(app.class.app_actor_defaults_path(app.name))
       _yaml = { 
         # app.name => app.organization.get_tree(without: [:template_actor_id]).slice(:children)
         app.name => { children: self.get_app_orga(without: [:template_actor_id]) }
