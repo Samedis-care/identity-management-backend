@@ -196,7 +196,7 @@ module Actors
     end
 
     def self.app_actor_defaults_path
-      "config/app/*/actor_defaults"
+      "config/app/#{name}/actor_defaults"
     end
     def app_actor_defaults_filepath
       "config/apps/#{name}/actor_defaults/#{name}.yml"
