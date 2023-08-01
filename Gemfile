@@ -16,7 +16,6 @@ gem 'mongoid-tree', :require => 'mongoid/tree'
 gem 'mongoid_search'
 gem 'mongoid_rails_migrations'
 gem 'mongoid-locker'
-gem 'mongoid_includes'
 gem 'nokogiri'
 gem 'strip_attributes'
 gem 'psych', '< 4' # https://stackoverflow.com/a/71192990/9156535

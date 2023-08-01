@@ -74,8 +74,8 @@ GEM
     aes_key_wrap (1.1.0)
     awesome_print (1.9.2)
     aws-eventstream (1.2.0)
-    aws-partitions (1.794.0)
-    aws-sdk-core (3.180.0)
+    aws-partitions (1.795.0)
+    aws-sdk-core (3.180.1)
       aws-eventstream (~> 1, >= 1.0.2)
       aws-partitions (~> 1, >= 1.651.0)
       aws-sigv4 (~> 1.5)
@@ -201,8 +201,6 @@ GEM
       mongoid (>= 5.0, < 9)
     mongoid-tree (2.2.0)
       mongoid (>= 4.0, < 9)
-    mongoid_includes (3.0.2)
-      mongoid (>= 7.0.10, < 9.0.0)
     mongoid_rails_migrations (1.4.0)
       activesupport (>= 4.2.0)
       bundler (>= 1.0.0)
@@ -414,7 +412,6 @@ DEPENDENCIES
   mongoid
   mongoid-locker
   mongoid-tree
-  mongoid_includes
   mongoid_rails_migrations
   mongoid_search
   nokogiri
