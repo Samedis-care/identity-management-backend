@@ -44,6 +44,13 @@ module IdentityManagement
     config.middleware.insert_after Rack::Sendfile, ActionDispatch::Cookies
     config.middleware.insert_after ActionDispatch::Cookies, ActionDispatch::Session::CookieStore
 
+    config.middleware.insert_before 0, Rack::Cors do
+      allow do
+        origins '*'
+        resource '*', headers: :any, methods: [:get, :post, :options], expose: ['Content-Security-Policy']
+      end
+    end
+
     # Skip views, helpers and assets when generating a new resource.
     config.after_initialize do
       Rails.application.routes.default_url_options[:host] = ENV['API_HOST'] || 'localhost:3000'
