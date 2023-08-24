@@ -44,6 +44,32 @@ module IdentityManagement
     config.middleware.insert_after Rack::Sendfile, ActionDispatch::Cookies
     config.middleware.insert_after ActionDispatch::Cookies, ActionDispatch::Session::CookieStore
 
+    config.middleware.insert_before 0, Class.new {
+      def initialize(app)
+        @app = app
+      end
+
+      def call(env)
+        status, headers, response = @app.call(env)
+
+        headers['Strict-Transport-Security'] = ENV['HSTS_HEADER'] if ENV['HSTS_HEADER'].present?
+
+        if ENV['CSP_HEADER'].present? || ENV['CSP_REPORT_ONLY_HEADER'].present?
+          # Check if the requested URL matches the specific URL you want to set CSP for
+          if env['REQUEST_PATH'].starts_with?('/api/v')
+            # Set the default CSP header for API endpoints
+            headers['Content-Security-Policy'] = ENV['CSP_HEADER'] if ENV['CSP_HEADER'].present?
+            headers['Content-Security-Policy-Report-Only'] = ENV['CSP_REPORT_ONLY_HEADER'] if ENV['CSP_REPORT_ONLY_HEADER'].present?
+          else
+            # Set the CSP header for anything else (e.g. swagger api-docs or sidekiq ui)
+            headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; frame-src 'self'; object-src 'none'"
+          end
+        end
+
+        [status, headers, response]
+      end
+    }
+
     # Skip views, helpers and assets when generating a new resource.
     config.after_initialize do
       Rails.application.routes.default_url_options[:host] = ENV['API_HOST'] || 'localhost:3000'

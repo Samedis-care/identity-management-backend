@@ -39,6 +39,9 @@ development: &defaults
   RECAPTCHA_PUBLIC_KEY: RecaptchaPublicKey
   RECAPTCHA_PRIVATE_KEY: RecaptchaPrivateKey
   MAINTENANCE_STATE_URL: "https://host/maintenance.json"
+  HSTS_HEADER: "max-age=94608000; preload"
+  CSP_HEADER: "default-src 'none'; report-uri https://sentry.samedis.care/api/5/security/?sentry_key=345213e414cb44e183b508e092728265"
+  CSP_REPORT_ONLY_HEADER: "default-src 'none'; report-uri https://sentry.samedis.care/api/5/security/?sentry_key=345213e414cb44e183b508e092728265"
 production:
   <<: *defaults
 test:
