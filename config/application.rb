@@ -28,6 +28,8 @@ module IdentityManagement
     # Application configuration can go into files in config/initializers
     # -- all .rb files in that directory are automatically loaded after loading
     # the framework and any gems in your application.
+    config.force_ssl = true
+    config.ssl_options = { hsts: { expires: 3.years.to_i, preload: true } }
 
     config.i18n.default_locale = :en
     config.i18n.available_locales = %i[en de fr ru nl]
@@ -44,12 +46,24 @@ module IdentityManagement
     config.middleware.insert_after Rack::Sendfile, ActionDispatch::Cookies
     config.middleware.insert_after ActionDispatch::Cookies, ActionDispatch::Session::CookieStore
 
-    config.middleware.insert_before 0, Rack::Cors do
-      allow do
-        origins '*'
-        resource '*', headers: :any, methods: [:get, :post, :options], expose: ['Content-Security-Policy']
+    ## CORS
+    # config.middleware.insert_before 0, Rack::Cors do
+    #   allow do
+    #     origins '*'
+    #     resource '*', headers: :any, methods: [:get, :post, :options], expose: ['Content-Security-Policy']
+    #   end
+    # end
+    config.middleware.insert_before 0, Class.new {
+      def initialize(app)
+        @app = app
       end
-    end
+
+      def call(env)
+        status, headers, response = @app.call(env)
+        headers['Content-Security-Policy'] = "default-src 'self'"
+        [status, headers, response]
+      end
+    }
 
     # Skip views, helpers and assets when generating a new resource.
     config.after_initialize do
