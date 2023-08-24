@@ -61,7 +61,7 @@ describe 'Users API', swagger_doc: 'v1/swagger.json', "users" => true  do
       parameter name: :data, in: :body,
                 schema: serializer::Schema.new.rswag_schema(
                   base_key: :data,
-                  only: [],
+                  only: [:image_b64, :image, :pwd_reset_uid, :active, :email, :picture, :locale, :set_password, :new_password, :new_password_verify, :title, :first_name, :last_name, :short, :gender, :invalid_at, :mobile],
                   #required: []
                 )
 
@@ -119,7 +119,7 @@ describe 'Users API', swagger_doc: 'v1/swagger.json', "users" => true  do
       parameter name: :data, in: :body,
                 schema: serializer::Schema.new.rswag_schema(
                   base_key: :data,
-                  only: [],
+                  only: [:image_b64, :image, :pwd_reset_uid, :active, :email, :picture, :locale, :set_password, :new_password, :new_password_verify, :title, :first_name, :last_name, :short, :gender, :invalid_at, :mobile],
                   required: []
                 )
 

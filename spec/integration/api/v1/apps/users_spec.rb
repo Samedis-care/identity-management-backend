@@ -103,7 +103,7 @@ parameter name: "id", in: :path,
       parameter name: :data, in: :body,
                 schema: serializer::Schema.new.rswag_schema(
                   base_key: :data,
-                  only: [:image_b64, :image, :pwd_reset_uid, :active, :email, :picture, :locale, :set_password, :new_password, :new_password_verify, :title, :first_name, :last_name, :short, :gender, :invalid_at],
+                  only: [:image_b64, :image, :pwd_reset_uid, :active, :email, :picture, :locale, :set_password, :new_password, :new_password_verify, :title, :first_name, :last_name, :short, :gender, :invalid_at, :mobile],
                   required: []
                 )
 
