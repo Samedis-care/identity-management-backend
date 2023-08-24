@@ -9,6 +9,8 @@ class Api::V1::JsonApiController < ApplicationController
   before_action :sentry_set_uid
   before_action :request_variant
 
+  JSON_API = true
+
   MODEL_BASE = nil
   MODEL_BASE_ACTION = {}
   MODEL = nil

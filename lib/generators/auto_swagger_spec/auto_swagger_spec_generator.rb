@@ -8,7 +8,7 @@ class AutoSwaggerSpecGenerator < Rails::Generators::NamedBase
     # Template method
     # First argument is the name of the template
     # Second argument is where to create the resulting file.
-    if controller.ancestors.include?(JsonApiController)
+    if controller.const_defined?(:JSON_API) #|| (controller.ancestors.include?(Api::V1::JsonApiController) rescue false)
       template 'swagger_spec.rb', File.join('spec/integration', "#{destination_file}_spec.rb")
     else
       puts "Skipping: #{controller} as it is not a supported JsonApiController".white

@@ -1,6 +1,6 @@
 # Version: 1.0.6
 # auto generated test, update via: (append `-f` to force update if needed)
-#     rails g auto_swagger_spec v1_tenant_invitations
+#     rails g auto_swagger_spec v1_invitations
 require 'swagger_helper'
 
 controller = Api::V1::App::Tenant::InvitationsController
@@ -12,7 +12,7 @@ tag = 'Invite'
 
 describe 'Invites API', swagger_doc: 'v1/swagger.json', "invites" => true  do
 
-  path '/api/v1/{app}/tenant/{tenant_id}/invitations' do
+  path '/api/v1/{app}/{tenant_id}/invitations' do
 
     post 'Create Invite' do
       metadata[:operation]['x-candos'] = ["~/access-control.writer", "~/tenant.admin", "~/app-tenant.admin"]
@@ -58,7 +58,7 @@ parameter name: "id", in: :path,
     end
   end
 
-  path '/api/v1/{app}/tenant/{tenant_id}/invitations/{id}' do
+  path '/api/v1/{app}/{tenant_id}/invitations/{id}' do
 
     delete 'Delete Invite' do
       metadata[:operation]['x-candos'] = ["~/access-control.writer", "~/tenant.admin", "~/app-tenant.admin"]
