@@ -28,8 +28,10 @@ module IdentityManagement
     # Application configuration can go into files in config/initializers
     # -- all .rb files in that directory are automatically loaded after loading
     # the framework and any gems in your application.
-    config.force_ssl = true
-    config.ssl_options = { hsts: { expires: 3.years.to_i, preload: true } }
+    if URI.parse(ENV['WEB_APP_HOST']).scheme.eql?('https')
+      config.force_ssl = true
+      config.ssl_options = { hsts: { expires: 3.years.to_i, preload: true } }
+    end
 
     config.i18n.default_locale = :en
     config.i18n.available_locales = %i[en de fr ru nl]
