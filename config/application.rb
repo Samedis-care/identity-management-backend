@@ -62,7 +62,16 @@ module IdentityManagement
 
       def call(env)
         status, headers, response = @app.call(env)
-        headers['Content-Security-Policy'] = "default-src 'self'"
+
+        # Check if the requested URL matches the specific URL you want to set CSP for
+        if env['SCRIPT_NAME'] == '/api-docs'
+          # Set the CSP header for the specific URL
+          headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; frame-src 'self'; object-src 'none'"
+        else
+          # Set the default CSP header for other URLs
+          headers['Content-Security-Policy'] = "default-src 'none'"
+        end
+
         [status, headers, response]
       end
     }
