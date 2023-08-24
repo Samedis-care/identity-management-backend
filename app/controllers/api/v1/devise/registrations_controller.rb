@@ -1,8 +1,10 @@
 class Api::V1::Devise::RegistrationsController < Devise::RegistrationsController
   include ActionController::Helpers
-  include ActionController::Flash
+  # include ActionController::Flash
   include BaseControllerMethods
   respond_to :json
+
+  rescue_from Recaptcha::RecaptchaError, with: :recaptcha_error
 
   MODEL_BASE = User
   SERIALIZER = OVERVIEW_SERIALIZER = AppUserSerializer
@@ -76,8 +78,12 @@ class Api::V1::Devise::RegistrationsController < Devise::RegistrationsController
   def check_captcha
     return unless ENV["RECAPTCHA_PUBLIC_KEY"]
     unless verify_recaptcha(response: params[:captcha], secret_key: ENV['RECAPTCHA_PRIVATE_KEY'])
-      render_jsonapi_error(I18n.t('devise.user.recaptcha_invalid'), 'recaptcha_invalid', status=400) and return
+      recaptcha_error
     end
+  end
+
+  def recaptcha_error
+    render_jsonapi_error(I18n.t('devise.user.recaptcha_invalid'), 'recaptcha_invalid', status=400) and return
   end
 
   def set_resource

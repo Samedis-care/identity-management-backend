@@ -1,6 +1,6 @@
 class Api::V1::Devise::ConfirmationsController < Devise::ConfirmationsController
   include ActionController::Helpers
-  include ActionController::Flash
+  # include ActionController::Flash
   include BaseControllerMethods
 
   MODEL_BASE = User
