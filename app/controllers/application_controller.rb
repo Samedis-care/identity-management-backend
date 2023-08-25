@@ -19,8 +19,9 @@ class ApplicationController < ActionController::Base
   before_action :set_cache_headers
   before_action :set_locale
   before_action :check_maintenance_mode
-
   skip_before_action :check_maintenance_mode, only: [:health]
+  skip_before_action :check_maintenance_mode, if: -> { controller_name == 'sentry' }
+
   def health
     unless MaintenanceMode.current.write_allowed?
       render json: { message: 'maintenance_mode', code: 400 }, status: 400
