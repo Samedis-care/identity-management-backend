@@ -74,11 +74,17 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
       case params[:action].to_sym
         when :apple, :microsoft_graph, :google_oauth2
           _user.redirect_host = state.dig(:redirect_host)
-          _user.redirect_path = _user.redirect_host
+          _user.redirect_path = state.dig(:redirect_host)
         else
           _user.redirect_host = params[:redirect_host]
-          _user.redirect_path = _user.redirect_host
+          _user.redirect_path = state.dig(:redirect_host)
       end
+      Sentry.add_breadcrumb(Sentry::Breadcrumb.new(
+        category: "auth",
+        message: "oAuth Callback. Action: #{params[:action]}",
+        level: "info",
+        data: _user
+      ))
       _user
     end
   end
