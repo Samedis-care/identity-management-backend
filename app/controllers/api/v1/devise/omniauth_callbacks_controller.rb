@@ -77,7 +77,7 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
           _user.redirect_path = state.dig(:redirect_host)
         else
           _user.redirect_host = params[:redirect_host]
-          _user.redirect_path = state.dig(:redirect_host)
+          _user.redirect_path = params[:redirect_host]
       end
       Sentry.add_breadcrumb(Sentry::Breadcrumb.new(
         category: "auth",
