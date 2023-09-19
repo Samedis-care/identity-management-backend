@@ -201,7 +201,7 @@ class User < ApplicationDocument
 
   def self.from_omniauth(auth)
     # Either create a User record or update it based on the provider (Google) and the UID   
-    user = login_allowed.where(email: auth.info.email).first_or_initialize
+    user = login_allowed.where(email: auth.info.email.downcase).first_or_initialize
     user.attributes = {
       provider: auth.provider,
       uid: auth.uid,
