@@ -23,11 +23,6 @@ class ApplicationController < ActionController::Base
   skip_before_action :check_maintenance_mode, if: -> { controller_name == 'sentry' }
 
   def health
-    unless MaintenanceMode.current.write_allowed?
-      render json: { message: 'maintenance_mode', code: 400 }, status: 400
-      return
-    end
-
     if (!User.collection.count.zero? rescue false)
       render json: { message: 'ok', code: 200 }
     else
