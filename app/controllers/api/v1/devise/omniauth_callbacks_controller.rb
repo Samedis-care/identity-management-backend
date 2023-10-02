@@ -25,6 +25,7 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
       resource_owner_id: user.id,
       expires_in: Doorkeeper.configuration.access_token_expires_in,
       scopes: 'api',
+      im_otp_required: false,
       im_app: user.app_context,
       im_ip: request.remote_ip,
       im_navigator: request.user_agent
