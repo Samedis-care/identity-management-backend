@@ -200,8 +200,8 @@ class User < ApplicationDocument
   end
 
   def self.from_omniauth(auth)
-    # Either create a User record or update it based on the provider (Google) and the UID   
-    user = login_allowed.where(email: auth.info.email.downcase).first_or_initialize
+    # Either create a User record or update it based on the provider (Google) and the UID
+    user = login_allowed.where(email: auth.info.email&.downcase).first_or_initialize
     user.attributes = {
       provider: auth.provider,
       uid: auth.uid,
@@ -211,10 +211,10 @@ class User < ApplicationDocument
       refresh_token: auth.credentials.refresh_token
     }
     user.locale ||= auth.info.locale
-    user.first_name ||= (auth.info.first_name || auth.info.name  || auth.info.screen_name || auth.info.email)
+    user.first_name ||= (auth.info.first_name || auth.info.name || auth.info.screen_name || auth.info.email)
     user.last_name ||= (auth.info.last_name || auth.info.name || auth.info.email)
     if user.encrypted_password.blank?
-      _password = SecureRandom.uuid[0,18]
+      _password = SecureRandom.uuid[0, 18]
       user.password = _password
       user.password_confirmation = _password
       user.set_password = _password
