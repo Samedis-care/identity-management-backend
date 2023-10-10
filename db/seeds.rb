@@ -16,10 +16,6 @@ end
 
 Actor.logs! false
 
-# cleanup
-Actors::User.cleanup_orphans!
-Actors::Mapping.cleanup_orphans!
-
 # Set up default structure
 
 # Container where all users reside in
@@ -37,6 +33,10 @@ Actors::User.ensure_global_admin!
 puts "=" * 80
 puts "Admin Account ensured!"
 puts "=" * 80
+
+# cleanup (for seeds on updates)
+Actors::User.cleanup_orphans!
+Actors::Mapping.cleanup_orphans!
 
 ## Set up apps
 apps = {}
