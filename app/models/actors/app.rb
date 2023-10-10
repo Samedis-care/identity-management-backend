@@ -269,7 +269,8 @@ module Actors
     # default locale with be the first
     def languages
       @languages ||= begin
-        ([default_language] + config.reload.locales.collect {|l| l.to_s.split('-').first.downcase }.sort).compact.uniq
+        config.reload if config.persisted?
+        ([default_language] + config.locales.collect {|l| l.to_s.split('-').first.downcase }.sort).compact.uniq
       end
     end
 

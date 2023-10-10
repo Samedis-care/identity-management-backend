@@ -435,16 +435,21 @@ class User < ApplicationDocument
   end
 
   def self.global_admin
-    @@global_admin ||= where(email: 'admin@ident.services').first_or_create(
-      system: true,
-      actor: Actors::User.global_admin,
-      first_name: 'Admin',
-      last_name: 'Administrator',
-      title: nil,
-      gender: 0,
-      confirmed_at: Time.now,
-      set_password: ("#" * 18)
-    )
+    @@global_admin ||= begin
+      default_pwd = ("#" * 18)
+      where(email: 'admin@ident.services').first_or_create(
+        system: true,
+        actor: Actors::User.global_admin,
+        first_name: 'Admin',
+        last_name: 'Administrator',
+        title: nil,
+        gender: 0,
+        confirmed_at: Time.now,
+        set_password: default_pwd,
+        password: default_pwd,
+        password_confirmation: default_pwd
+      )
+    end
   end
 
   # Filter by undeleted availabel users
