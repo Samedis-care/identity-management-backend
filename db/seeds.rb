@@ -53,9 +53,12 @@ puts "=" * 80
 puts "Apps ensured!"
 puts "=" * 80
 
+# Insert Candos, Roles and locales for these apps
+Actors::App.seed!
 
 # ensure default admin tenant with the default admin user as member
-admin_tenant = app_im.container_tenants.children.where(name: 'system').first_or_create(
+# admin_tenant = app_im.container_tenants.children.where(name: 'system').first_or_create(
+admin_tenant = Actors::Tenant.where(parent: app_im.container_tenants, name: 'system').first_or_create(
   short_name: 'System',
   full_name: 'System',
   title: 'System',
@@ -63,15 +66,16 @@ admin_tenant = app_im.container_tenants.children.where(name: 'system').first_or_
 )
 admin_tenant.save if admin_tenant.changes.any?
 admin_tenant.ensure_defaults!
+admin_tenant.descendants.groups.each do |g|
+  g.map_into! Actors::User.global_admin
+end
+
 admin_group = app_im.children.find_by(name: 'app-admins')
 admin_group.map_into! Actors::User.global_admin
 # default Tenant
 puts "=" * 80
 puts "Default IM Admin ensured!"
 puts "=" * 80
-
-# Insert Candos, Roles and locales for these apps
-Actors::App.seed!
 
 # Import/Update email domain blacklist
 EmailBlacklist.import_list('config/email_blacklist.txt')
