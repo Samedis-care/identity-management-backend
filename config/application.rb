@@ -94,3 +94,13 @@ Oj.optimize_rails
 
 # Mongoid migrations path
 Mongoid::Migrator.migrations_path = ['db/migrate', 'config/apps/*/migrate']
+if ENV['INDEXES'].present?
+  # only run migrations from indexes directory
+  Mongoid::Migrator.migrations_path = ['db/migrate/indexes']
+end
+if ENV['MANUAL'].present?
+  Mongoid::Migrator.migrations_path << 'db/migrate/manual'
+end
+puts '=' * 80
+puts "Mongoid::Migrator.migrations_path: #{Mongoid::Migrator.migrations_path}"
+puts '=' * 80
