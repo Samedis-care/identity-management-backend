@@ -49,7 +49,6 @@ Dir.glob('config/apps/*').collect { |d| File.basename(d) }.each do |app_name|
   )
   puts "- ensuring defaults for: #{apps[app_name].name} ..."
   apps[app_name].save
-  apps[app_name].ensure_defaults!
 end
 puts '=' * 80
 puts 'Apps ensured!'
@@ -57,6 +56,7 @@ puts '=' * 80
 
 # Insert Candos, Roles and locales for these apps
 Actors::App.seed!
+Actors::App.each(&:ensure_defaults!)
 
 Dir.glob('config/apps/*').each do |app_dir|
   app_name = File.basename(app_dir)
@@ -80,11 +80,10 @@ Dir.glob('config/apps/*').each do |app_dir|
       raise e
     end
     puts "ensuring tenant #{tenant.name} in #{app_name}"
-    tenant.save if tenant.changes.any?
-    tenant.ensure_defaults!
     tenant.descendants.groups.each do |g|
       g.map_into! Actors::User.global_admin
     end
+    tenant.save
   end
 end
 
