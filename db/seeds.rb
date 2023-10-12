@@ -40,42 +40,63 @@ Actors::Mapping.cleanup_orphans!
 
 ## Set up apps
 apps = {}
-%w(identity-management).each do |app_name|
+Dir.glob('config/apps/*').collect { |d| File.basename(d) }.each do |app_name|
+  puts "ensuring app: #{app_name} ..."
   apps[app_name] = Actors::App.available.named(app_name).first_or_create(
     system: true,
     short_name: app_name,
     parent: Actors::App.app_container
   )
+  puts "- ensuring defaults for: #{apps[app_name].name} ..."
+  apps[app_name].save
   apps[app_name].ensure_defaults!
 end
-app_im = apps['identity-management']
-puts "=" * 80
-puts "Apps ensured!"
-puts "=" * 80
+puts '=' * 80
+puts 'Apps ensured!'
+puts '=' * 80
 
 # Insert Candos, Roles and locales for these apps
 Actors::App.seed!
 
-# ensure default admin tenant with the default admin user as member
-# admin_tenant = app_im.container_tenants.children.where(name: 'system').first_or_create(
-admin_tenant = Actors::Tenant.where(parent: app_im.container_tenants, name: 'system').first_or_create(
-  short_name: 'System',
-  full_name: 'System',
-  title: 'System',
-  system: true
-)
-admin_tenant.save if admin_tenant.changes.any?
-admin_tenant.ensure_defaults!
-admin_tenant.descendants.groups.each do |g|
-  g.map_into! Actors::User.global_admin
+Dir.glob('config/apps/*').each do |app_dir|
+  app_name = File.basename(app_dir)
+  app = apps[app_name]
+  tenant_ymls = Dir.glob("config/apps/#{app_name}/tenants/*.yml")
+  tenant_ymls.each do |filename|
+    attrs = YAML.load_file(filename).with_indifferent_access
+    tenant = begin
+      if BSON::ObjectId.legal?(attrs[:id])
+        Actors::Tenant.where(
+          parent: app.container_tenants,
+          id: BSON::ObjectId(attrs[:id])
+        ).first_or_create(attrs.except(:id).merge(system: true))
+      else
+        Actors::Tenant.where(
+          parent: app.container_tenants,
+          name: attrs[:name]
+        ).first_or_create(attrs.except(:name).merge(system: true))
+      end
+    rescue StandardError => e
+      raise e
+    end
+    puts "ensuring tenant #{tenant.name} in #{app_name}"
+    tenant.save if tenant.changes.any?
+    tenant.ensure_defaults!
+    tenant.descendants.groups.each do |g|
+      g.map_into! Actors::User.global_admin
+    end
+  end
 end
 
-admin_group = app_im.children.find_by(name: 'app-admins')
-admin_group.map_into! Actors::User.global_admin
+apps.each do |name, app|
+  admin_group = app.children.find_by(name: 'app-admins')
+  admin_group.map_into! Actors::User.global_admin
+end
+
 # default Tenant
-puts "=" * 80
-puts "Default IM Admin ensured!"
-puts "=" * 80
+puts '=' * 80
+puts 'Default IM Admin ensured!'
+puts '=' * 80
 
 # Import/Update email domain blacklist
 EmailBlacklist.import_list('config/email_blacklist.txt')
