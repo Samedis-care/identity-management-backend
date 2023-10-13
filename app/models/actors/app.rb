@@ -192,7 +192,7 @@ module Actors
     end
 
     def host
-      @host ||= URI.parse(config.url).host
+      @host ||= URI.parse(config&.url).host rescue '127.0.0.1'
     end
 
     def self.app_actor_defaults_path(app_name)
