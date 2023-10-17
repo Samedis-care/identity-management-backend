@@ -45,7 +45,10 @@ Dir.glob('config/apps/*').collect { |d| File.basename(d) }.each do |app_name|
   apps[app_name] = Actors::App.available.named(app_name).first_or_create(
     system: true,
     short_name: app_name,
-    parent: Actors::App.app_container
+    parent: Actors::App.app_container,
+    config: {
+      locales: %w(de-DE en-US fr-FR nl-NL ru-KG)
+    }
   )
   puts "- ensuring defaults for: #{apps[app_name].name} ..."
   apps[app_name].save
@@ -80,10 +83,11 @@ Dir.glob('config/apps/*').each do |app_dir|
       raise e
     end
     puts "ensuring tenant #{tenant.name} in #{app_name}"
+    tenant.save
+    tenant.ensure_defaults!
     tenant.descendants.groups.each do |g|
       g.map_into! Actors::User.global_admin
     end
-    tenant.save
   end
 end
 

@@ -132,7 +132,7 @@ class Functionality < ApplicationDocument
       raise "Schema is app specific you need to pass an App as argument" unless app.is_a?(Actors::App)
       {
         type: :object,
-        additionalProperties: false,
+        additionalProperties: true,
         minProperties: 1,
         patternProperties: {
           Regexp.new("^#{app.languages.join('|')}$") => {
