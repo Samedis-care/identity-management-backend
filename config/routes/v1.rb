@@ -12,6 +12,7 @@ namespace :v1 do
     end
     resources :tenant, module: :tenant, only: [] do
       resources :groups, only: [:index]
+      resources :users, only: [:index, :show, :update, :destroy]
     end
   end
 
