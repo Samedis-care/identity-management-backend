@@ -1,0 +1,96 @@
+Style/Lambda:
+  Enabled: false
+
+Style/PercentLiteralDelimiters:
+  Enabled: false
+
+Lint/UnderscorePrefixedVariableName:
+  Enabled: false
+
+Style/RescueModifier:
+  Enabled: false
+
+Style/ClassAndModuleChildren:
+  Enabled: false
+
+Layout/TrailingWhitespace:
+  Enabled: false
+
+Style/Documentation:
+  Enabled: false
+
+Layout/ClosingParenthesisIndentation:
+  Enabled: false
+
+Layout/FirstHashElementIndentation:
+  Enabled: false
+
+Layout/HashAlignment:
+  Enabled: false
+
+Style/CombinableLoops:
+  Enabled: false
+
+# rubocop doesn't like EOM and wants something like END_OF_MESSAGE, but that's obviously dumb
+Naming/HeredocDelimiterNaming:
+  Enabled: false
+
+# 10 lines per method is a joke
+Metrics/MethodLength:
+  Description: Supposedly methods should have less than 10-20 lines of code. But this one has more than 75.
+  StyleGuide: https://github.com/bbatsov/ruby-style-guide#short-methods
+  Enabled: true
+  CountComments: false
+  Max: 75
+
+# Schema procs are long and must be so
+Metrics/BlockLength:
+  Enabled: true
+  CountComments: false
+  Max: 500
+
+# no need to annoy on every class
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+# rubocop doesn't know about the wiggly heredoc and the messages are useless
+Layout/HeredocIndentation:
+  Enabled: false
+  rubocop: warning
+Layout/ClosingHeredocIndentation:
+  Enabled: false
+
+# grouping mixins that belong together together is a good thing
+Style/MixinGrouping:
+  Enabled: false
+
+# don't need to nag about parenthesii where none are required
+Lint/AmbiguousOperator:
+  Enabled: false
+
+# fat model, skinny controller is what we do
+Metrics/ClassLength:
+  Max: 3000
+
+# yeah, no
+Naming/MethodParameterName:
+  Enabled: false
+
+# life is complex
+Metrics/AbcSize:
+  Max: 100
+
+Metrics/CyclomaticComplexity:
+  Max: 20
+
+Layout/EmptyLinesAroundModuleBody:
+  Enabled: false
+
+Layout/EmptyLinesAroundClassBody:
+  Enabled: false
+
+Metrics/CyclomaticComplexity:
+  Max: 50
+
+Metrics/PerceivedComplexity:
+  Max: 50

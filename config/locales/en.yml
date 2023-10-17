@@ -89,6 +89,7 @@ en:
     missing_app: No app was defined to perform this action
     user:
       quit_failed: There was an error leaving the app.
+      leaving_tenant_failed: There was an error leaving the tenant.
     invalid_app: App context is missing or wrong
     undeletable:
       one: 'A record from %{total} could not be deleted.'
