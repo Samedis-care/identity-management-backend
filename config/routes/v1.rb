@@ -6,10 +6,12 @@ namespace :v1 do
     end
     resources :apps, module: :apps, only: [] do
       resources :groups, only: [:index]
+      resources :tenant, module: :tenant, only: [] do
+        resources :users, only: [:index, :show, :update, :destroy]
+      end
     end
     resources :tenant, module: :tenant, only: [] do
       resources :groups, only: [:index]
-      resources :users, only: [:index, :show, :update, :destroy]
     end
   end
 
