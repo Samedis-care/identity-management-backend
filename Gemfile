@@ -86,6 +86,7 @@ gem 'ruby-progressbar'
 group :development, :test, :live, :local_dev, :staging do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: [:mri, :mingw, :x64_mingw]
+  gem 'mongo_logs_on_roids'
   gem 'colorize'
   gem 'clipboard'
 end

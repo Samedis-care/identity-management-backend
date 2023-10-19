@@ -1,6 +1,6 @@
-class Api::V1::LeaveTenantController < Api::V1::JsonApiController
+class Api::V1::User::LeaveTenantController < Api::V1::JsonApiController
   MODEL_BASE = Actors::Mapping
-  MODEL = -> { Tenant.find(params[:id]).descendants.mappings }
+  MODEL = -> { Actors::Tenant.find(params[:id]).descendants.mappings }
   MODEL_OVERVIEW = MODEL
   SERIALIZER = nil
   OVERVIEW_SERIALIZER = nil
@@ -21,7 +21,7 @@ class Api::V1::LeaveTenantController < Api::V1::JsonApiController
     render_jsonapi_msg({
       success:,
       error: (success ? nil : :leaving_tenant_failed),
-      message: I18n.t('errors.user.leaving_tenant_failed')
+      message: success ? nil : I18n.t('errors.user.leaving_tenant_failed')
     }, (success ? 200 : 409))
   end
 
