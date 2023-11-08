@@ -1,4 +1,4 @@
-FROM ruby:3.2.2-bookworm
+FROM ruby:3.2.2-bullseye
 
 RUN apt-get update --fix-missing \
   && apt-get install -y --no-install-recommends libvips-dev openssl libjemalloc2 libsnappy-dev curl \
