@@ -22,11 +22,27 @@ class ApplicationController < ActionController::Base
   skip_before_action :check_maintenance_mode, only: [:health]
   skip_before_action :check_maintenance_mode, if: -> { controller_name == 'sentry' }
 
+  around_action do |controller, block|
+    sentry_set_uid # ensure at least minimum sentry info is set
+    block.call
+    sentry_set_uid if current_user # add user details if available
+  end
+
   def health
     if (!User.collection.count.zero? rescue false)
       render json: { message: 'ok', code: 200 }
     else
       render json: { message: 'error', code: 500 }, status: 500
+    end
+  end
+
+  private
+
+  def sentry_set_uid
+    if current_user.nil?
+      Sentry.set_user(ip_address: request.remote_ip)
+    else
+      Sentry.set_user(id: current_user.id.to_s, ip_address: request.remote_ip)
     end
   end
 
