@@ -6,7 +6,6 @@ class Api::V1::JsonApiController < ApplicationController
   before_action :default_format_json
   before_action :authenticate_user! # use devise based token auth
   before_action :authorize
-  before_action :sentry_set_uid
   before_action :request_variant
 
   JSON_API = true
@@ -418,14 +417,6 @@ class Api::V1::JsonApiController < ApplicationController
       _candos << [:unlimited]
     end
     @current_cando_requirements
-  end
-
-  def sentry_set_uid
-    if current_user.nil?
-      Sentry.set_user(ip_address: request.remote_ip)
-    else
-      Sentry.set_user(id: current_user.id.to_s, ip_address: request.remote_ip)
-    end
   end
 
   def current_action_is_public?
