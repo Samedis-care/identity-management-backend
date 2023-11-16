@@ -26,7 +26,10 @@ class Api::V1::User::TenantsController < Api::V1::JsonApiController
     self.class::MODEL
   end
   def model_update
-    model_show
+    model_index
+  end
+  def model_destroy
+    model_index
   end
 
   def record_show

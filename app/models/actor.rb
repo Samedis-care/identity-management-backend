@@ -80,7 +80,7 @@ class Actor < ApplicationDocument
     # to these groups dependeing on actor type by the settings
     # coming from DEFAULTS
     after_save :ensure_defaults!
-    after_save :rebuilds_pathes!
+    after_save :rebuild_path!, if: -> { name_previously_changed? || deleted_previously_changed? }
     after_save :set_children_count!
     after_save :merge_group_candos!, if: :role_ids
   end
@@ -375,6 +375,21 @@ class Actor < ApplicationDocument
     self.name = self.short_name = "#{self.name.split('---')[0,1].join('---')}---#{self.id}"
     debug_puts "name_uniquely_disabled! #{self.name}"
     true
+  end
+
+  def determine_path
+    @determine_path ||= begin
+      debug_puts "=" * 80
+      debug_puts "determine_path #{self.path} #{self.id}"
+      debug_puts "=" * 80
+      base_path = []
+      if parent.present?
+        base_path << self.parent.path
+      end
+      _name = self.name = self.get_name
+      base_path << _name
+      base_path * '/'
+    end
   end
 
   def skip_callbacks
@@ -897,7 +912,6 @@ class Actor < ApplicationDocument
           end
         end
         base_actor.set_children_count!
-
       end
     end
   end
@@ -905,38 +919,6 @@ class Actor < ApplicationDocument
   def self.create_defaults!
     # Create roles with their basic functionalities via db/seeds.rb
     Rails.application.load_seed
-  end
-
-  # one read one write via bulk upsert
-  # also updates children_count in one go
-  def rebuild_path_descendants
-    _cache = {}
-    self.descendants.includes(:children).reorder(depth: 1).each do |_node|
-      _parent_path = self.id.eql?(_node.parent_id) ?
-                      self.path : _cache.dig(_node.parent_id, :path)
-      _path = [_parent_path, _node.name].compact.join('/')
-      _children_count = _node.children.reject{|_c|
-        _c.is_a?(Actors::User) || _c.is_a?(Actors::Mapping)
-      }.length
-      _cache[_node.id] = { path: _path, children_count: _children_count }
-    end
-    _bulk = _cache.map do |_node_id, _info|
-      {
-        update_one: {
-          filter: { _id: _node_id },
-          update: {
-            '$set': {
-              path: _info[:path],
-              children_count: _info[:children_count],
-              _keywords: self.class.get_index_keywords(_info[:path])
-            }
-          }
-        }
-      }
-    end
-    _cache = nil
-    return unless _bulk.any?
-    self.class.collection.bulk_write(_bulk)
   end
 
   def get_index_keywords
@@ -987,58 +969,130 @@ class Actor < ApplicationDocument
     end
   end
 
-  def update_path!
-    _new_path = determine_path
-    unless path.eql?(_new_path)
-      self.path=_new_path
-      set(path: _new_path)
-      rebuild_path_descendants
-    end
-    _new_path
-  end
-
-  private
-  def determine_path
-    @determine_path ||= begin
-      debug_puts "=" * 80
-      debug_puts "determine_path #{self.path} #{self.id}"
-      debug_puts "=" * 80
-      base_path = []
-      if parent.present?
-        base_path << self.parent.path
-      end
-      _name = self.name = self.get_name
-      base_path << _name
-      base_path * '/'
-    end
-  end
-
-  def rebuilds_pathes!
-    if self.name_changed? || self.deleted_changed?
-      self.mappings.set(name: self.name) unless (self.is_mapping? || !self.persisted?)
-      self.path = self.send(:rebuild_path)
-    end
-    if (self.deleted_changed?) || (self.path_changed? && !self.is_mapping?)
-      debug_puts "=" * 80
-      debug_puts "rebuilds_pathes #{self.path} #{self.id}"
-      debug_puts "=" * 80
-      self.send(:rebuild_path_descendants)
-    end
-  end
-
-  # Update path in tree for user readable output
+  # Update path in tree for user readable output and reloads to reflect the updated path
   # @return {String} Dash separated path in the actor tree
-  def rebuild_path
-    debug_puts "=" * 80
-    debug_puts "rebuild_path #{self.name} #{self.id}"
-    debug_puts "=" * 80
-    @rebuild_path ||= determine_path
-    if self.persisted?
-      unless (self.path.eql?(@rebuild_path))
-        set(path: @rebuild_path, _keywords: self.class.get_index_keywords(@rebuild_path))
-      end
-    end
-    @rebuild_path
+  def rebuild_path!
+    return if new_record?
+
+    self.class.where('$or': [{ _id: id }, { parent_ids: id }]).merge_rebuild_path!
+    _latest = self.class.where(_id: id).only(:path).first
+    attributes['path'] = _latest.path
+  end
+
+  def self.aggregation_rebuild_path
+    [
+      {
+        '$match' => criteria.selector
+      }
+    ] + [
+      {
+        '$project': {
+          'parent_ids': 1, 
+          'name': 1
+        }
+      }, {
+        '$addFields': {
+          'path_ids': {
+            '$concatArrays': [
+              {
+                '$ifNull': [
+                  '$parent_ids', []
+                ]
+              }, [
+                '$_id'
+              ]
+            ]
+          }
+        }
+      }, {
+        '$lookup': {
+          'from': 'actors', 
+          'localField': 'path_ids', 
+          'foreignField': '_id', 
+          'as': 'parents', 
+          'pipeline': [
+            {
+              '$project': {
+                'name': 1
+              }
+            }
+          ]
+        }
+      }, {
+        '$unwind': '$path_ids'
+      }, {
+        '$unwind': '$parents'
+      }, {
+        '$match': {
+          '$expr': {
+            '$eq': [
+              '$path_ids', '$parents._id'
+            ]
+          }
+        }
+      }, {
+        '$group': {
+          '_id': '$_id', 
+          'parent_ids': {
+            '$first': '$parent_ids'
+          }, 
+          'name': {
+            '$first': '$name'
+          }, 
+          'path_ids': {
+            '$push': '$path_ids'
+          }, 
+          'parents': {
+            '$push': '$parents'
+          }, 
+          'parent_names': {
+            '$push': '$parents.name'
+          }
+        }
+      }, {
+        '$addFields': {
+          'path': {
+            '$reduce': {
+              'input': '$parent_names', 
+              'initialValue': '', 
+              'in': {
+                '$concat': [
+                  '$$value', {
+                    '$cond': [
+                      {
+                        '$eq': [
+                          '$$value', ''
+                        ]
+                      }, '', ' / '
+                    ]
+                  }, '$$this'
+                ]
+              }
+            }
+          }
+        }
+      }, {
+        '$project': {
+          'path': 1
+        }
+      }
+    ]
+  end
+
+  def self.merge_rebuild_path!
+    collection.aggregate(
+      aggregation_rebuild_path +
+      [
+        {
+          '$merge' => {
+            'into' => 'actors',
+            'on' => '_id',
+            'whenMatched' => 'merge',
+            'whenNotMatched' => 'discard'
+          }
+        }
+      ]
+    ).to_a
   end
 
   # fetches the next available uniq name with criteria
