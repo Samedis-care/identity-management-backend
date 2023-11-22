@@ -127,6 +127,7 @@ module Actors
 
       source_groups = Actors::App.named(app_name).first.container_tenants.descendants.groups.where(:name.in => source_map.keys)
       source_groups.each do |source_group|
+        next if source_group.tenant.deleted?
         target_groups = source_group.tenant.organization.descendants.available.groups.where(:name.in => source_map.dig(source_group.name))
         puts "=" * 80
         puts "mappings from: #{source_group.path}"
