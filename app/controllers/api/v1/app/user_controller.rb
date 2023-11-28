@@ -82,6 +82,10 @@ class Api::V1::App::UserController < Api::V1::JsonApiController
     record_update
   end
 
+  def records_destroy
+    [record_update]
+  end
+
   def cando
     CANDO.merge({
       all: %w(public) # no CANDO required to edit own user info
