@@ -164,12 +164,12 @@ class User < ApplicationDocument
   validates :email, format: {
     with: URI::MailTo::EMAIL_REGEXP,
     message: Proc.new { I18n.t('mongoid.errors.models.user.attributes.email.syntax') }
-  }
+  }, unless: :deleted?
 
   validates :email, uniqueness: {
     conditions: -> { all.available },
     message: Proc.new { I18n.t('mongoid.errors.models.user.attributes.email.uniqueness') },
-    unless: Proc.new {|a| a.deleted? }
+    unless: :deleted?
   }
   validates_confirmation_of :email, message: Proc.new { I18n.t("errors.email.confirmation") }, on: :create
 
@@ -272,13 +272,18 @@ class User < ApplicationDocument
   end
 
   after_save do
-    return if actor.nil?
-    actor.set(
-      deleted: deleted,
-      active: active,
-      short_name: get_short_name,
-      full_name: get_full_name
-    )
+    next if actor.nil?
+
+    if deleted? || deleted_previously_changed?
+      Actor.where('$or' => [{ user_id: id }, { _id: actor_id }]).set(
+        deleted:,
+        active:,
+        short_name: get_short_name,
+        full_name: get_full_name
+      )
+    end
+    next if deleted?
+
     ensure_app_membership!
   end
 

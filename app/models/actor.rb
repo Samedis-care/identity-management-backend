@@ -97,7 +97,26 @@ class Actor < ApplicationDocument
   index _type: 1, deleted: 1, map_actor_id: 1
   index deleted: 1, _id: 1
   index deleted: 1, name: 1, _type: 1, map_actor_id: 1
-  index({ name: 1, path: 1 }, { sparse:true, background:true, unique: true, name: 'actor_path_unique' })
+
+  # redo unique name+path index
+  if collection.indexes.to_a.pluck(:name).include?("actor_path_unique")
+    # drop the old one
+    collection.indexes.drop_one("actor_path_unique")
+  end
+  index(
+    {
+      name: 1,
+      path: 1
+    },
+    {
+      unique: true,
+      name: 'actor_path_unique_undeleted',
+      partial_filter_expression: {
+        deleted: false
+      }
+    }
+  )
+
   index parent_id: 1, name: 1
   index tenant_id: 1, parent_template_actor_id: 1, user_id: 1
   index parent_template_actor_id: 1, user_id: 1
