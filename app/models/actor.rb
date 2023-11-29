@@ -98,11 +98,6 @@ class Actor < ApplicationDocument
   index deleted: 1, _id: 1
   index deleted: 1, name: 1, _type: 1, map_actor_id: 1
 
-  # redo unique name+path index
-  if collection.indexes.to_a.pluck(:name).include?("actor_path_unique")
-    # drop the old one
-    collection.indexes.drop_one("actor_path_unique")
-  end
   index(
     {
       name: 1,
