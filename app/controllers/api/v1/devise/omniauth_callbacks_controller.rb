@@ -80,7 +80,10 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
     provider = CustomAuthProvider.find_by(domain: params[:provider])
     user = provider.user_info(code)
 
-    render plain: "#{params[:provider]} user: #{JSON.pretty_generate(user)}" and return
+    _debug = []
+    _debug << "#{params[:provider]} user: #{JSON.pretty_generate(user)}"
+    _debug << "=" * 80
+    render plain: _debug.join("\n") and return
     # - use provider.user_info to load or create a user
     # - create a Doorkeeper::AccessToken
     # - redirect to frontend

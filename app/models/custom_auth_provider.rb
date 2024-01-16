@@ -15,7 +15,6 @@ class CustomAuthProvider < ApplicationDocument
   validates :domain, uniqueness: true
 
   before_save :generate_checksum
-  after_save :update_configuration
 
   index({ domain: 1 }, { unique: true })
   index({ checksum: 1 }, { unique: true })
@@ -71,7 +70,8 @@ class CustomAuthProvider < ApplicationDocument
       response_type:,
       scope: ,
       code_challenge:,
-      code_challenge_method:
+      code_challenge_method:,
+      prompt: :consent
     }
   end
 
@@ -92,7 +92,6 @@ class CustomAuthProvider < ApplicationDocument
     params = {
       code:,
       code_verifier: tmp_saved_code_verifier,
-      scope:,
       redirect_uri:,
       grant_type: 'authorization_code'
     }
@@ -107,20 +106,23 @@ class CustomAuthProvider < ApplicationDocument
     end
 
     user_info = JSON.parse(response.body) rescue nil
+    puts "=" * 80
+    ap user_info
+    puts "=" * 80
     raise "failed (#{response.status}): #{response.body}" unless user_info
 
-    JWT.decode(user_info['id_token'], nil, false)[0]
+    _decoded = JWT.decode(user_info['id_token'], nil, false)
+    puts "=" * 80
+    ap _decoded
+    puts "=" * 80
+    _decoded[0]
   end
 
 
   private
 
   def generate_checksum
-    self.checksum = Digest::SHA256.hexdigest(domain)
-  end
-
-  def update_configuration
-    AuthProviderConfigurator.configure_provider(self)
+    self.checksum = Digest::MD5.hexdigest(domain)
   end
 
 end

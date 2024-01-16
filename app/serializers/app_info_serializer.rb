@@ -61,6 +61,10 @@ class AppInfoSerializer
     end
   end
 
+  attribute :auth_provider_hints do |app|
+    CustomAuthProvider.pluck(:checksum)
+  end
+
   class Schema < JsonApi::Schema
 
     def schema_record
