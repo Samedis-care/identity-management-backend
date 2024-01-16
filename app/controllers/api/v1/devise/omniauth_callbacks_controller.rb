@@ -66,6 +66,26 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
     do_oauth
   end
 
+  def dynamic_provider_authorize
+    provider = CustomAuthProvider.find_by(domain: params[:provider])
+    state = params[:state]
+    login_hint = params[:login_hint] # optionally pass through the email address
+    session[:code_verifier] = code_verifier = provider.code_verifier # @TODO !!
+    redirect_to provider.passthru_uri(code_verifier:, state:, login_hint:), allow_other_host: true
+  end
+
+  def dynamic_provider_callback
+    code = params[:code]
+    session_state = params[:session_state]
+    provider = CustomAuthProvider.find_by(domain: params[:provider])
+    user = provider.user_info(code)
+
+    render plain: "#{params[:provider]} user: #{JSON.pretty_generate(user)}" and return
+    # - use provider.user_info to load or create a user
+    # - create a Doorkeeper::AccessToken
+    # - redirect to frontend
+  end
+
   private
   def user
     @user ||= begin

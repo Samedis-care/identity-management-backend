@@ -1,8 +1,24 @@
 namespace :v1 do
 
-  devise_for :users, skip: [:confirmations, :passwords, :sessions, :registration], :controllers => {
-    :omniauth_callbacks => "api/v1/devise/omniauth_callbacks"
+  class DomainConstraint
+    def self.matches?(request)
+      provider = request.params[:provider]
+      CustomAuthProvider.exists?(domain: provider)
+    end
+  end
+
+  devise_for :users, skip: [:confirmations, :passwords, :sessions, :registration], controllers: {
+    omniauth_callbacks: "api/v1/devise/omniauth_callbacks"
   }, noswagger: true
+
+  constraints(DomainConstraint) do
+    constraints(provider: /[^\/]+/) do
+      devise_scope :user do
+        post '/users/auth/:provider', to: 'devise/omniauth_callbacks#dynamic_provider_authorize', as: :user_custom_omniauth_authorize
+        get '/users/auth/:provider/callback', to: 'devise/omniauth_callbacks#dynamic_provider_callback', as: :user_custom_omniauth_callback
+      end
+    end
+  end
 
   post '*app/users/auth/:oauth', to: redirect { |path, req|
     "/api/v1/users/auth/#{path[:oauth]}?#{ { app: path[:app] }.to_param }"
