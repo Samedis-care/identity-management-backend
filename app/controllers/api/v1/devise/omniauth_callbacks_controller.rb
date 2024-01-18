@@ -43,7 +43,7 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
     # if an invite token is supplied this will be personalized with the user_id
     user.claim_invite_token!(user.invite_token)
     user.auto_accept_invites!
-    redirect_to Addressable::URI.parse(user.redirect_url_authenticated(url_values)).to_s
+    redirect_to Addressable::URI.parse(user.redirect_url_authenticated(url_values)).to_s, allow_other_host: true
   end
 
   def google_oauth2
