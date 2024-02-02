@@ -75,6 +75,15 @@ class CustomAuthProvider < ApplicationDocument
     }
   end
 
+  def claims
+    {
+      userinfo: {
+        given_name: { essential: true },
+        email: { essential: true },
+      }
+    }
+  end
+
   def passthru_uri(code_verifier: nil, state: nil, login_hint: nil)
     _query_params = self.query_params
     _query_params = _query_params.merge(login_hint:) if login_hint.present?
@@ -86,14 +95,16 @@ class CustomAuthProvider < ApplicationDocument
     URI::HTTPS.build(host:, path: , query: _query_params.to_query)
   end
 
-  def user_info(code)
+  def access_token(code)
     uri = URI::HTTPS.build(host:, path: '/oauth2/token')
 
     params = {
       code:,
       code_verifier: tmp_saved_code_verifier,
       redirect_uri:,
-      grant_type: 'authorization_code'
+      grant_type: 'authorization_code',
+      scope:,
+      claims:
     }
 
     _authorization = "Basic #{Base64.strict_encode64([client_id, client_secret].join(':'))}"
@@ -105,19 +116,38 @@ class CustomAuthProvider < ApplicationDocument
       ap req
     end
 
+    raise "failed (#{response.status}): #{response.body}" unless response.status.eql?(200)
+    user_info = JSON.parse(response.body) rescue nil
+
+    user_info
+  end
+
+  def jwt_decode(token)
+    JWT.decode(token, nil, false)
+  end
+
+  def user_info(access_token)
+    uri = URI::HTTPS.build(host:, path: '/oauth2/userinfo', query: { schema: :openid }.to_query)
+
+    _authorization = "Bearer #{access_token}"
+
+    response = Faraday.get(uri) do |req|
+      req.headers['Content-Type'] = 'application/json'
+      req.headers['Authorization'] = _authorization
+      req.body = { claims: }.to_json
+      ap req
+    end
+
     user_info = JSON.parse(response.body) rescue nil
     puts "=" * 80
+    puts "user_info:"
+    puts "-" * 80
     ap user_info
     puts "=" * 80
     raise "failed (#{response.status}): #{response.body}" unless user_info
 
-    _decoded = JWT.decode(user_info['id_token'], nil, false)
-    puts "=" * 80
-    ap _decoded
-    puts "=" * 80
-    _decoded[0]
+    user_info
   end
-
 
   private
 

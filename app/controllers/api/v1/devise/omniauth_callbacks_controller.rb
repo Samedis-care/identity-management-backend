@@ -78,10 +78,15 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
     code = params[:code]
     session_state = params[:session_state]
     provider = CustomAuthProvider.find_by(domain: params[:provider])
-    user = provider.user_info(code)
+    user_info = provider.access_token(code)
+    user = provider.user_info(user_info['access_token'])
 
     _debug = []
-    _debug << "#{params[:provider]} user: #{JSON.pretty_generate(user)}"
+    _debug << "#{params[:provider]} token: #{JSON.pretty_generate(user_info)}"
+    _debug << "=" * 80
+    _debug << "#{JSON.pretty_generate provider.jwt_decode(user_info['id_token'])}"
+    _debug << "=" * 80
+    _debug << "#{params[:provider]} user:\n#{JSON.pretty_generate(user)}"
     _debug << "=" * 80
     render plain: _debug.join("\n") and return
     # - use provider.user_info to load or create a user
