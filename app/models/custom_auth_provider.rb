@@ -1,6 +1,9 @@
 require 'digest'
 
 class CustomAuthProvider < ApplicationDocument
+  class UntrustedEmailError < StandardError; end
+  class FailedAuthError < StandardError; end
+
   include Mongoid::Document
   include Mongoid::Timestamps
 
@@ -9,12 +12,13 @@ class CustomAuthProvider < ApplicationDocument
   field :client_id, type: String
   field :client_secret, type: String
   field :host, type: String
-
-  field :tmp_saved_code_verifier, type: String # @TODO !! only temporary for testing
+  field :trusted_email_domains, type: Array
 
   validates :domain, uniqueness: true
 
   before_save :generate_checksum
+
+  attr_accessor :code_verifier
 
   index({ domain: 1 }, { unique: true })
   index({ checksum: 1 }, { unique: true })
@@ -23,17 +27,12 @@ class CustomAuthProvider < ApplicationDocument
     pluck(:checksum).compact
   end
 
-  def code_verifier
-    @code_verifier ||= begin
-      self.set tmp_saved_code_verifier: SecureRandom.urlsafe_base64(32)
-      self.tmp_saved_code_verifier
-    end
+  def create_code_verifier!
+    self.code_verifier = SecureRandom.urlsafe_base64(32)
   end
 
   def code_challenge
-    puts "=" * 80
-    puts "using code_verifier: #{code_verifier}"
-    puts "=" * 80
+    code_verifier || create_code_verifier!
     Base64.urlsafe_encode64(Digest::SHA256.digest(code_verifier)).tr('=', '')
   end
 
@@ -71,7 +70,7 @@ class CustomAuthProvider < ApplicationDocument
       scope: ,
       code_challenge:,
       code_challenge_method:,
-      prompt: :consent
+      # prompt: :consent
     }
   end
 
@@ -88,19 +87,19 @@ class CustomAuthProvider < ApplicationDocument
     _query_params = self.query_params
     _query_params = _query_params.merge(login_hint:) if login_hint.present?
     _query_params = _query_params.merge(state:) if state.present?
-    _query_params[:state] ||= {
-      app: 'samedis-care',
-      redirect_host: 'https://localhost.samedis.care'
-    }.to_json
+    _query_params[:state] ||= { app: 'identity-management', redirect_host: ENV['WEB_APP_HOST'] }.to_json
+
     URI::HTTPS.build(host:, path: , query: _query_params.to_query)
   end
 
-  def access_token(code)
+  def access_token(code, code_verifier: nil)
+    raise FailedAuthError.new("Missing code_verifier") unless code_verifier.present?
+
     uri = URI::HTTPS.build(host:, path: '/oauth2/token')
 
     params = {
       code:,
-      code_verifier: tmp_saved_code_verifier,
+      code_verifier:,
       redirect_uri:,
       grant_type: 'authorization_code',
       scope:,
@@ -113,10 +112,9 @@ class CustomAuthProvider < ApplicationDocument
       req.headers['Content-Type'] = 'application/json'
       req.headers['Authorization'] = _authorization
       req.body = params.to_json
-      ap req
     end
 
-    raise "failed (#{response.status}): #{response.body}" unless response.status.eql?(200)
+    raise FailedAuthError.new("Error at remote server #{host}") unless response.status.eql?(200)
     user_info = JSON.parse(response.body) rescue nil
 
     user_info
@@ -135,18 +133,62 @@ class CustomAuthProvider < ApplicationDocument
       req.headers['Content-Type'] = 'application/json'
       req.headers['Authorization'] = _authorization
       req.body = { claims: }.to_json
-      ap req
     end
 
     user_info = JSON.parse(response.body) rescue nil
-    puts "=" * 80
-    puts "user_info:"
-    puts "-" * 80
-    ap user_info
-    puts "=" * 80
+
     raise "failed (#{response.status}): #{response.body}" unless user_info
 
     user_info
+  end
+
+  # For Omniauth Aut Hash Schema 1.0 compatibility
+  # the callback will store this in request.env['omniauth.auth']
+  # so the default `do_oauth` can be used from there onwards
+  # https://github.com/omniauth/omniauth/wiki/Auth-Hash-Schema
+  def auth(token)
+    user_info = user_info(token['access_token'])
+
+    email = user_info['email'] || user_info['sub']
+    first_name = user_info['given_name']
+    last_name = user_info['family_name']
+    _name = user_info['name'] || "#{first_name} #{last_name}"
+    expires = token['expires_in'].to_i > 0
+    expires_at = expires ? token['expires_in'].to_i.seconds.from_now : nil
+
+    unless email_trusted?(email)
+      raise UntrustedEmailError.new(<<~ERR.chomp)
+        The email address >>#{email}<< that was returned by #{host} is not trusted!
+      ERR
+    end
+
+    OpenStruct.new(
+      provider: host,
+      uid: "#{user_info['sub']}@#{host}",
+      credentials: OpenStruct.new(
+        token: token['access_token'],
+        refresh_token: token['refresh_token'],
+        secret: client_secret,
+        expires:,
+        expires_at:
+      ),
+      info: OpenStruct.new(
+        email:,
+        name: _name,
+        first_name:,
+        last_name:
+      ),
+      extra: OpenStruct.new(
+        raw_info: token.to_json
+      )
+    )
+  end
+
+  def email_trusted?(email)
+    return false unless !!(email.to_s =~ URI::MailTo::EMAIL_REGEXP)
+
+    [domain, trusted_email_domains].flatten.compact
+      .collect(&:downcase).include?(email.to_s.split('@').last&.downcase)
   end
 
   private

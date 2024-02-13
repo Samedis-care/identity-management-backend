@@ -6,6 +6,7 @@ en:
     general_error: General error
     database_error: Database error
     authorization_error: Authorization error
+    oauth_error: The remote authentication server didn't return the minimum required information for logging in (trusted email, first name and last name)
     object_id_invalid_error: An invalid Object ID was provided
     malformed_csv_error: >-
       CSV is malformed. Character encoding must be UTF-8 (without BOM). It must not contain headers. Use semicolon as columns separator. Double quotes for text values if necessary.

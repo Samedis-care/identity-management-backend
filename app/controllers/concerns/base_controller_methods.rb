@@ -11,6 +11,8 @@ module BaseControllerMethods
     rescue_from ArgumentError, with: :argument_error
     rescue_from ApplicationDocument::AuthorizationError, with: :authorization_error
     rescue_from ApplicationDocument::GridfilterError, with: :gridfilter_error
+    rescue_from CustomAuthProvider::UntrustedEmailError, with: :oauth_error
+    rescue_from CustomAuthProvider::FailedAuthError, with: :oauth_error
     rescue_from Mongoid::Errors::DocumentNotFound, with: :record_not_found_error
     rescue_from Mongoid::Errors::InvalidFind, with: :record_not_found_error
     rescue_from Mongo::Error::OperationFailure, with: :database_error
@@ -177,6 +179,13 @@ module BaseControllerMethods
     return if performed?
     message = Rails.env.production? ? I18n.t('json_api.authorization_error') : e.message
     render_jsonapi_error(message, 'authorization_error', 403, exception: e) and return
+  end
+
+  def oauth_error(e)
+    raise e unless silence_errors?
+    return if performed?
+    message = Rails.env.production? ? I18n.t('json_api.oauth_error') : e.message
+    render_jsonapi_error(message, 'oauth_error', 401, exception: e) and return
   end
 
   def set_cache_headers

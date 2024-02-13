@@ -54,44 +54,33 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
     do_oauth
   end
 
-  # def facebook
-  #   do_oauth
-  # end
-
-  # def twitter
-  #   do_oauth
-  # end
-
   def apple
     do_oauth
   end
 
   def dynamic_provider_authorize
     provider = CustomAuthProvider.find_by(domain: params[:provider])
+
     state = params[:state]
+    if !state && params[:app]
+      state = { app: current_app_actor.name, redirect_host: current_app_actor.config.url }.to_json
+    end
+
     login_hint = params[:login_hint] # optionally pass through the email address
-    session[:code_verifier] = code_verifier = provider.code_verifier # @TODO !!
+    code_verifier =  provider.create_code_verifier!
+    cookies[:code_verifier] = { value: code_verifier, expires: 3.minutes }
+
     redirect_to provider.passthru_uri(code_verifier:, state:, login_hint:), allow_other_host: true
   end
 
   def dynamic_provider_callback
     code = params[:code]
-    session_state = params[:session_state]
     provider = CustomAuthProvider.find_by(domain: params[:provider])
-    user_info = provider.access_token(code)
-    user = provider.user_info(user_info['access_token'])
+    code_verifier = cookies[:code_verifier]
+    user_info = provider.access_token(code, code_verifier:)
+    request.env['omniauth.auth'] = provider.auth(user_info)
 
-    _debug = []
-    _debug << "#{params[:provider]} token: #{JSON.pretty_generate(user_info)}"
-    _debug << "=" * 80
-    _debug << "#{JSON.pretty_generate provider.jwt_decode(user_info['id_token'])}"
-    _debug << "=" * 80
-    _debug << "#{params[:provider]} user:\n#{JSON.pretty_generate(user)}"
-    _debug << "=" * 80
-    render plain: _debug.join("\n") and return
-    # - use provider.user_info to load or create a user
-    # - create a Doorkeeper::AccessToken
-    # - redirect to frontend
+    do_oauth
   end
 
   private
@@ -113,7 +102,7 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
   end
 
   def current_app
-    state[:app].gsub(/\./,'-').to_slug
+    (state[:app] || params[:app]).to_s.gsub(/\./,'-').to_slug
   end
 
   def oauth_params
