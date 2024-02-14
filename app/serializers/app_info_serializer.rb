@@ -62,7 +62,7 @@ class AppInfoSerializer
   end
 
   attribute :auth_provider_hints do |app|
-    CustomAuthProvider.pluck(:checksum)
+    CustomAuthProvider.all.collect(&:trusted_domain_checksums).flatten
   end
 
   class Schema < JsonApi::Schema
@@ -77,6 +77,12 @@ class AppInfoSerializer
           string :name, default: 'app-name', description: 'unique name of the app'
           string :short_name, default: 'app-name', description: 'short name of the app'
           string :full_name, default: 'app-name', description: 'full name of the app'
+
+          array :auth_provider_hints, description: 'MD5 checksums for domains with custom oauth provider' do
+            items do
+              string :checksum
+            end
+          end
 
           object :config, description: 'Hash of app config' do
             string :url, default: 'https://domain.local', description: 'URL of the app'

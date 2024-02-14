@@ -8,23 +8,22 @@ class CustomAuthProvider < ApplicationDocument
   include Mongoid::Timestamps
 
   field :domain, type: String
-  field :checksum, type: String
   field :client_id, type: String
   field :client_secret, type: String
   field :host, type: String
   field :trusted_email_domains, type: Array
 
   validates :domain, uniqueness: true
-
-  before_save :generate_checksum
+  validate :unique_trusted_email_domains
 
   attr_accessor :code_verifier
 
   index({ domain: 1 }, { unique: true })
-  index({ checksum: 1 }, { unique: true })
 
-  def self.hints
-    pluck(:checksum).compact
+  def unique_trusted_email_domains
+    return unless self.class.where(:_id.ne => id, :trusted_email_domains.in => trusted_email_domains).exists?
+
+    errors.add(:trusted_email_domains, 'A provider for one of the trusted email domains already exists') and throw(:abort)
   end
 
   def create_code_verifier!
@@ -184,17 +183,19 @@ class CustomAuthProvider < ApplicationDocument
     )
   end
 
+  def trusted_domains
+    @trusted_domains ||= [domain, trusted_email_domains].flatten.compact
+                          .collect(&:downcase).collect(&:strip).compact.uniq
+  end
+
+  def trusted_domain_checksums
+    @trusted_domain_checksums ||= trusted_domains.collect { |d| Digest::MD5.hexdigest(d) }
+  end
+
   def email_trusted?(email)
     return false unless !!(email.to_s =~ URI::MailTo::EMAIL_REGEXP)
 
-    [domain, trusted_email_domains].flatten.compact
-      .collect(&:downcase).include?(email.to_s.split('@').last&.downcase)
-  end
-
-  private
-
-  def generate_checksum
-    self.checksum = Digest::MD5.hexdigest(domain)
+    trusted_domains.include?(email.to_s.split('@').last&.downcase)
   end
 
 end

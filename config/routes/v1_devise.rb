@@ -3,7 +3,7 @@ namespace :v1 do
   class DomainConstraint
     def self.matches?(request)
       provider = request.params[:provider]
-      CustomAuthProvider.exists?(domain: provider)
+      CustomAuthProvider.where('$or': [{ domain: provider }, { trusted_email_domains: provider }]).exists?
     end
   end
 

@@ -59,7 +59,8 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
   end
 
   def dynamic_provider_authorize
-    provider = CustomAuthProvider.find_by(domain: params[:provider])
+    _domain = params[:provider]
+    provider = CustomAuthProvider.where('$or': [{ domain: _domain }, { trusted_email_domains: _domain }]).first
 
     state = params[:state]
     if !state && params[:app]
