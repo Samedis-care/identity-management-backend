@@ -1,11 +1,26 @@
 class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksController
 
+  include SetLocale
   include BaseControllerMethods
+
+  before_action :set_locale
+
+  rescue_from CustomAuthProvider::UntrustedEmailError, with: :oauth_error
+  rescue_from CustomAuthProvider::FailedAuthError, with: :oauth_error
+
+  # for CustomAuthProvider this sets the standard failure_message
+  def oauth_error(e)
+    request.env["omniauth.error.strategy"] = params[:provider]
+    request.env["omniauth.error.type"] = e.message
+
+    failure
+  end
 
   def failure
     _uri = URI.parse(User.redirect_url_login(current_app, invite_token: invite_token||''))
-    _uri.query = { failure_message: failure_message }.to_query
-    redirect_to _uri.to_s
+    _uri.query = { failure_message: failure_message, redirect_host: state[:redirect_host] }.to_query
+
+    redirect_to _uri.to_s, allow_other_host: true
   end
 
   def do_oauth
@@ -66,6 +81,8 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
     if !state && params[:app]
       state = { app: current_app_actor.name, redirect_host: current_app_actor.config.url }.to_json
     end
+    # pass on requested locale
+    state = JSON.parse(state).merge(locale: I18n.locale).to_json
 
     login_hint = params[:login_hint] # optionally pass through the email address
     code_verifier =  provider.create_code_verifier!
@@ -115,11 +132,15 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
   end
 
   def state
-    (JSON.parse(params[:state]) rescue {}).with_indifferent_access
+    @state ||= (JSON.parse(params[:state]) rescue {}).with_indifferent_access
   end
 
   def invite_token
     state[:invite_token]
+  end
+
+  def set_locale
+    I18n.locale = state[:locale].presence || super
   end
 
 end

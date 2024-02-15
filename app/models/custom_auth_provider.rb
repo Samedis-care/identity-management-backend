@@ -113,7 +113,7 @@ class CustomAuthProvider < ApplicationDocument
       req.body = params.to_json
     end
 
-    raise FailedAuthError.new("Error at remote server #{host}") unless response.status.eql?(200)
+    raise FailedAuthError.new(I18n.t('json_api.oauth_failed', host:)) unless response.status.eql?(200)
     user_info = JSON.parse(response.body) rescue nil
 
     user_info
@@ -156,9 +156,7 @@ class CustomAuthProvider < ApplicationDocument
     expires_at = expires ? token['expires_in'].to_i.seconds.from_now : nil
 
     unless email_trusted?(email)
-      raise UntrustedEmailError.new(<<~ERR.chomp)
-        The email address >>#{email}<< that was returned by #{host} is not trusted!
-      ERR
+      raise UntrustedEmailError.new(I18n.t('json_api.oauth_untrusted_email', email:, host:))
     end
 
     OpenStruct.new(
