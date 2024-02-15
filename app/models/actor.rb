@@ -806,7 +806,7 @@ class Actor < ApplicationDocument
   end
 
   def get_app_name
-    self.path.split('/').second
+    self.path.split('/').second.strip
   end
 
   def ensure_defaults!(with_defaults: nil, cache_expire: true)
