@@ -1,11 +1,29 @@
 class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksController
 
+  include SetLocale
   include BaseControllerMethods
 
+  before_action :set_locale
+
+  rescue_from CustomAuthProvider::UntrustedEmailError, with: :oauth_error
+  rescue_from CustomAuthProvider::FailedAuthError, with: :oauth_error
+
+  # for CustomAuthProvider this sets the standard failure_message
+  def oauth_error(e)
+    request.env["omniauth.error.strategy"] = params[:provider]
+    request.env["omniauth.error.type"] = e.message
+
+    failure
+  end
+
   def failure
+    redirect_to after_omniauth_failure_path_for, allow_other_host: true
+  end
+
+  def after_omniauth_failure_path_for(scope=nil)
     _uri = URI.parse(User.redirect_url_login(current_app, invite_token: invite_token||''))
-    _uri.query = { failure_message: failure_message }.to_query
-    redirect_to _uri.to_s
+    _uri.query = { failure_message: failure_message, redirect_host: state[:redirect_host] }.to_query
+    _uri.to_s
   end
 
   def do_oauth
@@ -54,15 +72,35 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
     do_oauth
   end
 
-  # def facebook
-  #   do_oauth
-  # end
-
-  # def twitter
-  #   do_oauth
-  # end
-
   def apple
+    do_oauth
+  end
+
+  def dynamic_provider_authorize
+    _domain = params[:provider]
+    provider = CustomAuthProvider.where('$or': [{ domain: _domain }, { trusted_email_domains: _domain }]).first
+
+    state = params[:state]
+    if !state && params[:app]
+      state = { app: current_app_actor.name, redirect_host: current_app_actor.config.url }.to_json
+    end
+    # pass on requested locale
+    state = JSON.parse(state).merge(locale: I18n.locale).to_json
+
+    login_hint = params[:login_hint] # optionally pass through the email address
+    code_verifier =  provider.create_code_verifier!
+    cookies[:code_verifier] = { value: code_verifier, expires: 3.minutes }
+
+    redirect_to provider.passthru_uri(code_verifier:, state:, login_hint:), allow_other_host: true
+  end
+
+  def dynamic_provider_callback
+    code = params[:code]
+    provider = CustomAuthProvider.find_by(domain: params[:provider])
+    code_verifier = cookies[:code_verifier]
+    user_info = provider.access_token(code, code_verifier:)
+    request.env['omniauth.auth'] = provider.auth(user_info)
+
     do_oauth
   end
 
@@ -72,20 +110,13 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
       _user = User.from_omniauth(auth)
       _user.app_context = current_app
       _user.invite_token = invite_token
-      case params[:action].to_sym
-        when :apple, :microsoft_graph, :google_oauth2
-          _user.redirect_host = state.dig(:redirect_host)
-          _user.redirect_path = state.dig(:redirect_host)
-        else
-          _user.redirect_host = params[:redirect_host]
-          _user.redirect_path = params[:redirect_host]
-      end
+      _user.redirect_path = _user.redirect_host = state.dig(:redirect_host) || params[:redirect_host]
       _user
     end
   end
 
   def current_app
-    state[:app].gsub(/\./,'-').to_slug
+    (state[:app] || params[:app]).to_s.gsub(/\./,'-').to_slug
   end
 
   def oauth_params
@@ -97,11 +128,15 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
   end
 
   def state
-    (JSON.parse(params[:state]) rescue {}).with_indifferent_access
+    @state ||= (JSON.parse(params[:state]) rescue {}).with_indifferent_access
   end
 
   def invite_token
     state[:invite_token]
+  end
+
+  def set_locale
+    I18n.locale = state[:locale].presence || super
   end
 
 end

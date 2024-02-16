@@ -379,7 +379,7 @@ class User < ApplicationDocument
   end
 
   def self.redirect_url_login(app_context, invite_token: '')
-    url_template(redirect_urls(app_context)[:login], { HOST: host(app_context), APP: app_context, INVITE_TOKEN: invite_token })
+    url_template(redirect_urls(app_context)[:login], { HOST: host('identity-management'), APP: app_context, INVITE_TOKEN: invite_token })
   end
 
   def redirect_url_acceptance(provided_values)
