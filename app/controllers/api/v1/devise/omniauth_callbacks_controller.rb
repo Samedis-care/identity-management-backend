@@ -110,14 +110,7 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
       _user = User.from_omniauth(auth)
       _user.app_context = current_app
       _user.invite_token = invite_token
-      case params[:action].to_sym
-        when :apple, :microsoft_graph, :google_oauth2
-          _user.redirect_host = state.dig(:redirect_host)
-          _user.redirect_path = state.dig(:redirect_host)
-        else
-          _user.redirect_host = params[:redirect_host]
-          _user.redirect_path = params[:redirect_host]
-      end
+      _user.redirect_path = _user.redirect_host = state.dig(:redirect_host) || params[:redirect_host]
       _user
     end
   end
