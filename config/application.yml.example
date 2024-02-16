@@ -20,6 +20,7 @@ development: &defaults
   AZURE_CONTAINER_NAME: container_name
   # if set to local
   FILES_DIRECTORY: /path/to/files
+  MAIL_FROM: 'no-reply@ident.services'
   SMTP_HOST: smtp.domain.local
   SMTP_PORT: 587
   SMTP_AUTH: login
