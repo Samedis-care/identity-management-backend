@@ -17,10 +17,13 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
   end
 
   def failure
+    redirect_to after_omniauth_failure_path_for, allow_other_host: true
+  end
+
+  def after_omniauth_failure_path_for(scope=nil)
     _uri = URI.parse(User.redirect_url_login(current_app, invite_token: invite_token||''))
     _uri.query = { failure_message: failure_message, redirect_host: state[:redirect_host] }.to_query
-
-    redirect_to _uri.to_s, allow_other_host: true
+    _uri.to_s
   end
 
   def do_oauth
