@@ -1,8 +1,30 @@
 namespace :v1 do
 
-  devise_for :users, skip: [:confirmations, :passwords, :sessions, :registration], :controllers => {
-    :omniauth_callbacks => "api/v1/devise/omniauth_callbacks"
+  class DomainConstraint
+    def self.matches?(request)
+      provider = request.params[:provider]
+      CustomAuthProvider.where('$or': [{ domain: provider }, { trusted_email_domains: provider }]).exists?
+    end
+  end
+
+  devise_for :users, skip: [:confirmations, :passwords, :sessions, :registration], controllers: {
+    omniauth_callbacks: "api/v1/devise/omniauth_callbacks"
   }, noswagger: true
+
+  constraints(DomainConstraint) do
+    constraints(provider: /[^\/]+/) do
+      devise_scope :user do
+        get '/users/auth/:provider/callback', to: 'devise/omniauth_callbacks#dynamic_provider_callback', as: :user_custom_omniauth_callback
+
+        # test for having bookmarkable URL to start a custom oauth2 login
+        get '/users/auth/:provider/:app', to: 'devise/omniauth_callbacks#dynamic_provider_authorize', as: :user_custom_omniauth_authorize_app_get
+        post '/users/auth/:provider/:app', to: 'devise/omniauth_callbacks#dynamic_provider_authorize', as: :user_custom_omniauth_authorize_app
+
+        get '/users/auth/:provider', to: 'devise/omniauth_callbacks#dynamic_provider_authorize', as: :user_custom_omniauth_authorize_get
+        post '/users/auth/:provider', to: 'devise/omniauth_callbacks#dynamic_provider_authorize', as: :user_custom_omniauth_authorize
+      end
+    end
+  end
 
   post '*app/users/auth/:oauth', to: redirect { |path, req|
     "/api/v1/users/auth/#{path[:oauth]}?#{ { app: path[:app] }.to_param }"

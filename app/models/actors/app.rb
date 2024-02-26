@@ -41,7 +41,6 @@ module Actors
         attr_accessor :image
 
         validates_length_of :logo_b64, minimum: 1, maximum: 1.megabyte, allow_blank: true
-        validates :footer_html, presence: true
 
         embeds_one :smtp_settings, autobuild: true, class_name: 'SmtpSettings'
 

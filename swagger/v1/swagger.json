@@ -2090,6 +2090,13 @@
             "default": "app-name",
             "description": "full name of the app"
           },
+          "auth_provider_hints": {
+            "type": "array",
+            "description": "MD5 checksums for domains with custom oauth provider",
+            "items": {
+              "type": "string"
+            }
+          },
           "config": {
             "type": "object",
             "description": "Hash of app config",
