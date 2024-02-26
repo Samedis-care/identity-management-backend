@@ -43,7 +43,7 @@ class Content < ApplicationDocument
     self.app = self.app.to_slug
     self.actors_app ||= Actors::App.named(self.app).first
     self.name = self.name.to_slug
-    self.version ||= self.class.where(name: self.name).max(:version).to_i + 1
+    self.version ||= self.class.where(app: self.app, name: self.name).max(:version).to_i + 1
   end
 
   def user
