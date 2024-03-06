@@ -55,6 +55,7 @@ namespace :app do
 
     Actors::Group.where(parent: app, short_name: 'users').first_or_create(system: true)
     app.save!
+    app.create_app_view!
 
     puts "=" * 80
     puts "App registered successfully."
