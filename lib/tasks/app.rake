@@ -33,7 +33,7 @@ namespace :app do
 
     puts "For environment: #{Rails.env} - register url: #{ENV['url']}"
 
-    app = Actor.apps.available.named(ENV['name']).first_or_initialize(short_name: ENV['name'])
+    app = Actors::App.available.named(ENV['name']).first_or_initialize(short_name: ENV['name'])
     if app.persisted? && !ENV['update'].eql?('yes')
       abort "An app name #{ENV['name']} already exists. Please choose a different name or set update=yes"
     end
@@ -46,7 +46,7 @@ namespace :app do
       app.actor_settings[:mailer] ||= {}
       app.actor_settings[:mailer][:reply_to] = ENV['mailer_reply_to']
     end
-    app.url = ENV['url']
+    app.config.url = ENV['url']
     app.save!
 
     if app.errors.any?

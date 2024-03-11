@@ -806,6 +806,7 @@ class Actor < ApplicationDocument
   end
 
   def get_app_name
+    return self.name if self.is_a?(Actors::App)
     self.path.split('/').second.strip
   end
 
