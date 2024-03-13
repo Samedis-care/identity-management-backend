@@ -177,8 +177,8 @@ class User < ApplicationDocument
             length: { in: 6..1024,
               message: Proc.new { I18n.t('mongoid.errors.models.user.attributes.password.too_short') },
             },
-            confirmation: { case_sensitive: true }, on: :create
-  validates :password_confirmation, :presence => true, :if => Proc.new{|u| u.password.present? }
+            confirmation: { case_sensitive: true }, on: :create, unless: :set_password
+  validates :password_confirmation, :presence => true, :if => Proc.new{|u| u.password.present? }, unless: :set_password
 
   #Relations
   has_many :oauth_tokens, class_name: 'Doorkeeper::AccessToken', foreign_key: 'resource_owner_id', dependent: :destroy
@@ -680,12 +680,13 @@ class User < ApplicationDocument
   # For setting the password (administative or after validation by password repeat)
   # @return {Bool} indication if password update was successful
   def set_password=(pwd)
-    begin
-      self.set(encrypted_password: password_digest(pwd))
-      true
-    rescue => e
-      false
-    end
+    self.password = self.password_confirmation = @set_password = pwd
+    set(encrypted_password: password_digest(pwd))
+    set_password
+  end
+
+  def set_password
+    @set_password.present?
   end
 
   def get_short_name
