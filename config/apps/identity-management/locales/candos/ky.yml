@@ -1,5 +1,0 @@
-identity-management/actors.deleter:
-  description: Актёрлорду жок кылуу үчүн талап кылынат
-  title: Актерлорду жок кылууга мүмкүндүк берет
-identity-management/actors.reader:
-  title: Актерлор үчүн REST интерфейсин окуй алат
