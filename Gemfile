@@ -5,37 +5,36 @@ gem 'rails', '~> 7.1.2'
 
 gem 'bcrypt'
 gem 'bootsnap', require: false
+gem 'enumerize'
 gem 'ffaker'
 gem 'mongoid'
-# on apple m1 install manually via
-# gem install snappy -- --with-cxxflags=\"-std=c++17\"
-gem "snappy"
-gem 'enumerize'
-gem 'mongoid-tree', :require => 'mongoid/tree'
-gem 'mongoid_search'
-gem 'mongoid_rails_migrations'
 gem 'mongoid-locker'
+gem 'mongoid_rails_migrations'
+gem 'mongoid_search'
+gem 'mongoid-tree', require: 'mongoid/tree'
 gem 'nokogiri'
-gem 'strip_attributes'
 gem 'psych', '< 4' # https://stackoverflow.com/a/71192990/9156535
+gem 'snappy'
+gem 'strip_attributes'
+
+gem 'oj'
 
 # Fastest solution for JSON:API serialization
-gem 'oj'#, '~> 3.7.12'
 gem 'jsonapi-serializer'
 
 gem 'kaminari-mongoid'
 
 # Integration rspec tests as source for describing swagger 2.0
+gem 'json-schema_builder'
 gem 'rspec'
 gem 'rspec-rails'
 gem 'rswag'
-gem 'json-schema_builder'
 
 # Replacement for ActiveStorage to use S3 stored file uploads with mongodb
-gem "aws-sdk-s3", "~> 1.14"
-gem "shrine"#, "~> 2.0"
-gem "shrine-mongoid"
-#gem "shrine-storage-azureblob", git: 'https://github.com/TQsoft-GmbH/shrine-storage-azureblob.git'
+gem 'aws-sdk-s3', '~> 1.14'
+gem 'shrine'
+gem 'shrine-mongoid'
+
 # For imageprocessing in shrine uploaders
 gem 'image_processing'
 gem 'ruby-vips'
@@ -43,36 +42,34 @@ gem 'ruby-vips'
 # HTTP client for microservice communication
 gem 'sawyer'
 
-#User Registration and Login 
-gem 'tzinfo-data'
-gem 'figaro'
+# user registration and login
+gem 'active_model_otp'
+gem 'devise-doorkeeper'
 gem 'doorkeeper'
 gem 'doorkeeper-mongodb', '~> 5.0'
-gem 'devise-doorkeeper'
+gem 'figaro'
 gem 'omniauth', '>= 1.9.2'
+gem 'omniauth-apple'
 gem 'omniauth-google-oauth2'
 gem 'omniauth-microsoft_graph'
-gem 'omniauth-apple'
 gem 'omniauth-rails_csrf_protection'
-# gem 'omniauth-facebook'
-# gem 'omniauth-twitter'
 gem 'recaptcha', require: 'recaptcha/rails'
-gem 'active_model_otp'
+gem 'tzinfo-data'
 
 # Browser detection for account activity
-gem "browser", require: "browser/browser"
-gem "geocoder"
-gem "maxminddb"
+gem 'browser', require: 'browser/browser'
+gem 'geocoder'
+gem 'maxminddb'
 
 # monitoring
 gem 'httparty'
-gem 'sentry-ruby'
 gem 'sentry-rails'
+gem 'sentry-ruby'
 
 # excel generator
 gem 'caxlsx'
 
-gem "rqrcode"
+gem 'rqrcode'
 
 # HTTP server
 gem 'puma'
@@ -84,10 +81,11 @@ gem 'ruby-progressbar'
 
 group :development, :test, :live, :local_dev, :staging do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
+  gem 'brakeman'
   gem 'byebug', platforms: [:mri, :mingw, :x64_mingw]
-  gem 'mongo_logs_on_roids'
-  gem 'colorize'
   gem 'clipboard'
+  gem 'colorize'
+  gem 'mongo_logs_on_roids'
 end
 
 group :development do
