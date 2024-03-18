@@ -1,0 +1,29 @@
+{
+  "ignored_warnings": [
+    {
+      "warning_type": "Redirect",
+      "warning_code": 18,
+      "fingerprint": "afe65f691e8f61ae85d396d6f8dfa77fff59b00acb07a3ad2b6a4551528bbfda",
+      "check_name": "Redirect",
+      "message": "Possible unprotected redirect",
+      "file": "app/controllers/api/v1/devise/omniauth_callbacks_controller.rb",
+      "line": 94,
+      "link": "https://brakemanscanner.org/docs/warning_types/redirect/",
+      "code": "redirect_to(CustomAuthProvider.where(:$or => ([{ :domain => params[:provider] }, { :trusted_email_domains => params[:provider] }])).first.passthru_uri(:code_verifier => CustomAuthProvider.where(:$or => ([{ :domain => params[:provider] }, { :trusted_email_domains => params[:provider] }])).first.create_code_verifier!, :state => JSON.parse((params[:state] or { :app => current_app_actor.name, :redirect_host => current_app_actor.config.url }.to_json)).merge(:locale => I18n.locale).to_json, :login_hint => params[:login_hint]), :allow_other_host => true)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Api::V1::Devise::OmniauthCallbacksController",
+        "method": "dynamic_provider_authorize"
+      },
+      "user_input": "CustomAuthProvider.where(:$or => ([{ :domain => params[:provider] }, { :trusted_email_domains => params[:provider] }])).first.passthru_uri(:code_verifier => CustomAuthProvider.where(:$or => ([{ :domain => params[:provider] }, { :trusted_email_domains => params[:provider] }])).first.create_code_verifier!, :state => JSON.parse((params[:state] or { :app => current_app_actor.name, :redirect_host => current_app_actor.config.url }.to_json)).merge(:locale => I18n.locale).to_json, :login_hint => params[:login_hint])",
+      "confidence": "Weak",
+      "cwe_id": [
+        601
+      ],
+      "note": "By design redirects to the host taken from the database record"
+    }
+  ],
+  "updated": "2024-03-18 14:49:44 +0100",
+  "brakeman_version": "6.1.2"
+}
