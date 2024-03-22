@@ -43,10 +43,11 @@ gem 'ruby-vips'
 gem 'sawyer'
 
 # user registration and login
-gem 'active_model_otp'
+# use fork of active_model_otp with updated dependencies
+gem 'active_model_otp', git: 'https://github.com/neongrau/active_model_otp.git'
 gem 'devise-doorkeeper'
 gem 'doorkeeper'
-gem 'doorkeeper-mongodb', '~> 5.0'
+gem 'doorkeeper-mongodb', '~> 5'
 gem 'figaro'
 gem 'omniauth', '>= 1.9.2'
 gem 'omniauth-apple'
