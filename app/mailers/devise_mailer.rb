@@ -28,6 +28,20 @@ class DeviseMailer < Devise::Mailer
     devise_mail(user, :recovery_confirmation_instructions, opts)
   end
 
+  def recovery_instructions(user, token, opts = {})
+    headers ApplicationMailer.default_headers
+
+    @app_context = user.app_context
+    @app = app
+    prepare_logo
+    @url = user.redirect_url_recover_account({ HOST: User.host('identity-management'), APP: @app_context, TOKEN: token })
+    opts[:from] = @app.config.mailer.from
+    opts[:reply_to] = @app.config.mailer.reply_to
+    use_styles
+
+    devise_mail(user, :recovery_instructions, opts)
+  end
+
   def reset_password_instructions(user, token, opts = {})
     headers ApplicationMailer.default_headers
 

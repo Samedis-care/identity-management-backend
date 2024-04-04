@@ -48,9 +48,16 @@ en:
         message: >-
           *** EXPLAIN WHAT AND WHY HERE... ***
 
-          <br />
-
           To confirm your recovery email address, please click the following link:
+      recovery_instructions:
+        started: 'A mail with instructions about the recovery process has been sent.'
+        action: 'Recover your account'
+        subject: 'Account recovery...'
+        header: 'Hello from %{app_name}!'
+        message: >-
+          *** EXPLAIN WHAT AND WHY HERE... ***
+
+          To start the recovery, please click the following link:
       email_change:
         subject: Changing your email address
         header: We have received your request

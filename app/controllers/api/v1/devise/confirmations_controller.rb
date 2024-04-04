@@ -38,7 +38,6 @@ class Api::V1::Devise::ConfirmationsController < Devise::ConfirmationsController
     user = resource_class.confirm_by_recovery_token(params[:recovery_confirmation_token])
     if user.is_a?(User) && user.errors.empty?
       user.app_context = current_app
-      user.invite_token = params[:invite_token]
       render json: AppUserSerializer.new(user, {
         meta: {
           msg: {

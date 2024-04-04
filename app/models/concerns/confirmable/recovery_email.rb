@@ -14,8 +14,12 @@ module Confirmable::RecoveryEmail
     after_update :send_recovery_reconfirmation_instructions, if: :recovery_reconfirmation_required?
     before_update :postpone_recovery_email_change_until_confirmation_and_regenerate_confirmation_token, if: :postpone_recovery_email_change?
 
+    before_update :update_recoverd_account, if: :email_changed?
+
     ## manually make recovery_email Confirmable (not supported by devise)
+    field :recovered_account, type: BSON::Boolean
     field :recovery_email, type: String
+    field :recovery_token, type: String
     field :recovery_confirmation_token, type: String
     field :recovery_confirmed_at, type: Time
     field :recovery_confirmation_sent_at, type: Time
@@ -42,7 +46,58 @@ module Confirmable::RecoveryEmail
     required_methods
   end
 
-  def recovery_confirm
+  class Recovery
+    ALG = 'HS256'.freeze
+    attr_accessor :user
+
+    def initialize(user)
+      self.user = user
+    end
+
+    # expiry
+    def exp
+      @exp ||= 5.minutes.from_now.to_i
+    end
+
+    def secret
+      "#{user.email}#{user.recovery_email}#{user.encrypted_password}"
+    end
+
+    def create_token
+      # no token if no recovery_email set
+      return nil unless user.recovery_email.presence
+
+      JWT.encode({ exp: }, secret, ALG)
+    end
+
+    def valid_token?(token)
+      return false unless user.recovery_token.presence
+      return false unless user.recovery_email.presence
+      return false unless user.recovery_token == token
+
+      _token = JWT.decode(token, secret, ALG)&.first rescue nil
+      return false unless _token
+
+      # final check if token has expired
+      Time.at(_token['exp']) > Time.now
+    end
+  end
+
+  def recovery
+    @recovery ||= Recovery.new(self)
+  end
+
+  def account_recovered!
+    drop_tenants!
+    set(recovered_account: true)
+  end
+
+  # to reset when email was changed
+  def update_recoverd_account
+    self.recovered_account = false
+  end
+
+  def recovery_email_confirm
     return if unconfirmed_recovery_email.blank? || recovery_confirmed_at.is_a?(Time)
 
     if recovery_confirmation_period_expired?
@@ -51,23 +106,40 @@ module Confirmable::RecoveryEmail
       return false
     end
 
-    self.recovery_confirmed_at = Time.now.utc
-    self.recovery_email = unconfirmed_recovery_email
-    self.unconfirmed_recovery_email = nil
-    save(validate: false)
+    set(
+      recovery_confirmed_at: Time.now.utc,
+      recovery_email: unconfirmed_recovery_email,
+      unconfirmed_recovery_email: nil
+    )
+    self
   end
 
   def recovery_confirmation_period_expired?
     self.class.confirm_within &&
-      self.recovery_confirmation_sent_at &&
-      (Time.now.utc > self.recovery_confirmation_sent_at.utc + self.class.confirm_within)
+      recovery_confirmation_sent_at &&
+      (Time.now.utc > recovery_confirmation_sent_at.utc + self.class.confirm_within)
   end
 
   def redirect_url_confirm_recovery_email(provided_values)
     self.class.url_template(redirect_urls[:confirm_recovery_email], provided_values)
   end
 
+  def redirect_url_recover_account(provided_values)
+    self.class.url_template(redirect_urls[:recover_account], provided_values)
+  end
+
   ###
+  def generate_recovery_token!
+    set(recovery_token: recovery.create_token)
+  end
+
+  # Send confirmation instructions by email
+  def send_recovery_instructions
+    generate_recovery_token! unless recovery_token
+
+    opts = pending_recovery_reconfirmation? ? { to: recovery_email } : {}
+    send_devise_notification(:recovery_instructions, recovery_token, opts)
+  end
 
   def pending_recovery_reconfirmation?
     self.class.reconfirmable && unconfirmed_recovery_email.present?
@@ -75,20 +147,16 @@ module Confirmable::RecoveryEmail
 
   # Send confirmation instructions by email
   def send_recovery_confirmation_instructions
-    unless @raw_recovery_confirmation_token
-      generate_recovery_confirmation_token!
-    end
+    generate_recovery_confirmation_token! unless @raw_recovery_confirmation_token
 
-    opts = pending_recovery_reconfirmation? ? { to: unconfirmed_recovery_email } : { }
+    opts = pending_recovery_reconfirmation? ? { to: unconfirmed_recovery_email } : {}
     send_devise_notification(:recovery_confirmation_instructions, @raw_recovery_confirmation_token, opts)
   end
 
   def send_recovery_reconfirmation_instructions
     @recovery_reconfirmation_required = false
 
-    unless @skip_recovery_confirmation_notification
-      send_recovery_confirmation_instructions
-    end
+    send_recovery_confirmation_instructions unless @skip_recovery_confirmation_notification
   end
 
   # Generates a new random token for confirmation, and stores
@@ -148,7 +216,8 @@ module Confirmable::RecoveryEmail
       end
 
       confirmable = find_first_by_auth_conditions(recovery_confirmation_token: recovery_confirmation_token)
-      confirmable.recovery_confirm if confirmable&.persisted?
+      confirmable.recovery_email_confirm if confirmable&.persisted?
+
       confirmable
     end
   end

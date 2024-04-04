@@ -69,6 +69,7 @@ namespace :v1 do
   end
 
   scope path: '*app', module: :app do
+    resource :recovery, only: [:create]
     scope :oauth do
       scope module: :doorkeeper do
         resource :token, only: [:create]

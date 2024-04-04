@@ -493,6 +493,12 @@ class User < ApplicationDocument
     locale.downcase.underscore
   end
 
+  # drops all access to every tenant the user currently has
+  def drop_tenants!
+    Actors::Mapping.where(user_id: id).delete_all
+    cache_expire!
+  end
+
   # Controllers may set app-context at run time to filter candos
   # specific for the app
   def app_context=(app_name)
