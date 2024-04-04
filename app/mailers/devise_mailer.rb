@@ -1,7 +1,7 @@
 class DeviseMailer < Devise::Mailer
   layout 'mailer'
 
-  def confirmation_instructions(user, token, opts={})
+  def confirmation_instructions(user, token, opts = {})
     headers ApplicationMailer.default_headers
 
     @app_context = user.app_context
@@ -14,7 +14,21 @@ class DeviseMailer < Devise::Mailer
     super
   end
 
-  def reset_password_instructions(user, token, opts={})
+  def recovery_confirmation_instructions(user, token, opts = {})
+    headers ApplicationMailer.default_headers
+
+    @app_context = user.app_context
+    @app = app
+    prepare_logo
+    @url = user.redirect_url_confirm_recovery_email({ HOST: User.host('identity-management'), APP: @app_context, TOKEN: token })
+    opts[:from] = @app.config.mailer.from
+    opts[:reply_to] = @app.config.mailer.reply_to
+    use_styles
+
+    devise_mail(user, :recovery_confirmation_instructions, opts)
+  end
+
+  def reset_password_instructions(user, token, opts = {})
     headers ApplicationMailer.default_headers
 
     @app_context = user.app_context
@@ -28,7 +42,7 @@ class DeviseMailer < Devise::Mailer
     super
   end
 
-  def password_change(user, opts={})
+  def password_change(user, opts = {})
     headers ApplicationMailer.default_headers
 
     @app_context = user.app_context
@@ -42,7 +56,7 @@ class DeviseMailer < Devise::Mailer
     super
   end
 
-  def email_changed(user, opts={})
+  def email_changed(user, opts = {})
     headers ApplicationMailer.default_headers
 
     @app_context = user.app_context
@@ -117,7 +131,6 @@ class DeviseMailer < Devise::Mailer
     @app_context ||= 'identity-management'
   end
 
-
   private
 
   def locale_vars
@@ -142,6 +155,7 @@ class DeviseMailer < Devise::Mailer
     @logo ||= begin
       _logo_b64 = app.config.try(:mailer).try(:logo_b64) rescue nil
       return nil unless _logo_b64.present?
+
       _file = Base64StringIO.from_base64(_logo_b64, 'logo')
       _file.try :rewind
       _file.binmode

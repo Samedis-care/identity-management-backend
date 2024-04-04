@@ -41,6 +41,16 @@ en:
         subject: 'Confirm your %{app_name} account creation'
         header: 'Welcome to %{app_name}!'
         message: 'To confirm your email address, please click the following link:'
+      recovery_confirmation_instructions:
+        action: 'Confirm your recovery email address'
+        subject: 'Confirm your %{app_name} recovery email address'
+        header: 'Hello from %{app_name}!'
+        message: >-
+          *** EXPLAIN WHAT AND WHY HERE... ***
+
+          <br />
+
+          To confirm your recovery email address, please click the following link:
       email_change:
         subject: Changing your email address
         header: We have received your request

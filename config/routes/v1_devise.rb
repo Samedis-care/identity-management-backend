@@ -41,6 +41,7 @@ namespace :v1 do
       post "/users/password" => "devise/passwords#create"
       put "/users/password" => "devise/passwords#update"
       get "/users/confirmation/:confirmation_token" => "devise/confirmations#show"
+      get '/users/recovery_confirmation/:recovery_confirmation_token' => 'devise/confirmations#recovery_confirmation'
       post "/users/confirmation" => "devise/confirmations#create", as: :app_user_confirmation
     end
   end

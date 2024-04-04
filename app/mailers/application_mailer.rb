@@ -4,9 +4,9 @@ class ApplicationMailer < ActionMailer::Base
   layout 'mailer'
 
   DEFAULT_HEADERS ||= {
-    'Precedence'=> 'Bulk',
+    'Precedence' => 'Bulk',
     'X-Auto-Response-Suppress' => 'All'
-  }
+  }.freeze
 
   def self.default_headers
     self::DEFAULT_HEADERS

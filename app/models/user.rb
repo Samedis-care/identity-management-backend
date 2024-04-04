@@ -6,6 +6,8 @@ class User < ApplicationDocument
 
   include WithBlameNoIndex
 
+  include Confirmable::RecoveryEmail
+
   Shrine.plugin :mongoid
   include ImageUploader::Attachment.new(:image)
 
@@ -118,6 +120,7 @@ class User < ApplicationDocument
   field :last_sign_in_at, type: Time
   field :current_sign_in_ip, type: String
   field :last_sign_in_ip, type: String
+
   ## Confirmable
   field :confirmation_token, type: String
   field :confirmed_at, type: Time
@@ -171,16 +174,16 @@ class User < ApplicationDocument
     message: Proc.new { I18n.t('mongoid.errors.models.user.attributes.email.uniqueness') },
     unless: :deleted?
   }
-  validates_confirmation_of :email, message: Proc.new { I18n.t("errors.email.confirmation") }, on: :create
+  validates_confirmation_of :email, message: -> { I18n.t('errors.email.confirmation') }, on: :create
 
   validates :password, presence: true,
             length: { in: 6..1024,
-              message: Proc.new { I18n.t('mongoid.errors.models.user.attributes.password.too_short') },
+              message: -> { I18n.t('mongoid.errors.models.user.attributes.password.too_short') }
             },
             confirmation: { case_sensitive: true }, on: :create, unless: :set_password
-  validates :password_confirmation, :presence => true, :if => Proc.new{|u| u.password.present? }, unless: :set_password
+  validates :password_confirmation, presence: true, if: -> { password.present? }, unless: :set_password
 
-  #Relations
+  # Relations
   has_many :oauth_tokens, class_name: 'Doorkeeper::AccessToken', foreign_key: 'resource_owner_id', dependent: :destroy
 
   def self.gridfilter_fields
@@ -188,15 +191,11 @@ class User < ApplicationDocument
   end
 
   def self.email(address)
-    where(email:address).first
+    where(email: address).first
   end
 
   def self.of_tenant_id(tenant_id)
     where(:actor_id.in => Actor.tenants.find(tenant_id).descendants.mappings.available.pluck(:map_actor_id))
-  end
-
-  def self.has_access_groups(group_ids=nil)
-    # TODO: apply filter criteria here
   end
 
   def self.from_omniauth(auth)
@@ -230,25 +229,23 @@ class User < ApplicationDocument
 
   before_save :image_derivatives, if: -> { image && image_changed? }
   def image_derivatives
-    self.image_derivatives!
+    image_derivatives!
   end
 
-  before_create do |user|
-    if user.actor.nil?
-      user.actor = Actors::User.create!(
+  before_create do |u|
+    if u.actor.nil?
+      u.actor = Actors::User.create!(
         parent: Actor.user_container,
-        name: user.email,
-        user: user,
-        short_name: user.get_short_name,
-        full_name: user.get_full_name,
-        title: user.get_short_name
+        name: u.email,
+        user: u,
+        short_name: u.get_short_name,
+        full_name: u.get_full_name,
+        title: u.get_short_name
       )
     end
   end
 
-  after_create do |user|
-    user.app_defaults!
-  end
+  after_create :app_defaults!
 
   before_save do |record|
     if record.write_protected && record.write_protected_was
@@ -259,9 +256,9 @@ class User < ApplicationDocument
       errors.add :system, 'protection flag set'
       throw(:abort)
     end
-    if record.deleted_changed?
-       # adds uuid after the email so the account can be re-created with same address
-      record.email_uniquely_disabled! if record.deleted?
+    if record.deleted_changed? && record.deleted?
+      # adds uuid after the email so the account can be re-created with same address
+      record.email_uniquely_disabled!
     end
     # persist changed access groups
     if record.access_group_ids_changed.is_a?(Array)
@@ -297,13 +294,15 @@ class User < ApplicationDocument
   def self.writable
     all.not.where(write_protected: true)
   end
+
   def self.deletable
     all.not.where(system: true)
   end
 
   def redirect_host=(_host)
     _host_uri = URI.parse(_host) rescue nil
-    return nil unless _host_uri.is_a?(URI)
+    return unless _host_uri.is_a?(URI)
+
     _host_uri.path = ''
     _host_uri.query = ''
     _host_uri.fragment = nil
@@ -343,6 +342,7 @@ class User < ApplicationDocument
 
   def host
     return redirect_host if redirect_host.present?
+
     self.class.host(app_context)
   end
 
@@ -356,7 +356,7 @@ class User < ApplicationDocument
   end
 
   def self.per_app_settings
-    @@auth_redirects ||= begin
+    @auth_redirects ||= begin
       _apps = {}
       Actor.apps.available.each do |app|
         _apps[app.name.to_sym] = app.settings
@@ -374,8 +374,9 @@ class User < ApplicationDocument
   end
 
   def redirect_urls
-    raise "MISSING APP CONTEXT!" if self.app_context.blank?
-    self.class.redirect_urls(self.app_context)
+    raise 'MISSING APP CONTEXT!' if app_context.blank?
+
+    self.class.redirect_urls(app_context)
   end
 
   def self.redirect_url_login(app_context, invite_token: '')
@@ -383,23 +384,23 @@ class User < ApplicationDocument
   end
 
   def redirect_url_acceptance(provided_values)
-    self.class.url_template(self.redirect_urls[:acceptance], provided_values)
+    self.class.url_template(redirect_urls[:acceptance], provided_values)
   end
 
   def redirect_url_authenticated(provided_values)
-    self.class.url_template(self.redirect_urls[:authenticated], provided_values)
+    self.class.url_template(redirect_urls[:authenticated], provided_values)
   end
 
   def redirect_url_confirm_account(provided_values)
-    self.class.url_template(self.redirect_urls[:confirm_account], provided_values)
+    self.class.url_template(redirect_urls[:confirm_account], provided_values)
   end
 
   def redirect_url_reset_password(provided_values)
-    self.class.url_template(self.redirect_urls[:reset_password], provided_values)
+    self.class.url_template(redirect_urls[:reset_password], provided_values)
   end
 
   def self.url_template(url, provided_values)
-    _needed_values = url.scan(/\%\{([^\}]*)\}/).map{|key|key<<''}.to_h
+    _needed_values = url.scan(/\%\{([^\}]*)\}/).map { |key| key << '' }.to_h
     url % _needed_values.symbolize_keys.merge(provided_values)
   end
 
@@ -408,7 +409,7 @@ class User < ApplicationDocument
       tenant_candos_cached: nil,
       tenant_candos_cached_at: nil,
       tenants_cached: nil,
-      tenants_cached_at: nil,
+      tenants_cached_at: nil
     )
   end
 
@@ -440,7 +441,7 @@ class User < ApplicationDocument
   end
 
   def self.global_admin
-    @@global_admin ||= begin
+    @global_admin ||= begin
       default_pwd = ("#" * 18)
       where(email: 'admin@ident.services').first_or_create(
         system: true,
@@ -472,22 +473,23 @@ class User < ApplicationDocument
   end
 
   def undelete!
-    self.skip_reconfirmation!
-    self.email = self.email.split('@')[0,2].join('@')
-    self.confirm
+    skip_reconfirmation!
+    self.email = email.split('@')[0,2].join('@')
+    confirm
     self.deleted = false
-    self.save(validate:false)
+    save validate: false
   end
 
   def email_uniquely_disabled!
-    self.skip_reconfirmation!
-    self.email = "#{self.email.split('@')[0,2].join('@')}@#{self.id}.local"
-    self.confirm
-    self.email
+    skip_reconfirmation!
+    self.email = "#{email.split('@')[0,2].join('@')}@#{self.id}.local"
+    confirm
+    email
   end
 
   def get_locale
-    return :de if self.locale.blank?
+    return :de if locale.blank?
+
     locale.downcase.underscore
   end
 
@@ -497,28 +499,37 @@ class User < ApplicationDocument
     @app_context_actor = nil
     @app_context = app_name.to_s.downcase
   end
+
   def app_context
     return 'identity-management' if @app_context.to_s.blank?
-    "#{@app_context}".to_slug
+
+    @app_context.to_s.to_slug
   end
+
   def app_context_actor
     @app_context_actor ||= Actors::App.named(app_context).first
   end
+
   def tenant_context=(tenant_id)
     @tenant_context = tenant_id
   end
+
   def tenant_context
     #return tenants.pluck(:id).first if @tenant_context.blank?
     @tenant_context
   end
+
   def invite_token=(token)
     @invite_token = token
   end
+
   def invite_token
     @invite_token || ''
   end
+
   def tenant
-    raise "MISSING TENANT CONTEXT" unless tenant_context.present?
+    raise 'MISSING TENANT CONTEXT' unless tenant_context.present?
+
     @tenant = nil unless @tenant.try(:id).to_s.eql?(tenant_context.to_s)
     @tenant ||= Actor.tenants.available.find(tenant_context)
   end
@@ -528,19 +539,21 @@ class User < ApplicationDocument
   end
 
   def app_defaults!
-    return if self.app_context.nil?
-    unless self.app_context.present?
-      self.app_context = (self.oauth_tokens.order({ created_at: -1 }).first.im_app.to_slug rescue nil)
+    return if app_context.nil?
+
+    unless app_context.present?
+      self.app_context = (oauth_tokens.order({ created_at: -1 }).first.im_app.to_slug rescue nil)
     end
-    _app = Actors::App.named(self.app_context.to_s.to_slug).first
-    if _app && _app.container_users
-      _app.container_users.map_into!(self.actor, {}, cache_expire: false)
-    end
+    _app = Actors::App.named(app_context.to_s.to_slug).first
+    return unless _app&.container_users
+
+    _app.container_users.map_into!(actor, {}, cache_expire: false)
   end
 
   # ensures the user's actor is mapped into app/*/users
-  def ensure_app_membership!(_apps=nil)
+  def ensure_app_membership!(_apps = nil)
     return unless actor.present?
+
     _apps = apps unless _apps.is_a?(Array)
     [_apps].flatten.each do |_app|
       _app.app_container_users.map_into!(actor, {}, cache_expire: false)
@@ -550,6 +563,7 @@ class User < ApplicationDocument
   # The actors of the apps the user is a member of
   def apps
     raise "MISSING ACTOR FOR: #{email}" if actor.nil?
+
     Actors::App.available.where(:id.in => actor.actor_ids)
   end
 
@@ -558,8 +572,6 @@ class User < ApplicationDocument
   # @return {Array} of Hashes with :id, :path, :parent_ids, :role_ids, :cando
   # unique by cando - so duplicate actor ids are very likely
   def actors_in_parent(parental_id)
-    #@actors_in_parent ||= {}
-    #@actors_in_parent[:parental_id] ||= 
     candos.select do |c|
       c.fetch(:parent_ids, []).collect(&:to_s).include?(parental_id.to_s)
     end
@@ -741,47 +753,39 @@ class User < ApplicationDocument
     @access_group_ids
   end
 
-  # Convenience helper
-  # @return {Bool} if user is male
-  def male?
-    self.gender.eql?(1)
-  end
-
-  # Convenience helper
-  # @return {Bool} if user is female
-  def female?
-    self.gender.eql?(2)
-  end
-
   def active_logins
-    oauth_tokens.where(revoked_at: nil)
-    .where(:created_at.gt => Doorkeeper.configuration.access_token_expires_in.seconds.ago)
+    oauth_tokens
+      .where(revoked_at: nil)
+      .where(:created_at.gt => Doorkeeper.configuration.access_token_expires_in.seconds.ago)
   end
+
   def expired_logins
-    oauth_tokens.where(revoked_at: nil)
-    .where(:created_at.lte => Doorkeeper.configuration.access_token_expires_in.seconds.ago)
+    oauth_tokens
+      .where(revoked_at: nil)
+      .where(:created_at.lte => Doorkeeper.configuration.access_token_expires_in.seconds.ago)
   end
 
   # this will personalize a formely anonymous token to the user
   # so #auto_accept_invites! can be run in the user context
   def claim_invite_token!(invite_token=nil)
-    if invite_token.present?
-      # if an invite token is supplied this will be personalized with the user_id
-      invites = Invite.unclaimed.where(token: invite_token)
-      return false unless invites.any?
-      invites.set(user_id: self.id)
-      return true
-    end
-    false
+    return false unless invite_token.present?
+
+    # if an invite token is supplied this will be personalized with the user_id
+    invites = Invite.unclaimed.where(token: invite_token)
+    return false unless invites.any?
+
+    invites.set(user_id: id)
+    true
   end
 
   def auto_accept_invites!
     _invites = Invite.valid.where(auto_accept: true).for_user(self)
     return unless _invites.any?
+
     _invites.each do |invite|
       invite.accept!(current_user: self)
     end
-    self.cache_expire!
+    cache_expire!
   end
 
   def recent_invites
@@ -790,10 +794,11 @@ class User < ApplicationDocument
 
   # Check if there are any content documents to accept (TOS)
   # Will accept outstanding auto-Invitations
-  def check_acceptances(app=nil)
+  def check_acceptances(app = nil)
     context = app || app_context
-    raise "MISSING APP CONTEXT" unless context.present?
-    self.auto_accept_invites!
+    raise 'MISSING APP CONTEXT' unless context.present?
+
+    auto_accept_invites!
     @check_acceptances ||= begin
       current_acceptances = content_acceptance || {}
       current_acceptances[context] ||= {}
@@ -825,21 +830,13 @@ class User < ApplicationDocument
     return false unless content.is_a?(Content)
     return false unless content.active?
     return false unless content.acceptance_required?
+
     current_acceptances = content_acceptance || {}
     current_acceptances[app_context] ||= {}
-    if current_acceptances.try(app_context, content.name).to_i < content.version
-      return true
-    end
+    return true if current_acceptances.try(app_context, content.name).to_i < content.version
+
     false
   end
-
-  # def email_required?
-  #   false
-  # end
-
-  # def email_changed?
-  #   false
-  # end
 
   # use this instead of email_changed? for rails >= 5.1
   def will_save_change_to_email?
@@ -851,20 +848,22 @@ class User < ApplicationDocument
   end
 
   private
+
   def set_access_group_ids=(tenant_groups_selected)
-    raise "MISSING TENANT CONTEXT" unless tenant_context.present?
+    raise 'MISSING TENANT CONTEXT' unless tenant_context.present?
+
     tenant_groups_available = Actors::Group.where(parent_ids: tenant.id)
     _resulting_ids = []
-    if tenant_groups_selected.is_a?(Array)
-      tenant_groups_available.each do |group|
-        if tenant_groups_selected.include?(group.id.to_s)
-          _resulting_ids << group.id.to_s if group.map_into!(self.actor, {}, cache_expire: false)
-        else
-          group.unmap_from!(self.actor, cache_expire: false)
-        end
+    return unless tenant_groups_selected.is_a?(Array)
+
+    tenant_groups_available.each do |group|
+      if tenant_groups_selected.include?(group.id.to_s)
+        _resulting_ids << group.id.to_s if group.map_into!(actor, {}, cache_expire: false)
+      else
+        group.unmap_from!(actor, cache_expire: false)
       end
-      @access_group_ids = tenant_access_group_ids[tenant_context] = _resulting_ids
     end
+    @access_group_ids = tenant_access_group_ids[tenant_context] = _resulting_ids
   end
 
   def email_blacklisted

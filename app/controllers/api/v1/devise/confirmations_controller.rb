@@ -17,8 +17,8 @@ class Api::V1::Devise::ConfirmationsController < Devise::ConfirmationsController
       user.app_context = current_app
       user.invite_token = params[:invite_token]
       render json: AppUserSerializer.new(user, {
-        meta: { 
-          msg:{ 
+        meta: {
+          msg: {
             success: true,
             message: I18n.t('devise.mailer.account_confirm')
           },
@@ -30,6 +30,29 @@ class Api::V1::Devise::ConfirmationsController < Devise::ConfirmationsController
       render_jsonapi_error(user.errors.full_messages*', ', 'error', 400)
     else
       render_jsonapi_error(I18n.t('auth.error.token_invalid') , 'invalid_token', 400)
+    end
+  end
+
+  # GET /users/recovery_confirmation/:recovery_confirmation_token
+  def recovery_confirmation
+    user = resource_class.confirm_by_recovery_token(params[:recovery_confirmation_token])
+    if user.is_a?(User) && user.errors.empty?
+      user.app_context = current_app
+      user.invite_token = params[:invite_token]
+      render json: AppUserSerializer.new(user, {
+        meta: {
+          msg: {
+            success: true,
+            message: I18n.t('devise.mailer.account_confirm')
+          },
+          redirect_url: User.redirect_url_login(user.app_context, invite_token: params[:invite_token]),
+          app: user.app_context
+        }
+      })
+    elsif user.is_a?(User)
+      render_jsonapi_error(user.errors.full_messages*', ', 'error', 400)
+    else
+      render_jsonapi_error(I18n.t('auth.error.token_invalid'), 'invalid_token', 400)
     end
   end
 
