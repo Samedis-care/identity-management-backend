@@ -10,8 +10,8 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
 
   # for CustomAuthProvider this sets the standard failure_message
   def oauth_error(e)
-    request.env["omniauth.error.strategy"] = params[:provider]
-    request.env["omniauth.error.type"] = e.message
+    request.env['omniauth.error.strategy'] = params[:provider]
+    request.env['omniauth.error.type'] = e.message
 
     failure
   end
@@ -20,9 +20,9 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
     redirect_to after_omniauth_failure_path_for, allow_other_host: true
   end
 
-  def after_omniauth_failure_path_for(scope=nil)
-    _uri = URI.parse(User.redirect_url_login(current_app, invite_token: invite_token||''))
-    _uri.query = { failure_message: failure_message, redirect_host: state[:redirect_host] }.to_query
+  def after_omniauth_failure_path_for(_scope = nil)
+    _uri = URI.parse(User.redirect_url_login(current_app, invite_token: invite_token || ''))
+    _uri.query = { failure_message:, redirect_host: state[:redirect_host] }.to_query
     _uri.to_s
   end
 
@@ -55,7 +55,7 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
       APP: user.app_context,
       TOKEN: token.token,
       REFRESH_TOKEN: token.refresh_token,
-      TOKEN_EXPIRE: token.expires_in.seconds.from_now.to_i*1000,
+      TOKEN_EXPIRE: token.expires_in.seconds.from_now.to_i * 1000,
       INVITE_TOKEN: user.invite_token
     }
     # if an invite token is supplied this will be personalized with the user_id
@@ -87,44 +87,43 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
     # pass on requested locale
     state = JSON.parse(state).merge(locale: I18n.locale).to_json
 
-    login_hint = params[:login_hint] # optionally pass through the email address
-    code_verifier =  provider.create_code_verifier!
+    code_verifier = provider.create_code_verifier!
     cookies[:code_verifier] = { value: code_verifier, expires: 3.minutes }
 
-    redirect_to provider.passthru_uri(code_verifier:, state:, login_hint:), allow_other_host: true
+    redirect_to provider.passthru_uri(code_verifier:, state:, login_hint: params[:login_hint]), allow_other_host: true
   end
 
   def dynamic_provider_callback
     code = params[:code]
     provider = CustomAuthProvider.find_by(domain: params[:provider])
-    code_verifier = cookies[:code_verifier]
-    user_info = provider.access_token(code, code_verifier:)
+    user_info = provider.access_token(code, code_verifier: cookies[:code_verifier])
     request.env['omniauth.auth'] = provider.auth(user_info)
 
     do_oauth
   end
 
   private
+
   def user
     @user ||= begin
       _user = User.from_omniauth(auth)
       _user.app_context = current_app
       _user.invite_token = invite_token
-      _user.redirect_path = _user.redirect_host = state.dig(:redirect_host) || params[:redirect_host]
+      _user.redirect_path = _user.redirect_host = state[:redirect_host] || params[:redirect_host]
       _user
     end
   end
 
   def current_app
-    (state[:app] || params[:app]).to_s.gsub(/\./,'-').to_slug
+    (state[:app] || params[:app]).to_s.gsub(/\./, '-').to_slug
   end
 
   def oauth_params
-    request.env["omniauth.params"]
+    request.env['omniauth.params']
   end
 
   def auth
-    request.env["omniauth.auth"]
+    request.env['omniauth.auth']
   end
 
   def state
@@ -140,4 +139,3 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
   end
 
 end
-

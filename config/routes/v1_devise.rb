@@ -41,6 +41,8 @@ namespace :v1 do
       post "/users/password" => "devise/passwords#create"
       put "/users/password" => "devise/passwords#update"
       get "/users/confirmation/:confirmation_token" => "devise/confirmations#show"
+      get '/users/recovery_confirmation/:recovery_confirmation_token' => 'devise/confirmations#recovery_confirmation'
+      post '/users/recovery_confirmation' => 'devise/confirmations#recovery_confirmation'
       post "/users/confirmation" => "devise/confirmations#create", as: :app_user_confirmation
     end
   end
@@ -68,6 +70,7 @@ namespace :v1 do
   end
 
   scope path: '*app', module: :app do
+    resource :recovery, only: [:create]
     scope :oauth do
       scope module: :doorkeeper do
         resource :token, only: [:create]

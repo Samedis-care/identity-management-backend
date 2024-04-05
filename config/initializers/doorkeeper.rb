@@ -16,13 +16,23 @@ Doorkeeper.configure do
     warden.authenticate!(scope: :user)
   end
 
-  resource_owner_from_credentials do |routes|
-    conditions = {email: params[:email], fb_uid: params[:fb_uid], google_uid: params[:google_uid]}.reject { |k,v| v.nil? || v.empty? }
+  resource_owner_from_credentials do |_|
+    conditions = {
+      email: params[:email],
+      recovery_email: params[:recovery_email],
+      google_uid: params[:google_uid]
+    }.reject { |_, v| v.nil? || v.empty? }
+
     u = User.login_allowed.find_for_database_authentication(conditions)
-    if conditions[:fb_uid] || conditions[:google_uid]
+
+    if u.is_a?(User) && conditions[:google_uid]
       u
-    else
-      u if u && u.valid_password?(params[:password])
+    elsif u.is_a?(User) && conditions[:recovery_email] &&
+          u.recovery.valid_token?(params[:password])
+      u&.account_recovered! # does after recover things like dropping tenants
+      u
+    elsif u.is_a?(User) && u.valid_password?(params[:password])
+      u
     end
   end
 
@@ -72,7 +82,7 @@ Doorkeeper.configure do
   # For more information go to
   # https://github.com/doorkeeper-gem/doorkeeper/wiki/Using-Scopes
   default_scopes  :api
-  optional_scopes :write#, :update
+  optional_scopes :write # , :update
 
   # Change the way client credentials are retrieved from the request object.
   # By default it retrieves first from the `HTTP_AUTHORIZATION` header, then
@@ -121,11 +131,11 @@ Doorkeeper.configure do
   # so that the user skips the authorization step.
   # For example if dealing with a trusted application.
   skip_authorization do |resource_owner, client|
-    true #client.superapp? or resource_owner.admin?
+    true # client.superapp? or resource_owner.admin?
   end
 
   # WWW-Authenticate Realm (default "Doorkeeper").
-  realm "backend"
+  realm 'backend'
 end
 
 require "#{Rails.root}/app/models/concerns/doorkeeper/access_token.rb"

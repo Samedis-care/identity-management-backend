@@ -2,5 +2,7 @@ default_redirects: &default_redirects
   login: '%{HOST}/login/%{APP}/?invite_token=%{INVITE_TOKEN}'
   authenticated: '%{HOST}/authenticated#remember_me=%{REMEMBER_ME}&redirect_path=%{REDIRECT_PATH}&token=%{TOKEN}&refresh_token=%{REFRESH_TOKEN}&token_expire=%{TOKEN_EXPIRE}&invite_token=%{INVITE_TOKEN}'
   confirm_account: '%{HOST}/login/%{APP}/confirm-account?token=%{TOKEN}&invite_token=%{INVITE_TOKEN}'
+  confirm_recovery_email: '%{HOST}/login/%{APP}/confirm-recovery-email?token=%{TOKEN}'
+  recover_account: '%{HOST}/login/%{APP}/recover-account?token=%{TOKEN}'
   reset_password: '%{HOST}/login/%{APP}/reset-password?token=%{TOKEN}'
   acceptance: '%{HOST}/acceptance/%{APP}/%{NAME}#token=%{TOKEN}&refresh_token=%{REFRESH_TOKEN}&token_expire=%{TOKEN_EXPIRE}&invite_token=%{INVITE_TOKEN}'

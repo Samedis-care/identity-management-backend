@@ -13,6 +13,8 @@ class AppUserSerializer
   attributes(
    :active,
    :email,
+   :recovery_email,
+   :unconfirmed_recovery_email,
    :first_name,
    :last_name,
    :gender,
@@ -21,6 +23,10 @@ class AppUserSerializer
    :title,
    :mobile
   )
+
+  attribute :recovered_account do |record|
+    !!record.recovered_account
+  end
 
   attribute :image do |user|
     {
@@ -100,6 +106,9 @@ class AppUserSerializer
           string :id, description: 'unique record id (of mapping)'
           string :actor_id, description: 'unique id of the users account'
           string :email, description: 'the new e-mail address'
+          string :recovery_email, description: 'a secondary email that can be used to recover an account if access to the main email is lost'
+          string :unconfirmed_recovery_email, description: 'holds the chosen recovery email address until it is confirmed'
+          boolean :recovered_account, description: 'if true this account was recovered and the main email should be changed'
           string :first_name, default: 'short name of an organizational unit or group', description: 'short name of this actor'
           string :last_name, default: 'full name of an organizational unit or group', description: 'full name of this actor'
           string :short, description: 'User short sign'
