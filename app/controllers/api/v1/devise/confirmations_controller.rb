@@ -36,6 +36,7 @@ class Api::V1::Devise::ConfirmationsController < Devise::ConfirmationsController
   # GET /users/recovery_confirmation/:recovery_confirmation_token
   def recovery_confirmation
     user = resource_class.confirm_by_recovery_token(params[:recovery_confirmation_token])
+
     if user.is_a?(User) && user.errors.empty?
       user.app_context = current_app
       render json: AppUserSerializer.new(user, {

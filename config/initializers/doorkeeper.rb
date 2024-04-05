@@ -24,10 +24,11 @@ Doorkeeper.configure do
     }.reject { |_, v| v.nil? || v.empty? }
 
     u = User.login_allowed.find_for_database_authentication(conditions)
+
     if u.is_a?(User) && conditions[:google_uid]
       u
     elsif u.is_a?(User) && conditions[:recovery_email] &&
-          u.valid_recovery_token?(params[:password])
+          u.recovery.valid_token?(params[:password])
       u&.account_recovered! # does after recover things like dropping tenants
       u
     elsif u.is_a?(User) && u.valid_password?(params[:password])
