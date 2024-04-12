@@ -9,27 +9,28 @@ class Api::V1::App::UserController < Api::V1::JsonApiController
 
   SWAGGER = {
     tag: 'Current User'
-  }
+  }.freeze
 
   undef_method :create
   undef_method :show
 
-  PERMIT_CREATE = []
-  PERMIT_UPDATE = [
-    :app,
-    :first_name,
-    :last_name,
-    :image,
-    :image_b64,
-    :gender,
-    :email,
-    :email_confirmation,
-    :mobile,
-    :title,
-    :short,
-    :otp_enable,
-    :otp_disable
-  ]
+  PERMIT_CREATE = [].freeze
+  PERMIT_UPDATE = %i[
+    app
+    first_name
+    last_name
+    image
+    image_b64
+    gender
+    email
+    email_confirmation
+    recovery_email
+    mobile
+    title
+    short
+    otp_enable
+    otp_disable
+  ].freeze
 
   def index
     show
@@ -62,13 +63,14 @@ class Api::V1::App::UserController < Api::V1::JsonApiController
     end
     render_serialized_record(
       record: user,
-      success: success,
-      error: error,
+      success:,
+      error:,
       meta: { app: user.app_context }
     )
   end
 
   private
+
   def record_update
     current_user.app_context = current_app if current_user.app_context.blank?
     current_user
