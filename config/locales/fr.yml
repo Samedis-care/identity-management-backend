@@ -8,22 +8,35 @@ fr:
     authorization_error: Erreur d'autorisation
     object_id_invalid_error: Un ID d'objet non valide a été fourni
     malformed_csv_error: >-
-      CSV est mal formé. L'encodage des caractères doit être UTF-8 (sans BOM). Il ne doit pas contenir d'en-têtes. Utilisez le point-virgule comme séparateur de colonnes. Guillemets doubles pour les valeurs de texte si nécessaire.
+      CSV est mal formé. L'encodage des caractères doit être UTF-8 (sans BOM). Il
+      ne doit pas contenir d'en-têtes. Utilisez le point-virgule comme séparateur
+      de colonnes. Guillemets doubles pour les valeurs de texte si nécessaire.
     smtp_syntax_error: >-
-      Le courrier n'a pas pu être envoyé. Veuillez vérifier l'adresse du destinataire pour les caractères non valides.
-    maintenance_readonly_error: "Le système est actuellement en lecture seule mode de maintenance. Veuillez réessayer plus tard. Raison: %{reason}"
-    maintenance_error: "Le système est actuellement en mode de maintenance. Veuillez réessayer plus tard. Raison: %{reason}"
+      Le courrier n'a pas pu être envoyé. Veuillez vérifier l'adresse du destinataire
+      pour les caractères non valides.
+    maintenance_readonly_error: "Le système est actuellement en lecture seule mode
+      de maintenance. Veuillez réessayer plus tard. Raison: %{reason}"
+    maintenance_error: "Le système est actuellement en mode de maintenance. Veuillez
+      réessayer plus tard. Raison: %{reason}"
+    oauth_error: Le serveur d'authentification distant n'a pas renvoyé les informations
+      minimales requises pour la connexion (e-mail de confiance, prénom et nom).
+    oauth_failed: La communication avec le serveur d'authentification distant %{host}
+      a échoué !
+    oauth_untrusted_email: L'adresse e-mail %{email} qui a été renvoyée par %{host}
+      n'est pas fiable!
   auth:
     error:
       forbidden: Interdit.
       grant_type_invalid: Non autorisé. Le type d'octroi n'est pas valide.
       invalid_request: La demande est invalide ou il manque un paramètre obligatoire.
       login_incorrect: Les informations d'identification soumises sont incorrectes.
-      password_token_invalid: Le lien pour réinitialiser votre mot de passe n'est plus valide.
+      password_token_invalid: Le lien pour réinitialiser votre mot de passe n'est
+        plus valide.
       missing_tenant_context: Le contexte du locataire est manquant.
       token_expired: Non autorisé. Le jeton de sécurité a expiré.
       token_invalid: Non autorisé. Le jeton de sécurité n'est pas valide.
-      unauthenticated: Échec de la connexion. Le jeton de sécurité est invalide ou manquant.
+      unauthenticated: Échec de la connexion. Le jeton de sécurité est invalide ou
+        manquant.
       otp_required: Connexion incomplète. Mot de passe à usage unique pas encore fourni.
       otp_invalid: Mot de passe à usage unique invalide ou expiré.
       otp_too_many_tries: Trop de tentatives de mot de passe à usage unique non valides.
@@ -32,30 +45,37 @@ fr:
   devise:
     mailer:
       account_confirm: Merci pour votre confirmation. Votre accès a été activé.
-      account_confirm_resend: 'Nous avons envoyé un e-mail de confirmation à votre adresse e-mail (% {email}).'
+      account_confirm_resend: 'Nous avons envoyé un e-mail de confirmation à votre
+        adresse e-mail (% {email}).'
       confirmation_instructions:
         action: Confirmez votre adresse email
         subject: 'Confirmez la création de votre compte %{app_name}'
         header: 'Bienvenue dans %{app_name}!'
-        message: 'Pour confirmer votre adresse e-mail, veuillez cliquer sur le lien suivant:'
+        message: 'Pour confirmer votre adresse e-mail, veuillez cliquer sur le lien
+          suivant:'
       email_change:
         subject: Changer votre adresse e-mail
         header: Nous avons reçu votre demande
         message_html: >-
-          Votre adresse e-mail sera remplacée par <a href="mailto:%{email_new}">% {email_new} </a>. <br />
+          Votre adresse e-mail sera remplacée par <a href="mailto:%{email_new}">%
+          {email_new} </a>. <br />
 
           <br />
 
           Vous n'avez pas changé votre adresse e-mail? <br />
 
-          Veuillez contacter immédiatement notre assistance à l'adresse: <a href="mailto:%{support_email}"> %{support_email} </a>
+          Veuillez contacter immédiatement notre assistance à l'adresse: <a href="mailto:%{support_email}">
+          %{support_email} </a>
       password_change:
         subject: Changement de mot de passe
         header: Votre mot de passe a été changé avec succès.
         message_html: >-
-          Vous n'avez pas changé votre mot de passe? <br /> Veuillez contacter immédiatement notre assistance à l'adresse: <a href="mailto:%{support_email}"> %{support_email} </a>
+          Vous n'avez pas changé votre mot de passe? <br /> Veuillez contacter immédiatement
+          notre assistance à l'adresse: <a href="mailto:%{support_email}"> %{support_email}
+          </a>
       registered: >-
-        Veuillez vérifier vos e-mails pour confirmer l'inscription. Votre compte %{email} a été créé avec succès et sera activé après confirmation.
+        Veuillez vérifier vos e-mails pour confirmer l'inscription. Votre compte %{email}
+        a été créé avec succès et sera activé après confirmation.
       reset_password_instructions:
         subject: Instructions pour réinitialiser votre mot de passe
         header: Nous avons reçu votre demande
@@ -64,36 +84,69 @@ fr:
         thanks: 'Votre équipe %{app_name}'
         message_1_html: Vous pouvez changer votre mot de passe maintenant
         message_2_html: >-
-          Vous n'avez pas demandé de changement de mot de passe? <br /> Alors veuillez ignorer cet e-mail.
+          Vous n'avez pas demandé de changement de mot de passe? <br /> Alors veuillez
+          ignorer cet e-mail.
       reset_password_msg: >-
-        Un lien pour réinitialiser votre mot de passe a été envoyé à votre adresse e-mail (%{email}). Veuillez suivre ce lien pour attribuer un nouveau mot de passe.
+        Un lien pour réinitialiser votre mot de passe a été envoyé à votre adresse
+        e-mail (%{email}). Veuillez suivre ce lien pour attribuer un nouveau mot de
+        passe.
       send_password:
         link_text: Cliquez pour accéder au site Web.
         message: >-
-          Vous avez été ajouté avec le rôle %{role_name} dans %{app_name}. Vous trouverez ci-dessous les informations d'accès pour vous connecter. Après vous être connecté, vous pouvez attribuer votre mot de passe dans votre profil.
+          Vous avez été ajouté avec le rôle %{role_name} dans %{app_name}. Vous trouverez
+          ci-dessous les informations d'accès pour vous connecter. Après vous être
+          connecté, vous pouvez attribuer votre mot de passe dans votre profil.
         subject: 'Utilisateur de données d''accès: %{user_name}'
+      recovery_confirmation_instructions:
+        message: "Avec l'adresse e-mail de récupération, si vous n'avez plus accès
+          à l'adresse e-mail stockée dans votre compte (par exemple si vous ne travaillez
+          plus dans l'établissement), vous pouvez vous connecter au compte puis modifier
+          l'adresse e-mail principale. adresse e-mail pour retrouver un accès complet
+          à votre compte.\n\nPour confirmer votre adresse e-mail de récupération,
+          veuillez cliquer sur le lien suivant :"
+        action: Confirmez votre adresse e-mail de récupération
+        subject: Confirmez votre adresse e-mail de récupération %{app_name}
+        header: Bonjour de %{app_name} !
+      recovery_instructions:
+        started: Un e-mail contenant des instructions sur le processus de récupération
+          a été envoyé.
+        action: Récupérez votre compte
+        subject: Récupération du compte...
+        header: Bonjour de %{app_name} !
+        message: "Avec l'adresse e-mail de récupération, si vous n'avez plus accès
+          à l'adresse e-mail stockée dans votre compte (par exemple si vous ne travaillez
+          plus dans l'établissement), vous pouvez vous connecter au compte puis modifier
+          l'adresse e-mail principale. adresse e-mail pour retrouver un accès complet
+          à votre compte.\n\nRemarque : Si vous continuez et vous connectez à votre
+          adresse e-mail de récupération, nous supprimerons toutes les installations
+          associées pour des raisons de sécurité. Vous devrez donc recevoir de nouvelles
+          invitations des installations auxquelles vous avez encore besoin d'accéder.\n
+          \nPour démarrer la récupération, veuillez cliquer sur le lien suivant :"
     user:
       recaptcha_invalid: Le captcha capturé n'est malheureusement pas valide.
       unverified: >-
-        Cet accès n'a pas encore été confirmé. Veuillez d'abord confirmer votre adresse e-mail.
+        Cet accès n'a pas encore été confirmé. Veuillez d'abord confirmer votre adresse
+        e-mail.
   errors:
     actor:
       name_is_invalid: Le nom sélectionné n'est pas valide
     actor_role:
       actor:
         may_have_roles: >-
-          Ce type d'acteur n'est pas autorisé à avoir des rôles. Seuls les unités organisationnelles ou les groupes peuvent avoir des rôles.
+          Ce type d'acteur n'est pas autorisé à avoir des rôles. Seuls les unités
+          organisationnelles ou les groupes peuvent avoir des rôles.
     email:
       blacklisted: 'Malheureusement, l''adresse n''est pas valide'
       confirmation: La répétition est incorrecte
     missing_app: Aucune application n'a été définie pour effectuer cette action
     user:
       quit_failed: Une erreur s'est produite en quittant l'application.
+      leaving_tenant_failed: Une erreur s'est produite lors du départ du locataire.
     invalid_app: Le contexte de l'application est manquant ou incorrect
     undeletable:
-      one: 'Un enregistrement de %{total} n''a pas pu être supprimé.'
-      many: ' %{count} enregistrements sur %{total} n''ont pas pu être supprimés.'
-      other: ' %{count} enregistrements sur %{total} n''ont pas pu être supprimés.'
+      one: Un enregistrement de %{total} n'a pas pu être supprimé.
+      many: " %{count} enregistrements sur %{total} n'ont pas pu être supprimés."
+      other: " %{count} enregistrements sur %{total} n'ont pas pu être supprimés."
   mongoid:
     attributes:
       actor:
@@ -142,7 +195,8 @@ fr:
           attributes:
             ident:
               taken: >-
-                L'application dispose déjà d'une fonctionnalité pour le module sélectionné avec cet identifiant.
+                L'application dispose déjà d'une fonctionnalité pour le module sélectionné
+                avec cet identifiant.
         role:
           attributes:
             description:
@@ -189,12 +243,20 @@ fr:
         other: applications
       actors/container_apps:
         one: Conteneur pour les applications
+        many: ''
+        other: ''
       actors/container_enterprises:
         one: Conteneur pour les entreprises
+        many: ''
+        other: ''
       actors/container_tenants:
         one: Conteneur pour locataire
+        many: ''
+        other: ''
       actors/container_users:
         one: Conteneur pour les entreprises
+        many: ''
+        other: ''
       actors/group:
         one: Groupe
         many: Groupes
@@ -222,7 +284,8 @@ fr:
   mailer:
     greeting: 'Bonjour %{user_name}.'
     manual_link_instructions: >-
-      Si le bouton n'est pas cliquable, veuillez copier l'URL suivante dans votre navigateur :
+      Si le bouton n'est pas cliquable, veuillez copier l'URL suivante dans votre
+      navigateur :
     regards: 'Votre équipe %{app_name}'
     footer_html: |-
       Ce mail a été envoyé par identity-management (https://github.com/Samedis-care/identity-management) <br />
