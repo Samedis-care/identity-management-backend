@@ -6,16 +6,22 @@ en:
     general_error: General error
     database_error: Database error
     authorization_error: Authorization error
-    oauth_error: The remote authentication server didn't return the minimum required information for logging in (trusted email, first name and last name)
-    oauth_untrusted_email: The email address %{email} that was returned by %{host} is not trusted!
+    oauth_error: The remote authentication server didn't return the minimum required
+      information for logging in (trusted email, first name and last name).
+    oauth_untrusted_email: The email address %{email} that was returned by %{host}
+      is not trusted!
     oauth_failed: Contacting the remote authentication server at %{host} failed!
     object_id_invalid_error: An invalid Object ID was provided
     malformed_csv_error: >-
-      CSV is malformed. Character encoding must be UTF-8 (without BOM). It must not contain headers. Use semicolon as columns separator. Double quotes for text values if necessary.
+      CSV is malformed. Character encoding must be UTF-8 (without BOM). It must not
+      contain headers. Use semicolon as columns separator. Double quotes for text
+      values if necessary.
     smtp_syntax_error: >-
       The mail could not be send. Please check recipient address for invalid characters.
-    maintenance_readonly_error: "System is in read-only maintenance. Please try again later. Reason: %{reason}"
-    maintenance_error: "The system is currently in maintenance mode. Please try again later. Reason: %{reason}"
+    maintenance_readonly_error: "System is in read-only maintenance. Please try again
+      later. Reason: %{reason}"
+    maintenance_error: "The system is currently in maintenance mode. Please try again
+      later. Reason: %{reason}"
   auth:
     error:
       forbidden: Forbidden.
@@ -35,7 +41,8 @@ en:
   devise:
     mailer:
       account_confirm: Thank you for your confirmation. Your access has been activated.
-      account_confirm_resend: 'We have sent a confirmation email to your email address (%{email}).'
+      account_confirm_resend: 'We have sent a confirmation email to your email address
+        (%{email}).'
       confirmation_instructions:
         action: Confirm your email address
         subject: 'Confirm your %{app_name} account creation'
@@ -62,7 +69,8 @@ en:
         subject: Changing your email address
         header: We have received your request
         message_html: >-
-          Your email address will be changed to <a href="mailto:%{email_new}">%{email_new}</a>.<br />
+          Your email address will be changed to <a href="mailto:%{email_new}">%{email_new}</a>.<br
+          />
 
           <br />
 
@@ -73,9 +81,11 @@ en:
         subject: Password change
         header: Your password has been changed successfully.
         message_html: >-
-          You didn't change your password?<br /> Please contact our support immediately at: <a href="mailto:%{support_email}">%{support_email}</a>
+          You didn't change your password?<br /> Please contact our support immediately
+          at: <a href="mailto:%{support_email}">%{support_email}</a>
       registered: >-
-        Please check your e-mails to confirm the registration. Your account %{email} was created successfully and will be activated after confirmation.
+        Please check your e-mails to confirm the registration. Your account %{email}
+        was created successfully and will be activated after confirmation.
       reset_password_instructions:
         subject: Instructions on how to reset your password
         header: We have received your request
@@ -84,25 +94,31 @@ en:
         thanks: 'Your %{app_name} Team'
         message_1_html: You can change your password now
         message_2_html: >-
-          You didn't request a password change?<br /> Then please just ignore this email.
+          You didn't request a password change?<br /> Then please just ignore this
+          email.
       reset_password_msg: >-
-        A link to reset your password has been sent to your email address (%{email}). Please follow this link to assign a new password.
+        A link to reset your password has been sent to your email address (%{email}).
+        Please follow this link to assign a new password.
       send_password:
         link_text: Click to go to the website.
         message: >-
-          You were added with the role %{role_name} in %{app_name}. Below is the access information to log in. After logging in, you can assign your password in your profile.
+          You were added with the role %{role_name} in %{app_name}. Below is the access
+          information to log in. After logging in, you can assign your password in
+          your profile.
         subject: 'Access data user: %{user_name}'
     user:
       recaptcha_invalid: The captured captcha is unfortunately not valid.
       unverified: >-
-        This access has not yet been confirmed. Please confirm your email address first.
+        This access has not yet been confirmed. Please confirm your email address
+        first.
   errors:
     actor:
       name_is_invalid: The selected name is invalid
     actor_role:
       actor:
         may_have_roles: >-
-          This kind of Actor isn't allowed to have Roles. Only Organizational Units or Groups may have roles.
+          This kind of Actor isn't allowed to have Roles. Only Organizational Units
+          or Groups may have roles.
     email:
       blacklisted: 'Unfortunately, the address is not valid'
       confirmation: Repetition is incorrect
@@ -112,7 +128,7 @@ en:
       leaving_tenant_failed: There was an error leaving the tenant.
     invalid_app: App context is missing or wrong
     undeletable:
-      one: 'A record from %{total} could not be deleted.'
+      one: A record from %{total} could not be deleted.
       other: ' %{count} of %{total} records could not be deleted.'
   mongoid:
     attributes:
@@ -162,7 +178,8 @@ en:
           attributes:
             ident:
               taken: >-
-                The application already has a functionality for the selected module with this identifier.
+                The application already has a functionality for the selected module
+                with this identifier.
         role:
           attributes:
             description:
@@ -204,12 +221,16 @@ en:
         other: Apps
       actors/container_apps:
         one: Container for Apps
+        other: ''
       actors/container_enterprises:
         one: Container for Enterprises
+        other: ''
       actors/container_tenants:
         one: Container for Tenant
+        other: ''
       actors/container_users:
         one: Container for Enterprises
+        other: ''
       actors/group:
         one: Group
         other: Groups
@@ -231,7 +252,8 @@ en:
   mailer:
     greeting: 'Hello %{user_name}.'
     manual_link_instructions: >-
-      In case the button is not clickable, please copy the following URL into your Browser:
+      In case the button is not clickable, please copy the following URL into your
+      Browser:
     regards: 'Your %{app_name} Team'
     footer_html: |-
       This mail was send by identity-management (https://github.com/Samedis-care/identity-management)<br />
