@@ -19,8 +19,8 @@ de:
     maintenance_error: "Das System befindet sich derzeit im Wartungsmodus. Bitte versuche
       es später noch einmal. Grund: %{reason}"
     oauth_error: Der Remote-Authentifizierungsserver hat nicht die für die Anmeldung
-      erforderlichen Mindestinformationen zurückgegeben (vertrauenswürdige E-Mail-Adresse,
-      Vorname und Nachname).
+      erforderlichen Mindestinformationen zurückgegeben (vertrauenswürdige E-Mail,
+      Vor- und Nachname).
   auth:
     error:
       forbidden: Unzureichende Rechte.
