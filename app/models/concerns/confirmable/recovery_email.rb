@@ -56,7 +56,7 @@ module Confirmable::RecoveryEmail
 
     # expiry
     def exp
-      @exp ||= 5.minutes.from_now.to_i
+      @exp ||= 15.minutes.from_now.to_i
     end
 
     def iat
