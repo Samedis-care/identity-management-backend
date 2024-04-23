@@ -21,6 +21,10 @@ de:
     oauth_error: Der Remote-Authentifizierungsserver hat nicht die für die Anmeldung
       erforderlichen Mindestinformationen zurückgegeben (vertrauenswürdige E-Mail,
       Vor- und Nachname).
+    oauth_untrusted_email: Die von %{host} zurückgegebene E-Mail-Adresse %{email}
+      ist nicht vertrauenswürdig!
+    oauth_failed: Die Kontaktaufnahme mit dem Remote-Authentifizierungsserver unter
+      %{host} ist fehlgeschlagen!
   auth:
     error:
       forbidden: Unzureichende Rechte.
@@ -92,6 +96,30 @@ de:
           sind die Zugangsinformationen um sich einzuloggen. Nach dem Login kannst
           du dein Passwort in deinem Profil vergeben.
         subject: 'Zugangsdatem Benutzer: %{user_name}'
+      recovery_instructions:
+        message: "Mit deiner Wiederherstellungs-E-Mail-Adresse kannst du dich einloggen,
+          falls du keinen Zugriff mehr auf die in deinem Konto gespeicherte E-Mail-Adresse
+          hast (z. B. wenn du nicht mehr in der Einrichtung arbeitest). Danach kannst
+          du die primäre E-Mail-Adresse ändern, um wieder vollen Zugriff auf dein
+          Konto zu erhalten.\n\nBitte beachte: Wenn du dich mit deiner Wiederherstellungs-E-Mail-Adresse
+          anmeldest, entfernen wir aus Sicherheitsgründen alle zugehörigen Einrichtungen.
+          Das bedeutet, dass du neue Einladungen von den Einrichtungen erhalten musst,
+          zu denen du weiterhin Zugang benötigst.\n\nUm die Wiederherstellung zu starten,
+          klicke bitte auf den folgenden Link:"
+        started: Eine E-Mail mit Anweisungen zum Wiederherstellungsprozess wurde gesendet.
+        action: Konto wiederherstellen
+        subject: Konto-Wiederherstellung...
+        header: Hallo von %{app_name}!
+      recovery_confirmation_instructions:
+        action: Bestätige Deine Wiederherstellungs-E-Mail-Adresse
+        message: "Mit der Recovery-Email-Adresse kannst Du, wenn Du nicht mehr über
+          den Zugriff Deiner im Konto hinterlegten E-Mail Adresse verfügst (z.B. wenn
+          Du nicht mehr in der Einrichtung arbeitest), Dich an dem Konto anmelden
+          und anschließend die primäre E-Mail Adresse ändern um so wieder vollen Zugriff
+          auf Dein Konto zu erhalten.\n\nUm die Wiederherstellungs-E-Mail-Adresse
+          zu bestätigen, klicken bitte auf den folgenden Link:"
+        subject: Bestätige Deine %{app_name}-Wiederherstellungs-E-Mail-Adresse
+        header: Hallo von %{app_name}!
     user:
       recaptcha_invalid: Das übermittelte Captcha ist leider nicht gültig.
       unverified: >-
@@ -111,6 +139,7 @@ de:
     missing_app: Es wurde keine App definiert um diese Aktion auszuführen
     user:
       quit_failed: Beim Verlassen der App ist ein Fehler aufgetreten.
+      leaving_tenant_failed: Fehler beim Verlassen der Einrichtung aufgetreten.
     invalid_app: App-Kontext fehlt oder ist falsch
     undeletable:
       one: Ein Datensatz von %{total} konnte nicht gelöscht werden.
