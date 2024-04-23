@@ -53,7 +53,11 @@ en:
         subject: 'Confirm your %{app_name} recovery email address'
         header: 'Hello from %{app_name}!'
         message: >-
-          *** EXPLAIN WHAT AND WHY HERE... ***
+          With the recovery e-mail address, if you no longer have access to the e-mail
+          address stored in your account (e.g. if you no longer work at the facility),
+          you can log in to the account and then change the primary e-mail address
+          to regain full access to your account.
+
 
           To confirm your recovery email address, please click the following link:
       recovery_instructions:
@@ -62,7 +66,16 @@ en:
         subject: 'Account recovery...'
         header: 'Hello from %{app_name}!'
         message: >-
-          *** EXPLAIN WHAT AND WHY HERE... ***
+          With the recovery e-mail address, if you no longer have access to the e-mail
+          address stored in your account (e.g. if you no longer work at the facility),
+          you can log in to the account and then change the primary e-mail address
+          to regain full access to your account.
+
+
+          Please note: If you continue and log in to your recovery email address,
+          we will remove all associated facilities for security reasons, so you will
+          need to get new invites from the facilities you still need access to.
+
 
           To start the recovery, please click the following link:
       email_change:
