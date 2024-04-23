@@ -8,22 +8,33 @@ de:
     authorization_error: Berechtigungsfehler
     object_id_invalid_error: Es wurde eine ungültige Objekt-ID angegeben
     malformed_csv_error: >-
-      CSV Format ist ungültig. Zeichensatz Encoding muß UTF-8 (ohne BOM) sein. Das Format darf keine Kopfzeilen enthalten. Als Spaltentrenner Semikolon verwenden. Doppeltes-Anführungszeichen für Textwerte sofern nötig.
+      CSV Format ist ungültig. Zeichensatz Encoding muß UTF-8 (ohne BOM) sein. Das
+      Format darf keine Kopfzeilen enthalten. Als Spaltentrenner Semikolon verwenden.
+      Doppeltes-Anführungszeichen für Textwerte sofern nötig.
     smtp_syntax_error: >-
-      Die Mail konnte nicht versendet werden. Bitte überprüfe die Empfängeradresse auf ungültige Zeichen.
-    maintenance_readonly_error: "Das System befindet sich im schreibgeschützten Wartungsmodus. Bitte versuche es später erneut. Grund: %{reason}"
-    maintenance_error: "Das System befindet sich derzeit im Wartungsmodus. Bitte versuche es später noch einmal. Grund: %{reason}"
+      Die Mail konnte nicht versendet werden. Bitte überprüfe die Empfängeradresse
+      auf ungültige Zeichen.
+    maintenance_readonly_error: "Das System befindet sich im schreibgeschützten Wartungsmodus.
+      Bitte versuche es später erneut. Grund: %{reason}"
+    maintenance_error: "Das System befindet sich derzeit im Wartungsmodus. Bitte versuche
+      es später noch einmal. Grund: %{reason}"
+    oauth_error: Der Remote-Authentifizierungsserver hat nicht die für die Anmeldung
+      erforderlichen Mindestinformationen zurückgegeben (vertrauenswürdige E-Mail-Adresse,
+      Vorname und Nachname).
   auth:
     error:
       forbidden: Unzureichende Rechte.
       grant_type_invalid: Nicht autorisiert. Die Übergabe Daten sind ungültig.
-      invalid_request: Die Anforderung ist ungültig oder der erforderliche Parameter fehlt.
+      invalid_request: Die Anforderung ist ungültig oder der erforderliche Parameter
+        fehlt.
       login_incorrect: Die übermittelten Anmeldeinformationen sind nicht korrekt.
-      password_token_invalid: Der Link zum zurücksetzen des Passworts ist nicht länger gültig.
+      password_token_invalid: Der Link zum zurücksetzen des Passworts ist nicht länger
+        gültig.
       missing_tenant_context: Mandantenkontext fehlt.
       token_expired: Nicht autorisiert. Das Sicherheitstoken ist abgelaufen.
       token_invalid: Nicht autorisiert. Das Sicherheitstoken ist ungültig.
-      unauthenticated: Anmeldung fehlgeschlagen. Der Sicherheitstoken ist ungültig oder fehlt.
+      unauthenticated: Anmeldung fehlgeschlagen. Der Sicherheitstoken ist ungültig
+        oder fehlt.
       otp_required: Anmeldung unvollständig. Einmalpasswort noch nicht angegeben.
       otp_invalid: Dein Einmalpasswort ist ungültig oder abgelaufen.
       otp_too_many_tries: Zu viele ungültige Einmalkennwortversuche.
@@ -32,17 +43,20 @@ de:
   devise:
     mailer:
       account_confirm: Danke für deine Bestätigung. Dein Zugang wurde aktiviert.
-      account_confirm_resend: 'Wir haben eine Bestätigungsmail an deine E-Mail Adresse (%{email}) gesendet.'
+      account_confirm_resend: 'Wir haben eine Bestätigungsmail an deine E-Mail Adresse
+        (%{email}) gesendet.'
       confirmation_instructions:
         action: E-Mail bestätigen
         subject: 'Bestätige die Erstellung deines %{app_name}-Kontos'
         header: 'Willkommen bei %{app_name}!'
-        message: 'Um Deine E-Mail Adresse zu bestätigen, klicke bitte auf folgenden Link:'
+        message: 'Um Deine E-Mail Adresse zu bestätigen, klicke bitte auf folgenden
+          Link:'
       email_change:
         subject: Änderung der E-Mail Adresse
         header: Wir haben Deine Anfrage erhalten
         message_html: >-
-          Deine E-Mail Adresse wird auf <a href="mailto:%{email_new}">%{email_new}</a> geändert.<br />
+          Deine E-Mail Adresse wird auf <a href="mailto:%{email_new}">%{email_new}</a>
+          geändert.<br />
 
           <br />
 
@@ -53,9 +67,11 @@ de:
         subject: Passwortänderung
         header: Dein Passwort wurde erfolgreich geändert.
         message_html: >-
-          Solltest Du diese Anfrage nicht vorgenommen haben, setze dich bitte umgehend mit unserem Support in Verbindung: <a href="mailto:%{support_email}">%{support_email}</a>
+          Solltest Du diese Anfrage nicht vorgenommen haben, setze dich bitte umgehend
+          mit unserem Support in Verbindung: <a href="mailto:%{support_email}">%{support_email}</a>
       registered: >-
-        Bitte überprüfe deine E-Mails, um die Registrierung zu bestätigen. Dein Konto %{email} wurde erfolgreich erstellt und wird nach Bestätigung aktiviert.
+        Bitte überprüfe deine E-Mails, um die Registrierung zu bestätigen. Dein Konto
+        %{email} wurde erfolgreich erstellt und wird nach Bestätigung aktiviert.
       reset_password_instructions:
         subject: Anweisungen zum Zurücksetzen des Passworts
         header: Wir haben deine Anfrage erhalten
@@ -64,25 +80,31 @@ de:
         thanks: 'Dein %{app_name} Team'
         message_1_html: Du kannst dein Passwort jetzt zurücksetzen
         message_2_html: >-
-          Du hast nicht um ein neues Passwort gebeten?<br /> Dann kannst Du diese E-Mail ignorieren.
+          Du hast nicht um ein neues Passwort gebeten?<br /> Dann kannst Du diese
+          E-Mail ignorieren.
       reset_password_msg: >-
-        Ein Link zum Zurücksetzen deines Passworts wurde an deine E-Mail-Adresse gesendet (%{email}). Bitte folge diesem Link, um ein neues Passwort zu vergeben.
+        Ein Link zum Zurücksetzen deines Passworts wurde an deine E-Mail-Adresse gesendet
+        (%{email}). Bitte folge diesem Link, um ein neues Passwort zu vergeben.
       send_password:
         link_text: Klicken um die Webseite aufzurufen.
         message: >-
-          Du wurdest mit der Rolle %{role_name} in %{app_name} hinzugefügt. Nachfolgend sind die Zugangsinformationen um sich einzuloggen. Nach dem Login kannst du dein Passwort in deinem Profil vergeben.
+          Du wurdest mit der Rolle %{role_name} in %{app_name} hinzugefügt. Nachfolgend
+          sind die Zugangsinformationen um sich einzuloggen. Nach dem Login kannst
+          du dein Passwort in deinem Profil vergeben.
         subject: 'Zugangsdatem Benutzer: %{user_name}'
     user:
       recaptcha_invalid: Das übermittelte Captcha ist leider nicht gültig.
       unverified: >-
-        Dieser Zugang wurde noch nicht bestätigt. Bitte bestätige zuerst Deine E-Mail Adresse.
+        Dieser Zugang wurde noch nicht bestätigt. Bitte bestätige zuerst Deine E-Mail
+        Adresse.
   errors:
     actor:
       name_is_invalid: Der ausgewählte Name ist ungültig
     actor_role:
       actor:
         may_have_roles: >-
-          Diese Art von Akteur darf keine Rollen haben. Nur Organisationseinheiten oder Gruppen können Rollen haben.
+          Diese Art von Akteur darf keine Rollen haben. Nur Organisationseinheiten
+          oder Gruppen können Rollen haben.
     email:
       blacklisted: 'Adresse ist leider nicht gültig'
       confirmation: Wiederholung ist inkorrekt
@@ -91,7 +113,7 @@ de:
       quit_failed: Beim Verlassen der App ist ein Fehler aufgetreten.
     invalid_app: App-Kontext fehlt oder ist falsch
     undeletable:
-      one: 'Ein Datensatz von %{total} konnte nicht gelöscht werden.'
+      one: Ein Datensatz von %{total} konnte nicht gelöscht werden.
       other: '%{count} von %{total} Datensätzen konnten nicht gelöscht werden.'
   mongoid:
     attributes:
@@ -128,7 +150,8 @@ de:
         actor:
           attributes:
             name:
-              uniqueness: 'Der gewählte Name "%{value}" existiert bereits in dieser Ebene.'
+              uniqueness: 'Der gewählte Name "%{value}" existiert bereits in dieser
+                Ebene.'
             parent_id:
               invalid: Ungültiger Elternknoten.
             short_name:
@@ -136,12 +159,14 @@ de:
         content:
           attributes:
             name:
-              uniqueness: Es gibt für die Anwendung bereits einen Inhalt mit dieser Version.
+              uniqueness: Es gibt für die Anwendung bereits einen Inhalt mit dieser
+                Version.
         functionality:
           attributes:
             ident:
               taken: >-
-                Es gibt in der Anwendung bereits eine Funktionalität zum gewählten Modul mit diesem Identifikator.
+                Es gibt in der Anwendung bereits eine Funktionalität zum gewählten
+                Modul mit diesem Identifikator.
         role:
           attributes:
             description:
@@ -182,13 +207,17 @@ de:
         one: Apps
         other: Apps
       actors/container_apps:
-        one: "Kontäner für Apps "
+        one: 'Kontäner für Apps '
+        other: ''
       actors/container_enterprises:
         one: Kontäner für Enterprises
+        other: ''
       actors/container_tenants:
         one: Kontäner für Mandanten
+        other: ''
       actors/container_users:
         one: Kontäner für Enterprises
+        other: ''
       actors/group:
         one: Gruppe
         other: Gruppen
@@ -210,7 +239,8 @@ de:
   mailer:
     greeting: 'Hallo %{user_name}.'
     manual_link_instructions: >-
-      Wenn der Klick auf den Button nicht funktioniert, kopiere die folgende Adresse in Deinen Web-Browser:
+      Wenn der Klick auf den Button nicht funktioniert, kopiere die folgende Adresse
+      in Deinen Web-Browser:
     regards: 'Dein %{app_name} Team'
     footer_html: |-
       Diese Mail wurde von Identity-Management (https://github.com/Samedis-care/identity-management) gesendet<br />
