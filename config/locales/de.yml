@@ -46,7 +46,8 @@ de:
       unauthorized_tenant: Zugriff verweigert. Kein Zugriff auf diesen Mandanten erlaubt.
   devise:
     mailer:
-      account_confirm: Danke für deine Bestätigung. Dein Zugang wurde aktiviert.
+      account_confirm: Vielen Dank für die Bestätigung. Dein Konto ist nun für die
+        E-Mail-Wiederherstellung eingerichtet.
       account_confirm_resend: 'Wir haben eine Bestätigungsmail an deine E-Mail Adresse
         (%{email}) gesendet.'
       confirmation_instructions:
