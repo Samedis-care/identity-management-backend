@@ -75,15 +75,31 @@ module Confirmable::RecoveryEmail
     end
 
     def valid_token?(token)
-      return false unless user.recovery_token.presence
-      return false unless user.recovery_email.presence
-      return false unless user.recovery_token == token
+      unless user.recovery_token.presence
+        user.errors.add(:recovery_token, I18n.t('errors.user.recovery_token.unset'))
+        return false
+      end
+      unless user.recovery_email.presence
+        user.errors.add(:recovery_token, I18n.t('errors.user.recovery_token.recovery_email_unset'))
+        return false
+      end
+      unless user.recovery_token == token
+        user.errors.add(:recovery_token, I18n.t('errors.user.recovery_token.no_match'))
+        return false
+      end
 
       _token = JWT.decode(token, secret, ALG)&.first
       return false unless _token
 
       true
     rescue JWT::ExpiredSignature
+      user.errors.add(:recovery_token, I18n.t('errors.user.recovery_token.expired'))
+      false
+    rescue JWT::VerificationError
+      user.errors.add(:recovery_token, I18n.t('errors.user.recovery_token.verification_error'))
+      false
+    rescue JWT::DecodeError
+      user.errors.add(:recovery_token, I18n.t('errors.user.recovery_token.decode_error'))
       false
     end
   end

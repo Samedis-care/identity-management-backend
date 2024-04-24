@@ -137,6 +137,13 @@ en:
       confirmation: Repetition is incorrect
     missing_app: No app was defined to perform this action
     user:
+      recovery_token:
+        unset: The recovery process has not been started.
+        recovery_email_unset: This user does not have a recovery email configured.
+        no_match: The provided recovery token does not match the expected recovery token.
+        expired: The recovery token has expired. Please re-try the recovery process.
+        verification_error: The recovery token couldn't be verified.
+        decode_error: The recovery token couldn't be decoded.
       quit_failed: There was an error leaving the app.
       leaving_tenant_failed: There was an error leaving the tenant.
     invalid_app: App context is missing or wrong
