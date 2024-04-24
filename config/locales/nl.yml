@@ -43,7 +43,8 @@ nl:
       unauthorized_tenant: Geen toestemming. Geen toegang tot dit account toegestaan.
   devise:
     mailer:
-      account_confirm: Dank je voor jouw bevestiging. Jouw toegang is geactiveerd.
+      account_confirm: Bedankt voor de bevestiging. Uw account is nu ingesteld voor
+        e-mailherstel.
       account_confirm_resend: 'We hebben een bevestigingsmail naar uw e-mailadres
         gestuurd (%{email}).'
       confirmation_instructions:
