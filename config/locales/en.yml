@@ -40,7 +40,8 @@ en:
       unauthorized_tenant: Permission denied. No access to this tenant allowed.
   devise:
     mailer:
-      account_confirm: Thank you for your confirmation. Your access has been activated.
+      account_confirm: Thank you for the confirmation. Your account is now set up
+        for email recovery.
       account_confirm_resend: 'We have sent a confirmation email to your email address
         (%{email}).'
       confirmation_instructions:
