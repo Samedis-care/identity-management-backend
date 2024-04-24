@@ -197,6 +197,7 @@ module Confirmable::RecoveryEmail
     self.unconfirmed_recovery_email = recovery_email
     self.recovery_email = recovery_email_was
     self.recovery_confirmation_token = nil
+    self.recovery_confirmed_at = nil # unset to allow change
     generate_recovery_confirmation_token
   end
 
