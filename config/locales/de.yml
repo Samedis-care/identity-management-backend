@@ -141,6 +141,16 @@ de:
     user:
       quit_failed: Beim Verlassen der App ist ein Fehler aufgetreten.
       leaving_tenant_failed: Fehler beim Verlassen der Einrichtung aufgetreten.
+      recovery_token:
+        unset: Der Wiederherstellungsprozess wurde nicht gestartet.
+        recovery_email_unset: Für diesen Benutzer ist keine Wiederherstellungs-E-Mail
+          konfiguriert.
+        no_match: Das bereitgestellte Wiederherstellungstoken stimmt nicht mit dem
+          erwarteten Wiederherstellungstoken überein.
+        expired: Das Wiederherstellungstoken ist abgelaufen. Bitte versuche den Wiederherstellungsprozess
+          erneut.
+        verification_error: Das Wiederherstellungstoken konnte nicht verifiziert werden.
+        decode_error: Das Wiederherstellungstoken konnte nicht dekodiert werden.
     invalid_app: App-Kontext fehlt oder ist falsch
     undeletable:
       one: Ein Datensatz von %{total} konnte nicht gelöscht werden.
