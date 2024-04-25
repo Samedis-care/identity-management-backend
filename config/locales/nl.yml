@@ -135,6 +135,13 @@ nl:
     user:
       quit_failed: Er is een fout opgetreden bij het verlaten van de app.
       leaving_tenant_failed: Er is een fout opgetreden bij het verlaten van de huurder.
+      recovery_token:
+        no_match: Het opgegeven hersteltoken komt niet overeen met het verwachte hersteltoken.
+        expired: Het hersteltoken is verlopen. Probeer het herstelproces opnieuw.
+        verification_error: Het hersteltoken kan niet worden geverifieerd.
+        decode_error: Het hersteltoken kan niet worden gedecodeerd.
+        recovery_email_unset: Voor deze gebruiker is geen herstel-e-mailadres geconfigureerd.
+        unset: Het herstelproces is niet gestart.
     invalid_app: App-context ontbreekt of is onjuist
     undeletable:
       one: Een record van %{total} kan niet worden verwijderd.
