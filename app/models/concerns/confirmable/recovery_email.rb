@@ -9,8 +9,6 @@ module Confirmable::RecoveryEmail
   extend ActiveSupport::Concern
 
   included do
-    before_create :generate_recovery_confirmation_token, if: :recovery_confirmation_required?
-
     after_update :send_recovery_reconfirmation_instructions, if: :recovery_reconfirmation_required?
     before_update :postpone_recovery_email_change_until_confirmation_and_regenerate_confirmation_token, if: :postpone_recovery_email_change?
 
