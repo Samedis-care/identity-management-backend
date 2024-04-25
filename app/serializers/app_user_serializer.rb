@@ -13,6 +13,7 @@ class AppUserSerializer
   attributes(
    :active,
    :email,
+   :unconfirmed_email,
    :recovery_email,
    :unconfirmed_recovery_email,
    :first_name,
@@ -106,6 +107,7 @@ class AppUserSerializer
           string :id, description: 'unique record id (of mapping)'
           string :actor_id, description: 'unique id of the users account'
           string :email, description: 'the new e-mail address'
+          string :unconfirmed_email, description: 'holds the new email address until it is confirmed'
           string :recovery_email, description: 'a secondary email that can be used to recover an account if access to the main email is lost'
           string :unconfirmed_recovery_email, description: 'holds the chosen recovery email address until it is confirmed'
           boolean :recovered_account, description: 'if true this account was recovered and the main email should be changed'
