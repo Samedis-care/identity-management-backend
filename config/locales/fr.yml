@@ -143,6 +143,15 @@ fr:
     user:
       quit_failed: Une erreur s'est produite en quittant l'application.
       leaving_tenant_failed: Une erreur s'est produite lors du départ du locataire.
+      recovery_token:
+        no_match: Le jeton de récupération fourni ne correspond pas au jeton de récupération
+          attendu.
+        expired: Le jeton de récupération a expiré. Veuillez réessayer le processus
+          de récupération.
+        decode_error: Le jeton de récupération n'a pas pu être décodé.
+        unset: Le processus de récupération n'a pas démarré.
+        recovery_email_unset: Cet utilisateur n'a pas configuré d'e-mail de récupération.
+        verification_error: Le jeton de récupération n'a pas pu être vérifié.
     invalid_app: Le contexte de l'application est manquant ou incorrect
     undeletable:
       one: Un enregistrement de %{total} n'a pas pu être supprimé.
