@@ -19,7 +19,7 @@ module BaseControllerMethods
     rescue_from Net::SMTPFatalError, with: :smtp_syntax_error
     rescue_from MaintenanceMode::ReadOnlyMaintenanceError, with: :read_only_maintenance_error
     rescue_from MaintenanceMode::FullMaintenanceError, with: :full_maintenance_error
-    rescue_from BSON::ObjectId::Invalid, with: :object_id_invalid_error
+    rescue_from BSON::Error::InvalidObjectId, with: :object_id_invalid_error
     rescue_from JSON::ParserError, with: :json_parser_error
   end
 
