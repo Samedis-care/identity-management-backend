@@ -337,7 +337,7 @@ class User < ApplicationDocument
 
   def redirect_path
     @redirect_path ||= nil
-    @redirect_path.to_s
+    @redirect_path.presence || '/'
   end
 
   def host
@@ -730,7 +730,7 @@ class User < ApplicationDocument
     @tenant_access_group_ids ||= super
     unless (@tenant_access_group_ids.try(:keys).any? rescue false)
       @access_group_ids = nil
-      @tenant_access_group_ids = tenant_access_group_ids = determine_tenant_access_group_ids
+      @tenant_access_group_ids = determine_tenant_access_group_ids
       self.save(validate: false) if self.changes.any?
     end
     @tenant_access_group_ids ||= {}
@@ -743,7 +743,7 @@ class User < ApplicationDocument
   def access_group_ids
     raise "MISSING TENANT CONTEXT" unless tenant_context.present?
     #@access_group_ids ||= 
-    tenant_access_group_ids[tenant_context]
+    tenant_access_group_ids[tenant_context.to_s]
   end
 
   def access_group_ids=(selected_ids)
@@ -755,7 +755,7 @@ class User < ApplicationDocument
   def add_access_group_ids(added_ids)
     raise "MISSING TENANT CONTEXT" unless tenant_context.present?
     return unless added_ids.is_a?(Array) && added_ids.any?
-    tenant_access_group_ids[tenant_context] = @access_group_ids_changed = @access_group_ids = (access_group_ids.to_a+added_ids).compact.uniq
+    tenant_access_group_ids[tenant_context.to_s] = @access_group_ids_changed = @access_group_ids = (access_group_ids.to_a+added_ids).compact.uniq
     @access_group_ids
   end
 
@@ -869,7 +869,7 @@ class User < ApplicationDocument
         group.unmap_from!(actor, cache_expire: false)
       end
     end
-    @access_group_ids = tenant_access_group_ids[tenant_context] = _resulting_ids
+    @access_group_ids = tenant_access_group_ids[tenant_context.to_s] = _resulting_ids
   end
 
   def email_blacklisted
