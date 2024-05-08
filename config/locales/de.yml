@@ -151,6 +151,8 @@ de:
           erneut.
         verification_error: Das Wiederherstellungstoken konnte nicht verifiziert werden.
         decode_error: Das Wiederherstellungstoken konnte nicht dekodiert werden.
+      record_not_found_error: Wir konnten kein Benutzerkonto mit dieser E-Mail-Adresse
+        finden.
     invalid_app: App-Kontext fehlt oder ist falsch
     undeletable:
       one: Ein Datensatz von %{total} konnte nicht gelöscht werden.
