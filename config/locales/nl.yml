@@ -142,6 +142,8 @@ nl:
         decode_error: Het hersteltoken kan niet worden gedecodeerd.
         recovery_email_unset: Voor deze gebruiker is geen herstel-e-mailadres geconfigureerd.
         unset: Het herstelproces is niet gestart.
+      record_not_found_error: We konden geen gebruikersaccount met dat e-mailadres
+        vinden.
     invalid_app: App-context ontbreekt of is onjuist
     undeletable:
       one: Een record van %{total} kan niet worden verwijderd.
