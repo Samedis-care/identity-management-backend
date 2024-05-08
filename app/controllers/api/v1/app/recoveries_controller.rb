@@ -13,6 +13,10 @@ class Api::V1::App::RecoveriesController < ApplicationController
     recovery_user = User.login_allowed.where(email: params[:email]).first
 
     unless recovery_user.is_a?(User)
+      render_jsonapi_error(I18n.t('errors.user.record_not_found_error'), 'record_error', 404) and return
+    end
+
+    unless recovery_user.recovery_email
       render_jsonapi_error(I18n.t('errors.user.recovery_token.recovery_email_unset'), 'record_error', 400) and return
     end
 

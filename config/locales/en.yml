@@ -138,6 +138,7 @@ en:
       confirmation: Repetition is incorrect
     missing_app: No app was defined to perform this action
     user:
+      record_not_found_error: We could not find a user account with that email address.
       recovery_token:
         unset: The recovery process has not been started.
         recovery_email_unset: This user does not have a recovery email configured.
