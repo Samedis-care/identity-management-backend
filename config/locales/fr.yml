@@ -152,6 +152,8 @@ fr:
         unset: Le processus de récupération n'a pas démarré.
         recovery_email_unset: Cet utilisateur n'a pas configuré d'e-mail de récupération.
         verification_error: Le jeton de récupération n'a pas pu être vérifié.
+      record_not_found_error: Nous n'avons pas trouvé de compte utilisateur avec cette
+        adresse e-mail.
     invalid_app: Le contexte de l'application est manquant ou incorrect
     undeletable:
       one: Un enregistrement de %{total} n'a pas pu être supprimé.
