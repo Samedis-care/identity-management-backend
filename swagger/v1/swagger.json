@@ -2962,6 +2962,22 @@
               "type": "string",
               "description": "the new e-mail address"
             },
+            "unconfirmed_email": {
+              "type": "string",
+              "description": "holds the new email address until it is confirmed"
+            },
+            "recovery_email": {
+              "type": "string",
+              "description": "a secondary email that can be used to recover an account if access to the main email is lost"
+            },
+            "unconfirmed_recovery_email": {
+              "type": "string",
+              "description": "holds the chosen recovery email address until it is confirmed"
+            },
+            "recovered_account": {
+              "type": "boolean",
+              "description": "if true this account was recovered and the main email should be changed"
+            },
             "first_name": {
               "type": "string",
               "default": "short name of an organizational unit or group",
@@ -3108,6 +3124,22 @@
           "email": {
             "type": "string",
             "description": "the new e-mail address"
+          },
+          "unconfirmed_email": {
+            "type": "string",
+            "description": "holds the new email address until it is confirmed"
+          },
+          "recovery_email": {
+            "type": "string",
+            "description": "a secondary email that can be used to recover an account if access to the main email is lost"
+          },
+          "unconfirmed_recovery_email": {
+            "type": "string",
+            "description": "holds the chosen recovery email address until it is confirmed"
+          },
+          "recovered_account": {
+            "type": "boolean",
+            "description": "if true this account was recovered and the main email should be changed"
           },
           "first_name": {
             "type": "string",
@@ -3417,6 +3449,22 @@
             "type": "string",
             "description": "the new e-mail address"
           },
+          "unconfirmed_email": {
+            "type": "string",
+            "description": "holds the new email address until it is confirmed"
+          },
+          "recovery_email": {
+            "type": "string",
+            "description": "a secondary email that can be used to recover an account if access to the main email is lost"
+          },
+          "unconfirmed_recovery_email": {
+            "type": "string",
+            "description": "holds the chosen recovery email address until it is confirmed"
+          },
+          "recovered_account": {
+            "type": "boolean",
+            "description": "if true this account was recovered and the main email should be changed"
+          },
           "first_name": {
             "type": "string",
             "default": "short name of an organizational unit or group",
@@ -3655,6 +3703,22 @@
           "email": {
             "type": "string",
             "description": "the new e-mail address"
+          },
+          "unconfirmed_email": {
+            "type": "string",
+            "description": "holds the new email address until it is confirmed"
+          },
+          "recovery_email": {
+            "type": "string",
+            "description": "a secondary email that can be used to recover an account if access to the main email is lost"
+          },
+          "unconfirmed_recovery_email": {
+            "type": "string",
+            "description": "holds the chosen recovery email address until it is confirmed"
+          },
+          "recovered_account": {
+            "type": "boolean",
+            "description": "if true this account was recovered and the main email should be changed"
           },
           "first_name": {
             "type": "string",
@@ -24570,6 +24634,22 @@
             "type": "string",
             "description": "the new e-mail address"
           },
+          "unconfirmed_email": {
+            "type": "string",
+            "description": "holds the new email address until it is confirmed"
+          },
+          "recovery_email": {
+            "type": "string",
+            "description": "a secondary email that can be used to recover an account if access to the main email is lost"
+          },
+          "unconfirmed_recovery_email": {
+            "type": "string",
+            "description": "holds the chosen recovery email address until it is confirmed"
+          },
+          "recovered_account": {
+            "type": "boolean",
+            "description": "if true this account was recovered and the main email should be changed"
+          },
           "first_name": {
             "type": "string",
             "default": "short name of an organizational unit or group",
@@ -24894,6 +24974,22 @@
           "email": {
             "type": "string",
             "description": "the new e-mail address"
+          },
+          "unconfirmed_email": {
+            "type": "string",
+            "description": "holds the new email address until it is confirmed"
+          },
+          "recovery_email": {
+            "type": "string",
+            "description": "a secondary email that can be used to recover an account if access to the main email is lost"
+          },
+          "unconfirmed_recovery_email": {
+            "type": "string",
+            "description": "holds the chosen recovery email address until it is confirmed"
+          },
+          "recovered_account": {
+            "type": "boolean",
+            "description": "if true this account was recovered and the main email should be changed"
           },
           "first_name": {
             "type": "string",
@@ -28404,6 +28500,22 @@
             "type": "string",
             "description": "the new e-mail address"
           },
+          "unconfirmed_email": {
+            "type": "string",
+            "description": "holds the new email address until it is confirmed"
+          },
+          "recovery_email": {
+            "type": "string",
+            "description": "a secondary email that can be used to recover an account if access to the main email is lost"
+          },
+          "unconfirmed_recovery_email": {
+            "type": "string",
+            "description": "holds the chosen recovery email address until it is confirmed"
+          },
+          "recovered_account": {
+            "type": "boolean",
+            "description": "if true this account was recovered and the main email should be changed"
+          },
           "first_name": {
             "type": "string",
             "default": "short name of an organizational unit or group",
@@ -28725,6 +28837,22 @@
             "type": "string",
             "description": "the new e-mail address"
           },
+          "unconfirmed_email": {
+            "type": "string",
+            "description": "holds the new email address until it is confirmed"
+          },
+          "recovery_email": {
+            "type": "string",
+            "description": "a secondary email that can be used to recover an account if access to the main email is lost"
+          },
+          "unconfirmed_recovery_email": {
+            "type": "string",
+            "description": "holds the chosen recovery email address until it is confirmed"
+          },
+          "recovered_account": {
+            "type": "boolean",
+            "description": "if true this account was recovered and the main email should be changed"
+          },
           "first_name": {
             "type": "string",
             "default": "short name of an organizational unit or group",
@@ -28973,6 +29101,22 @@
             "type": "string",
             "description": "the new e-mail address"
           },
+          "unconfirmed_email": {
+            "type": "string",
+            "description": "holds the new email address until it is confirmed"
+          },
+          "recovery_email": {
+            "type": "string",
+            "description": "a secondary email that can be used to recover an account if access to the main email is lost"
+          },
+          "unconfirmed_recovery_email": {
+            "type": "string",
+            "description": "holds the chosen recovery email address until it is confirmed"
+          },
+          "recovered_account": {
+            "type": "boolean",
+            "description": "if true this account was recovered and the main email should be changed"
+          },
           "first_name": {
             "type": "string",
             "default": "short name of an organizational unit or group",
@@ -29197,6 +29341,22 @@
                       "type": "string",
                       "description": "the new e-mail address"
                     },
+                    "unconfirmed_email": {
+                      "type": "string",
+                      "description": "holds the new email address until it is confirmed"
+                    },
+                    "recovery_email": {
+                      "type": "string",
+                      "description": "a secondary email that can be used to recover an account if access to the main email is lost"
+                    },
+                    "unconfirmed_recovery_email": {
+                      "type": "string",
+                      "description": "holds the chosen recovery email address until it is confirmed"
+                    },
+                    "recovered_account": {
+                      "type": "boolean",
+                      "description": "if true this account was recovered and the main email should be changed"
+                    },
                     "first_name": {
                       "type": "string",
                       "default": "short name of an organizational unit or group",
@@ -29353,6 +29513,22 @@
           "email": {
             "type": "string",
             "description": "the new e-mail address"
+          },
+          "unconfirmed_email": {
+            "type": "string",
+            "description": "holds the new email address until it is confirmed"
+          },
+          "recovery_email": {
+            "type": "string",
+            "description": "a secondary email that can be used to recover an account if access to the main email is lost"
+          },
+          "unconfirmed_recovery_email": {
+            "type": "string",
+            "description": "holds the chosen recovery email address until it is confirmed"
+          },
+          "recovered_account": {
+            "type": "boolean",
+            "description": "if true this account was recovered and the main email should be changed"
           },
           "first_name": {
             "type": "string",
@@ -29593,6 +29769,22 @@
             "type": "string",
             "description": "the new e-mail address"
           },
+          "unconfirmed_email": {
+            "type": "string",
+            "description": "holds the new email address until it is confirmed"
+          },
+          "recovery_email": {
+            "type": "string",
+            "description": "a secondary email that can be used to recover an account if access to the main email is lost"
+          },
+          "unconfirmed_recovery_email": {
+            "type": "string",
+            "description": "holds the chosen recovery email address until it is confirmed"
+          },
+          "recovered_account": {
+            "type": "boolean",
+            "description": "if true this account was recovered and the main email should be changed"
+          },
           "first_name": {
             "type": "string",
             "default": "short name of an organizational unit or group",
@@ -29817,6 +30009,22 @@
                       "type": "string",
                       "description": "the new e-mail address"
                     },
+                    "unconfirmed_email": {
+                      "type": "string",
+                      "description": "holds the new email address until it is confirmed"
+                    },
+                    "recovery_email": {
+                      "type": "string",
+                      "description": "a secondary email that can be used to recover an account if access to the main email is lost"
+                    },
+                    "unconfirmed_recovery_email": {
+                      "type": "string",
+                      "description": "holds the chosen recovery email address until it is confirmed"
+                    },
+                    "recovered_account": {
+                      "type": "boolean",
+                      "description": "if true this account was recovered and the main email should be changed"
+                    },
                     "first_name": {
                       "type": "string",
                       "default": "short name of an organizational unit or group",
@@ -29973,6 +30181,22 @@
           "email": {
             "type": "string",
             "description": "the new e-mail address"
+          },
+          "unconfirmed_email": {
+            "type": "string",
+            "description": "holds the new email address until it is confirmed"
+          },
+          "recovery_email": {
+            "type": "string",
+            "description": "a secondary email that can be used to recover an account if access to the main email is lost"
+          },
+          "unconfirmed_recovery_email": {
+            "type": "string",
+            "description": "holds the chosen recovery email address until it is confirmed"
+          },
+          "recovered_account": {
+            "type": "boolean",
+            "description": "if true this account was recovered and the main email should be changed"
           },
           "first_name": {
             "type": "string",
@@ -30196,6 +30420,22 @@
                       "type": "string",
                       "description": "the new e-mail address"
                     },
+                    "unconfirmed_email": {
+                      "type": "string",
+                      "description": "holds the new email address until it is confirmed"
+                    },
+                    "recovery_email": {
+                      "type": "string",
+                      "description": "a secondary email that can be used to recover an account if access to the main email is lost"
+                    },
+                    "unconfirmed_recovery_email": {
+                      "type": "string",
+                      "description": "holds the chosen recovery email address until it is confirmed"
+                    },
+                    "recovered_account": {
+                      "type": "boolean",
+                      "description": "if true this account was recovered and the main email should be changed"
+                    },
                     "first_name": {
                       "type": "string",
                       "default": "short name of an organizational unit or group",
@@ -30352,6 +30592,22 @@
           "email": {
             "type": "string",
             "description": "the new e-mail address"
+          },
+          "unconfirmed_email": {
+            "type": "string",
+            "description": "holds the new email address until it is confirmed"
+          },
+          "recovery_email": {
+            "type": "string",
+            "description": "a secondary email that can be used to recover an account if access to the main email is lost"
+          },
+          "unconfirmed_recovery_email": {
+            "type": "string",
+            "description": "holds the chosen recovery email address until it is confirmed"
+          },
+          "recovered_account": {
+            "type": "boolean",
+            "description": "if true this account was recovered and the main email should be changed"
           },
           "first_name": {
             "type": "string",
@@ -30570,6 +30826,22 @@
                       "type": "string",
                       "description": "the new e-mail address"
                     },
+                    "unconfirmed_email": {
+                      "type": "string",
+                      "description": "holds the new email address until it is confirmed"
+                    },
+                    "recovery_email": {
+                      "type": "string",
+                      "description": "a secondary email that can be used to recover an account if access to the main email is lost"
+                    },
+                    "unconfirmed_recovery_email": {
+                      "type": "string",
+                      "description": "holds the chosen recovery email address until it is confirmed"
+                    },
+                    "recovered_account": {
+                      "type": "boolean",
+                      "description": "if true this account was recovered and the main email should be changed"
+                    },
                     "first_name": {
                       "type": "string",
                       "default": "short name of an organizational unit or group",
@@ -30726,6 +30998,22 @@
           "email": {
             "type": "string",
             "description": "the new e-mail address"
+          },
+          "unconfirmed_email": {
+            "type": "string",
+            "description": "holds the new email address until it is confirmed"
+          },
+          "recovery_email": {
+            "type": "string",
+            "description": "a secondary email that can be used to recover an account if access to the main email is lost"
+          },
+          "unconfirmed_recovery_email": {
+            "type": "string",
+            "description": "holds the chosen recovery email address until it is confirmed"
+          },
+          "recovered_account": {
+            "type": "boolean",
+            "description": "if true this account was recovered and the main email should be changed"
           },
           "first_name": {
             "type": "string",
@@ -30942,6 +31230,22 @@
                       "type": "string",
                       "description": "the new e-mail address"
                     },
+                    "unconfirmed_email": {
+                      "type": "string",
+                      "description": "holds the new email address until it is confirmed"
+                    },
+                    "recovery_email": {
+                      "type": "string",
+                      "description": "a secondary email that can be used to recover an account if access to the main email is lost"
+                    },
+                    "unconfirmed_recovery_email": {
+                      "type": "string",
+                      "description": "holds the chosen recovery email address until it is confirmed"
+                    },
+                    "recovered_account": {
+                      "type": "boolean",
+                      "description": "if true this account was recovered and the main email should be changed"
+                    },
                     "first_name": {
                       "type": "string",
                       "default": "short name of an organizational unit or group",
@@ -31098,6 +31402,22 @@
           "email": {
             "type": "string",
             "description": "the new e-mail address"
+          },
+          "unconfirmed_email": {
+            "type": "string",
+            "description": "holds the new email address until it is confirmed"
+          },
+          "recovery_email": {
+            "type": "string",
+            "description": "a secondary email that can be used to recover an account if access to the main email is lost"
+          },
+          "unconfirmed_recovery_email": {
+            "type": "string",
+            "description": "holds the chosen recovery email address until it is confirmed"
+          },
+          "recovered_account": {
+            "type": "boolean",
+            "description": "if true this account was recovered and the main email should be changed"
           },
           "first_name": {
             "type": "string",
@@ -31328,6 +31648,22 @@
           "email": {
             "type": "string",
             "description": "the new e-mail address"
+          },
+          "unconfirmed_email": {
+            "type": "string",
+            "description": "holds the new email address until it is confirmed"
+          },
+          "recovery_email": {
+            "type": "string",
+            "description": "a secondary email that can be used to recover an account if access to the main email is lost"
+          },
+          "unconfirmed_recovery_email": {
+            "type": "string",
+            "description": "holds the chosen recovery email address until it is confirmed"
+          },
+          "recovered_account": {
+            "type": "boolean",
+            "description": "if true this account was recovered and the main email should be changed"
           },
           "first_name": {
             "type": "string",
