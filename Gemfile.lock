@@ -447,6 +447,7 @@ DEPENDENCIES
   caxlsx
   clipboard
   colorize
+  csv
   devise-doorkeeper
   doorkeeper
   doorkeeper-mongodb (~> 5)

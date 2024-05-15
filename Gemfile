@@ -5,6 +5,7 @@ gem 'rails', '~> 7.1.2'
 
 gem 'bcrypt'
 gem 'bootsnap', require: false
+gem 'csv'
 gem 'enumerize'
 gem 'ffaker'
 gem 'mongoid'
