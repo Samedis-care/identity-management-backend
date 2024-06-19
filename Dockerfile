@@ -1,4 +1,4 @@
-FROM ruby:3.3.2-bullseye
+FROM ruby:3.3.3-bullseye
 
 RUN apt-get update --fix-missing \
   && apt-get install -y --no-install-recommends libvips-dev openssl libjemalloc2 libsnappy-dev curl \
