@@ -20,6 +20,7 @@ class Api::V1::App::RecoveriesController < ApplicationController
       render_jsonapi_error(I18n.t('errors.user.recovery_token.recovery_email_unset'), 'record_error', 400) and return
     end
 
+    recovery_user.app_context = params[:app]
     recovery_user.send_recovery_instructions
 
     render_jsonapi_msg({
