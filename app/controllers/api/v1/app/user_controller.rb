@@ -46,6 +46,7 @@ class Api::V1::App::UserController < Api::V1::JsonApiController
   def update
     begin
       user = record_update
+      user.app_context = params[:app]
       if params_update_with_password[:password].present?
         user.update_with_password(params_update_with_password)
         # delete all but current token of this user

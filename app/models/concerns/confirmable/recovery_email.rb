@@ -167,7 +167,7 @@ module Confirmable::RecoveryEmail
 
   # Send confirmation instructions by email
   def send_recovery_instructions
-    generate_recovery_token! unless recovery_token
+    generate_recovery_token!
 
     opts = { to: recovery_email }
     send_devise_notification(:recovery_instructions, recovery_token, opts)
