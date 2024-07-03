@@ -121,6 +121,9 @@ de:
           zu bestätigen, klicken bitte auf den folgenden Link:"
         subject: Bestätige Deine %{app_name}-Wiederherstellungs-E-Mail-Adresse
         header: Hallo von %{app_name}!
+      recovery_email_confirm: Vielen Dank für die Bestätigung. Dein Konto ist nun
+        für die E-Mail-Wiederherstellung eingerichtet.
+      email_change_confirm: Vielen Dank für Deine Bestätigung. Die E-Mail wurde geändert.
     user:
       recaptcha_invalid: Das übermittelte Captcha ist leider nicht gültig.
       unverified: >-
