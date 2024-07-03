@@ -44,8 +44,7 @@ fr:
       unauthorized_tenant: Permission refusée. Aucun accès à ce locataire autorisé.
   devise:
     mailer:
-      account_confirm: Merci pour la confirmation. Votre compte est maintenant configuré
-        pour la récupération des e-mails.
+      account_confirm: Merci pour votre confirmation. Votre accès a été activé.
       account_confirm_resend: 'Nous avons envoyé un e-mail de confirmation à votre
         adresse e-mail (% {email}).'
       confirmation_instructions:
@@ -123,6 +122,15 @@ fr:
           associées pour des raisons de sécurité. Vous devrez donc recevoir de nouvelles
           invitations des installations auxquelles vous avez encore besoin d'accéder.\n
           \nPour démarrer la récupération, veuillez cliquer sur le lien suivant :"
+      recovery_email_confirm: Merci pour la confirmation. Votre compte est maintenant
+        configuré pour la récupération des e-mails.
+      email_change_confirm: Merci pour votre confirmation. Votre email a été modifié.
+      confirmation_email_change:
+        action: Confirmez votre adresse email
+        subject: Confirmez votre adresse e-mail %{app_name}
+        header: Confirmez votre adresse e-mail mise à jour
+        message: 'Pour confirmer votre adresse e-mail, veuillez cliquer sur le lien
+          suivant:'
     user:
       recaptcha_invalid: Le captcha capturé n'est malheureusement pas valide.
       unverified: >-
