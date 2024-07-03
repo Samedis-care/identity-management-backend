@@ -46,8 +46,7 @@ de:
       unauthorized_tenant: Zugriff verweigert. Kein Zugriff auf diesen Mandanten erlaubt.
   devise:
     mailer:
-      account_confirm: Vielen Dank für die Bestätigung. Dein Konto ist nun für die
-        E-Mail-Wiederherstellung eingerichtet.
+      account_confirm: Vielen Dank für Deine Bestätigung. Dein Zugang wurde aktiviert.
       account_confirm_resend: 'Wir haben eine Bestätigungsmail an deine E-Mail Adresse
         (%{email}) gesendet.'
       confirmation_instructions:
@@ -124,6 +123,12 @@ de:
       recovery_email_confirm: Vielen Dank für die Bestätigung. Dein Konto ist nun
         für die E-Mail-Wiederherstellung eingerichtet.
       email_change_confirm: Vielen Dank für Deine Bestätigung. Die E-Mail wurde geändert.
+      confirmation_email_change:
+        action: Bestätige Deine E-Mail-Adresse
+        subject: Bestätige Deine %{app_name}-E-Mail-Adresse
+        header: Bestätige Deine aktualisierte E-Mail-Adresse
+        message: 'Um Deine E-Mail Adresse zu bestätigen, klicke bitte auf folgenden
+          Link:'
     user:
       recaptcha_invalid: Das übermittelte Captcha ist leider nicht gültig.
       unverified: >-
