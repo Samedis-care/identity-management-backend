@@ -43,8 +43,7 @@ nl:
       unauthorized_tenant: Geen toestemming. Geen toegang tot dit account toegestaan.
   devise:
     mailer:
-      account_confirm: Bedankt voor de bevestiging. Uw account is nu ingesteld voor
-        e-mailherstel.
+      account_confirm: Dank u voor uw bevestiging. Uw toegang is geactiveerd.
       account_confirm_resend: 'We hebben een bevestigingsmail naar uw e-mailadres
         gestuurd (%{email}).'
       confirmation_instructions:
@@ -116,6 +115,14 @@ nl:
         action: Bevestig uw herstel-e-mailadres
         subject: Bevestig uw %{app_name} herstel-e-mailadres
         header: Hallo van %{app_name}!
+      recovery_email_confirm: Bedankt voor de bevestiging. Uw account is nu ingesteld
+        voor e-mailherstel.
+      email_change_confirm: Dank u voor uw bevestiging. Uw e-mailadres is gewijzigd.
+      confirmation_email_change:
+        action: Bevestig je e-mailadres
+        subject: Bevestig uw %{app_name} e-mailadres
+        header: Bevestig uw bijgewerkte e-mailadres
+        message: 'Klik op de volgende link om jouw e-mailadres te bevestigen:'
     user:
       recaptcha_invalid: De vastgelegde captcha is helaas niet geldig.
       unverified: >-
