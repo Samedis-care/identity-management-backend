@@ -16,20 +16,26 @@ class Api::V1::Devise::ConfirmationsController < Devise::ConfirmationsController
     if user.errors.empty?
       user.app_context = current_app
       user.invite_token = params[:invite_token]
+      _message = if params[:reason] == 'email_change'
+                   I18n.t('devise.mailer.email_change_confirm')
+                 else
+                   I18n.t('devise.mailer.account_confirm')
+                 end
+
       render json: AppUserSerializer.new(user, {
         meta: {
           msg: {
             success: true,
-            message: I18n.t('devise.mailer.account_confirm')
+            message: _message
           },
           redirect_url: User.redirect_url_login(user.app_context, invite_token: params[:invite_token]),
           app: user.app_context
         }
       })
     elsif user.is_a?(User)
-      render_jsonapi_error(user.errors.full_messages*', ', 'error', 400)
+      render_jsonapi_error(user.errors.full_messages * ', ', 'error', 400)
     else
-      render_jsonapi_error(I18n.t('auth.error.token_invalid') , 'invalid_token', 400)
+      render_jsonapi_error(I18n.t('auth.error.token_invalid'), 'invalid_token', 400)
     end
   end
 
@@ -43,7 +49,7 @@ class Api::V1::Devise::ConfirmationsController < Devise::ConfirmationsController
         meta: {
           msg: {
             success: true,
-            message: I18n.t('devise.mailer.account_confirm')
+            message: I18n.t('devise.mailer.recovery_email_confirm')
           },
           redirect_url: User.redirect_url_login(user.app_context, invite_token: params[:invite_token]),
           app: user.app_context

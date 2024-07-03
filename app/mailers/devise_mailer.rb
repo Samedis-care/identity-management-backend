@@ -7,11 +7,22 @@ class DeviseMailer < Devise::Mailer
     @app_context = user.app_context
     @app = app
     prepare_logo
-    @url = user.redirect_url_confirm_account({ HOST: User.host('identity-management'), APP: @app_context, TOKEN: token, INVITE_TOKEN: user.invite_token })
+
     opts[:from] = @app.config.mailer.from
     opts[:reply_to] = @app.config.mailer.reply_to
     use_styles
-    super
+
+    @url = user.redirect_url_confirm_account({ HOST: User.host('identity-management'), APP: @app_context, TOKEN: token, INVITE_TOKEN: user.invite_token })
+    if user.confirmed_at
+      # account was previously confirmed and is not new
+      # so we only mention email change and not account creation
+      opts[:subject] = I18n.t('devise.mailer.email_change.subject')
+      @url << '&reason=email_change'
+
+      devise_mail(user, :confirmation_email_change, opts)
+    else
+      devise_mail(user, :confirmation_instructions, opts)
+    end
   end
 
   def recovery_confirmation_instructions(user, token, opts = {})
