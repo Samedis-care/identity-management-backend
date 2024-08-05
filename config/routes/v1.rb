@@ -104,7 +104,7 @@ namespace :v1 do
     resources :content_acceptance, only: [:update]
 
     scope path: ':tenant_id', module: :tenant do
-      resources :invitations, only: %i(create update destroy), constraints: { id: /[a-z0-9\{\}]*/ }
+      resources :invitations, only: %i(create update destroy)
     end
   end
 
