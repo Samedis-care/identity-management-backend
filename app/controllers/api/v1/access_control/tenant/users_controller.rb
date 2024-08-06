@@ -85,12 +85,13 @@ class Api::V1::AccessControl::Tenant::UsersController < Api::V1::JsonApiControll
     super + [:tenant_id]
   end
 
+  # invitations.writer on destroy is to remove users from a tenant previously auto joined via invite
   def cando
     CANDO.merge({
       index:   %w(~/access-control.reader identity-management/apps.admin identity-management/global.admin),
       show:    %w(~/access-control.reader identity-management/apps.admin identity-management/global.admin),
       update:  %w(~/access-control.writer identity-management/apps.admin identity-management/global.admin),
-      destroy: %w(~/access-control.writer identity-management/apps.admin identity-management/global.admin)
+      destroy: %w(~/invitations.writer ~/access-control.writer identity-management/apps.admin identity-management/global.admin)
     })
   end
 
