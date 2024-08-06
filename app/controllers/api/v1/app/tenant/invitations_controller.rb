@@ -31,8 +31,8 @@ class Api::V1::App::Tenant::InvitationsController < Api::V1::JsonApiController
 
   def cando
     CANDO.merge({
-      create: %w(~/access-control.writer ~/tenant.admin ~/app-tenant.admin),
-      destroy: %w(~/access-control.writer ~/tenant.admin ~/app-tenant.admin)
+      create:  %w(~/invitations.writer ~/access-control.writer ~/tenant.admin ~/app-tenant.admin),
+      destroy: %w(~/invitations.writer ~/tenant.admin ~/app-tenant.admin)
     })
   end
 
