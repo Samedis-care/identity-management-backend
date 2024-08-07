@@ -137,6 +137,14 @@ module BaseControllerMethods
     render_jsonapi_error(message, "malformed_csv_error", 500, exception: e) and return
   end
 
+  def smtp_syntax_error(e)
+    raise e unless silence_errors?
+    return if performed?
+
+    message = Rails.env.production? ? I18n.t('json_api.smtp_syntax_error') : e.message
+    render_jsonapi_error(message, 'smtp_syntax_error', 400, exception: e) and return
+  end
+
   def read_only_maintenance_error(e)
     raise e unless silence_errors?
     return if performed?
