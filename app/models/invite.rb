@@ -106,34 +106,43 @@ class Invite < ApplicationDocument
   end
 
   # processes this invite if invitable_type is 'tenant'
-  def _process_accept_tenant(*args)
-    tenant = Actor.tenants.find(self.tenant_id) rescue nil
-    raise "NO SUCH TENANT TO JOIN" unless tenant.is_a?(Actor)
-    user = self.get_user
-    raise "NO SUCH USER" unless user.is_a?(User)
+  def _process_accept_tenant(*_)
+    tenant = Actor.tenants.find(tenant_id) rescue nil
+    raise 'NO SUCH TENANT TO JOIN' unless tenant.is_a?(Actor)
+
+    user = get_user
+    raise 'NO SUCH USER' unless user.is_a?(User)
+
     employee_group = tenant.descendants.groups.where(system: true, name: :staff_read_device_briefings).first
-    raise "NO EMPLOYEE GROUP FOUND" unless employee_group.is_a?(Actor)
+    raise 'NO EMPLOYEE GROUP FOUND' unless employee_group.is_a?(Actor)
+
     employee_group.map_into!(user.actor)
-    #puts "added #{user.name} to #{employee_group.path}"
+
     true
   end
 
-  def _process_accept_access_control(*args)
-    user = self.get_user
+  def _process_accept_access_control(*_)
+    user = get_user
     user.tenant_context = tenant_id
-    if actions[:access_group_ids].is_a?(Array)
-      user.access_group_ids = actions[:access_group_ids]
+
+    if actions[:access_group_ids].is_a?(Array) || actions[:access_groups].is_a?(Array)
+      _access_group_ids = actions[:access_group_ids] || []
+      if actions[:access_groups].is_a?(Array)
+        # dear rubocop, this is easier to read than an overly long one-liner
+        _access_group_ids += tenant.group_ids_named(actions[:access_groups])
+      end
+      user.access_group_ids = _access_group_ids.compact.uniq
     end
-    if actions[:access_groups].is_a?(Array)
-      user.access_group_ids = tenant.group_ids_named(actions[:access_groups])
+
+    if actions[:add_access_group_ids].is_a?(Array) || actions[:add_access_groups].is_a?(Array)
+      _add_ids = actions[:add_access_group_ids] || []
+      if actions[:add_access_groups].is_a?(Array)
+        # dear rubocop, this is easier to read than an overly long one-liner
+        _add_ids += tenant.group_ids_named(actions[:add_access_groups])
+      end
+      user.add_access_group_ids(_add_ids.compact.uniq)
     end
-    if actions[:add_access_group_ids].is_a?(Array)
-      user.add_access_group_ids(actions[:add_access_group_ids])
-    end
-    if actions[:add_access_groups].is_a?(Array)
-      _add_ids = tenant.group_ids_named(actions[:add_access_groups])
-      user.add_access_group_ids(_add_ids)
-    end
+
     user.save! validate: false
     true
   end

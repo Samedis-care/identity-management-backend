@@ -247,7 +247,11 @@ class User < ApplicationDocument
 
   after_create :app_defaults!
 
-  before_save do |record|
+  attr_accessor :access_group_ids_changed
+  before_save :do_before_save
+
+  def do_before_save
+    record = self
     if record.write_protected && record.write_protected_was
       errors.add :write_protected, 'protection flag set'
       throw(:abort)
@@ -736,26 +740,24 @@ class User < ApplicationDocument
     @tenant_access_group_ids ||= {}
   end
 
-  def access_group_ids_changed
-    @access_group_ids_changed ||= nil
-  end
-
   def access_group_ids
-    raise "MISSING TENANT CONTEXT" unless tenant_context.present?
-    #@access_group_ids ||= 
+    raise 'MISSING TENANT CONTEXT' unless tenant_context.present?
+
     tenant_access_group_ids[tenant_context.to_s]
   end
 
   def access_group_ids=(selected_ids)
-    raise "MISSING TENANT CONTEXT" unless tenant_context.present?
-    tenant_access_group_ids[tenant_context] = @access_group_ids_changed = @access_group_ids = selected_ids
-    @access_group_ids
+    raise 'MISSING TENANT CONTEXT' unless tenant_context.present?
+
+    tenant_access_group_ids[tenant_context] = self.access_group_ids_changed = @access_group_ids = selected_ids
   end
 
   def add_access_group_ids(added_ids)
-    raise "MISSING TENANT CONTEXT" unless tenant_context.present?
+    raise 'MISSING TENANT CONTEXT' unless tenant_context.present?
+
     return unless added_ids.is_a?(Array) && added_ids.any?
-    tenant_access_group_ids[tenant_context.to_s] = @access_group_ids_changed = @access_group_ids = (access_group_ids.to_a+added_ids).compact.uniq
+
+    tenant_access_group_ids[tenant_context.to_s] = self.access_group_ids_changed = @access_group_ids = (access_group_ids.to_a+added_ids).compact.uniq
     @access_group_ids
   end
 
