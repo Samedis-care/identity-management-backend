@@ -38,7 +38,10 @@ module JsonApi
 
   def render_jsonapi_error(message, error, status = 500, meta: {}, exception: nil)
     exception ||= StandardException.new(message, error)
-    Sentry.capture_exception(exception) if exception.present? && status.to_i >= 500
+    if exception.present? && status.to_i >= 500
+      logger.error(exception)
+      Sentry.capture_exception(exception)
+    end
     return if performed?
 
     render json: {
@@ -47,10 +50,10 @@ module JsonApi
                          msg: {
                            success: false,
                            message: message.to_s.encode('utf-8', invalid: :replace, undef: :replace),
-                           error: error
+                           error:
                          }
                        })
-    }, status: status
+    }, status:
   end
 
   def render_jsonapi_msg(msg = {}, status = 200, meta = {})
