@@ -153,6 +153,7 @@ module Actors
           include Mongoid::Document
           embedded_in :theme
           field :default, type: String, default: "rgb(185, 215, 240)"
+          field :advanced, type: String
         end
         class ComponentsCare
           include Mongoid::Document
