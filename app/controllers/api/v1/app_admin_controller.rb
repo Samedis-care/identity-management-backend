@@ -40,7 +40,7 @@ class Api::V1::AppAdminController < Api::V1::JsonApiController
           theme: [
             { primary: [:main, :light, :dark] },
             { secondary: [:main, :light, :dark] },
-            { background: [:default] },
+            { background: [:default, :advanced] },
             { components_care: [
                 { ui_kit: [ { action_button: [:background_color]} ] }
               ]

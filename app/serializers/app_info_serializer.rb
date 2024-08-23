@@ -39,7 +39,7 @@ class AppInfoSerializer
       theme: {
         primary: app&.config&.theme&.primary.attributes.symbolize_keys.slice(:main, :light, :dark),
         secondary: app&.config&.theme&.secondary.attributes.symbolize_keys.slice(:main, :light, :dark),
-        background: app&.config&.theme&.background.attributes.symbolize_keys.slice(:default),
+        background: app&.config&.theme&.background.attributes.symbolize_keys.slice(:default, :advanced),
         components_care: {
           ui_kit: {
             action_button: app&.config&.theme&.components_care&.ui_kit&.action_button.attributes.symbolize_keys.slice(:background_color),
@@ -111,8 +111,9 @@ class AppInfoSerializer
                 string :light, description: 'lighter variant of the secondary color'
                 string :dark, description: 'darker variant of the secondary color'
               end
-              object :background, description: 'secondary colors' do
+              object :background, description: 'background' do
                 string :default, description: 'background color'
+                string :advanced, description: 'background CSS property', nullable: true
               end
               object :components_care, description: 'components care specific settings' do
                 object :ui_kit, description: 'theme settings for ui_kit' do
