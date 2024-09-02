@@ -24,6 +24,8 @@ module IdentityManagement
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 7.1
 
+    config.action_mailer.show_previews = !Rails.env.production?
+
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration can go into files in config/initializers
     # -- all .rb files in that directory are automatically loaded after loading

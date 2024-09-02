@@ -8,10 +8,15 @@
         <%= @style.font_family %>;
         <%= @style.font_size %>;
       }
+      html, body {
+        width: 100%;
+        padding: 0;
+        margin: 0;
+        background: <%= @app.config.theme.background.advanced || @app.config.theme.background.default || 'rgb(8, 105, 179)' %>;
+      }
       body {
         height: 100%;
-        background-color: <%= @app.config.theme.background.default || '#b9d7f0' %>;
-        margin: 0;
+        padding: 10px;
       }
       h1 {
         font-weight: 700;
@@ -32,7 +37,7 @@
         color:  <%= @color.secondary.dark %>;
       }
       a {
-        color: #000;
+        color:  <%= @color.secondary.dark %>;
       }
       ul {
         padding: 0 0 0 1em;
@@ -44,18 +49,28 @@
       small {
         font-size: 80%;
       }
+      blockquote {
+        font-size: 80%;
+        border-radius: 5px;
+        border-left: 6px solid #e62d4b;
+        background-color: rgba(125, 125, 130, .1);
+        margin: 15px 30px;
+        padding: 3px 20px;
+      }
       .logo {
         text-align: center;
-        font-size: 36px;
-        padding: 15px 0;
-        font-weight: bold;
+        font-size: 0px;
+        border-bottom: 1px solid rgba(0,0,0, .05);
+        padding-top: 0;
+        padding-bottom: 15px;
       }
       .logo img {
-        font-size: 36px;
+        width: 240px;
+        font-size: 0;
       }
       .content {
-        background-color: <%= @color.content %>;
-        color: <%= @style.color %>;
+        background-color: #FFF;
+        color: #000;
         margin: 0 auto;
         line-height: 1.45em;
         border-radius: 10px;
@@ -63,21 +78,23 @@
       }
       .block {
         margin: 0;
-        background-color: <%= @color.primary.main %>;
+        background: <%= @app.config.theme.background.advanced || @app.config.theme.background.default || 'rgb(8, 105, 179)' %>;
         color: #FFF;
         text-align: center;
         line-height: unset;
         padding: 15px;
         margin: 0;
-        border-radius: 3px;
+        border-radius: 6px;
       }
       .block *,
       .block strong {
         color: #FFF;
       }
       .footer {
+        text-align: center;
         margin: 0 auto;
-        padding: 25px;
+        padding: 20px;
+        <%= @style.font_size %> !important;
       }
 
       @media only screen and (max-device-width: 640px) {
@@ -92,7 +109,7 @@
       }
       @media (prefers-color-scheme: dark) {
         .logo img {
-          filter: drop-shadow(0 0 4px rgba(0,0,0, .4));
+          filter: drop-shadow(0 0 3px rgba(0,0,0, .1));
         }
       }
     </style>
@@ -102,20 +119,9 @@
     <center>
       <table class="mail" cellpadding="0" cellspacing="0" border="0" width="530" style="border-collapse: collapse;">
         <tr>
-          <td class="logo" style="<%= @tag_style.td %>">
-            <h1>
-              <center>
-                <% if attachments['logo.png'].try(:url) -%>
-                      <%= image_tag((attachments['logo.png'].url rescue ''), alt: @app_context, width: @logo_width, height: @logo_height, style: @logo_style) %>
-                <% else -%>
-                  <%= @app.full_name %>
-                <% end -%>
-              </center>
-            </h1>
-          </td>
-        </tr>
-        <tr>
-          <td class="content" style="<%= @tag_style.td %>;<% @style.content %>">
+          <td class="content" style="<% @tag_style.td %>;<% @style.white_background %>; vertical-align: top; padding-top: 0;"><div class="logo" style="padding-top: 25px"><center><%= image_tag((attachments['logo.png'].url rescue ''), alt: @app_context, xsize: "#{(@logo.width/2).abs}x#{(@logo.height/2).abs}", style: "xwidth:#{(@logo.width/2).abs}px;xheight:#{(@logo.height/2).abs}px;" ) %></center>
+            </div>
+
             <%= yield %>
           </td>
         </tr>

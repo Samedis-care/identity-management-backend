@@ -10,6 +10,10 @@ Rails.application.routes.draw do
     draw :v1
   end
 
+  # allows local mail previews in browser (will not work via balancer)
+  # http://127.0.0.1:<port>/rails/mailers
+  mount ActionMailer::Preview => 'rails/mailers'
+
   # Sentry tunneling
   post '/api/error-reporting' => 'api/sentry#tunnel'
 
