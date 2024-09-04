@@ -88,6 +88,12 @@ group :development, :test, :live, :local_dev, :staging do
   gem 'clipboard'
   gem 'colorize'
   gem 'mongo_logs_on_roids'
+  gem 'prism'
+  gem 'rubocop', require: false
+  gem 'rubocop-factory_bot', require: false
+  gem 'rubocop-rails', require: false
+  gem 'rubocop-rspec', require: false
+  gem 'rubocop-rspec_rails', require: false
 end
 
 group :development do
