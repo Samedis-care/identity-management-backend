@@ -16,21 +16,21 @@ COPY Gemfile Gemfile.lock ./
 RUN gem install bundler:$(cat Gemfile.lock | grep -A 1 "BUNDLED WITH" | grep -Po '[0-9]+\.[0-9]+\.[0-9]+')
 RUN bundle install
 
-ENV HOME /root
+ENV HOME=/root
 
 # Set Rails ENV variables
-ENV RAILS_LOG_TO_STDOUT true
+ENV RAILS_LOG_TO_STDOUT=true
 # Use jemalloc
 RUN ln -s /usr/lib/*-linux-gnu/libjemalloc.so.2 /usr/lib/libjemalloc.so.2
 ENV LD_PRELOAD=/usr/lib/libjemalloc.so.2
 
-ENV MALLOC_CONF narenas:2,background_thread:true,abort_conf:true
+ENV MALLOC_CONF=narenas:2,background_thread:true,abort_conf:true
 # Glibc malloc
 #ENV MALLOC_ARENA_MAX 2
 
 # Add the Rails app
 ADD . /home/app/webapp
-ENV PATH "$PATH:/home/app/webapp/bin"
+ENV PATH="$PATH:/home/app/webapp/bin"
 ENV RUBY_YJIT_ENABLE=1
 
 # Download MaxMind GeoIP Database
