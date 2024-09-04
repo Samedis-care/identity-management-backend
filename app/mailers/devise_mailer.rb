@@ -115,7 +115,7 @@ class DeviseMailer < Devise::Mailer
     @style = OpenStruct.new(
       font_family: 'font-family: sans-serif',
       font_size: 'font-size: 16px',
-      line_height: 'line-height: 24px',
+      line_height: '',
       color: "#{@app.config.theme.mode.eql?('light') ? '#000' : '#FFF'}",
       background: "background-color: #{@color.background};",
       content: "background-color: #{@color.content};",

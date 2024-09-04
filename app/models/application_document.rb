@@ -4,6 +4,22 @@ class ApplicationDocument
 
   delegate :url_helpers, to: 'Rails.application.routes'
 
+  class CleanupScrubber < Loofah::Scrubber
+    def initialize
+      super()
+      @allowed_tags = %w[addr b br strong em i]
+    end
+
+    def scrub(node)
+      # Only process element nodes
+      if node.element? && !@allowed_tags.include?(node.name)
+        node.remove # Remove the node if it's not in the allowed list
+      end
+
+      Loofah::Scrubber::CONTINUE
+    end
+  end
+
   class AuthorizationError < StandardError; end
   class MissingTenantContextError < StandardError; end
   class GridfilterError < StandardError; end
@@ -647,7 +663,8 @@ class ApplicationDocument
   # pre defined scrubbing stragegy of loofah
   # will remove unsafe tags and attributes
   def self.cleanup_html_scrubber
-    :whitewash
+    # custom scrubber since `:whitewash` was too restrictive
+    CleanupScrubber.new
   end
 
   # turns string ids into an Array of BSON::ObjectId's
