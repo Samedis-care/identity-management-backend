@@ -24,7 +24,7 @@
 
 <%= tag.p style: @tag_style.p do %>
   <%= t('mailer.manual_link_instructions') %><br />
-  <%= @url %>
+  <div style="word-break: break-all; word-wrap: anywhere"><%= @url %></div>
 <% end %>
 
 <%= tag.p style: @tag_style.p do %>
