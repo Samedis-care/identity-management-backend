@@ -34,6 +34,10 @@ module Actors
     # end
 
     def ensure_user_data
+      unless map_actor.is_a?(Actors::User)
+        logger.error("MISSING map_actor on mapping: #{JSON.pretty_generate(attributes)}")
+        return
+      end
       _user = self.map_actor.user
       self.name = _user.email
       self.short_name = _user.name
@@ -42,9 +46,9 @@ module Actors
 
     def ensure_references
       self.app_id ||= self.app&.id
-      self.user_id ||= self.map_actor.user&.id
+      self.user_id ||= self.map_actor&.user&.id
       self.tenant_id ||= tenant&.id
-      self.parent_template_actor_id ||= parent.template_actor&.id
+      self.parent_template_actor_id ||= parent&.template_actor&.id
     end
 
     def user_cache_expire!
