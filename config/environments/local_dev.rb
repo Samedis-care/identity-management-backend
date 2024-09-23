@@ -47,7 +47,6 @@ Rails.application.configure do
   # Highlight code that triggered database queries in logs.
   #config.active_record.verbose_query_logs = true
 
-
   # Raises error for missing translations
   # config.action_view.raise_on_missing_translations = true
 
@@ -59,14 +58,27 @@ Rails.application.configure do
 
   #config.mongoid.logger = Logger.new(STDOUT, :warn)
 
-  # Enable stdout logger
-  #config.logger = Logger.new(STDOUT)
-  config.logger = ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new(STDOUT))
-
-  # Set log level
-  config.log_level = :debug
-
   require "awesome_print"
   AwesomePrint.irb!
+
+  if ENV['RAILS_LOG_TO_STDOUT'].present?
+    # config.log_level = :info
+    # logger           = ActiveSupport::Logger.new(STDOUT)
+    # logger.formatter = config.log_formatter
+    # config.logger    = ActiveSupport::TaggedLogging.new(logger)
+
+    config.log_level = :info
+    $stdout.sync = true
+    config.rails_semantic_logger.add_file_appender = false
+    config.semantic_logger.backtrace_level = :error
+    config.colorize_logging = false
+  else
+    config.log_level = :debug
+    $stdout.sync = true
+    config.rails_semantic_logger.add_file_appender = false
+    config.semantic_logger.backtrace_level = :warn
+    config.colorize_logging = true
+  end
+  config.semantic_logger.add_appender(io: $stdout, formatter: config.rails_semantic_logger.format)
 
 end
