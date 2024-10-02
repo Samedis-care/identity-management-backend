@@ -1,13 +1,18 @@
+FROM --platform=$BUILDPLATFORM alpine AS preperation
+
+# download GeoIP database< just once on multiplatform build
+
+WORKDIR /root
+RUN apk add --no-cache curl
+# Download MaxMind GeoIP Database
+RUN curl -L -f -o 'GeoLite2-City.mmdb' 'https://github.com/P3TERX/GeoLite.mmdb/raw/download/GeoLite2-City.mmdb'
+
+
 FROM ruby:3.3.5-bullseye
 
 RUN apt-get update --fix-missing \
-  && apt-get install -y --no-install-recommends libvips-dev openssl libjemalloc2 libsnappy-dev curl \
+  && apt-get install -y --no-install-recommends libvips-dev openssl libjemalloc2 libsnappy-dev \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Configure SSL
-COPY deploy/ssl /etc/ssl
-# generate self signed cert if none was supplied
-RUN bash -c '[ -f "/etc/ssl/key.pem" ] || openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/ssl/key.pem -out /etc/ssl/cert.pem -subj "/C=DE/ST=Local/L=Local/O=Local/OU=Local/CN=Local/emailAddress=ssl@localhost"'
 
 WORKDIR /home/app/webapp
 
@@ -33,13 +38,13 @@ ADD . /home/app/webapp
 ENV PATH="$PATH:/home/app/webapp/bin"
 ENV RUBY_YJIT_ENABLE=1
 
-# Download MaxMind GeoIP Database
-RUN curl -L -f -o 'GeoLite2-City.mmdb' 'https://github.com/P3TERX/GeoLite.mmdb/raw/download/GeoLite2-City.mmdb'
+# Copy GeoIP database
+COPY --from=preperation /root/GeoLite2-City.mmdb /home/app/webapp
 
 # Generate Swagger Docs
-RUN rails rswag:specs:swaggerize
+RUN SHRINE_STORAGE=local FILES_DIRECTORY=/tmp rails rswag:specs:swaggerize
 
-CMD ["bash", "-c", "puma -b 'tcp://0.0.0.0:80' -e \"$([ ! -z \"$RAILS_ENV\" ] && echo \"$RAILS_ENV\" || echo 'production')\" -v -t 64:64 -w \"$([ ! -z \"$WORKER_COUNT\" ] && echo \"$WORKER_COUNT\" || nproc)\""]
+CMD puma -b 'tcp://0.0.0.0:80' -e "${RAILS_ENV-production}" -v -t 64:64 -w "${WORKER_COUNT-$(nproc)}"
 
 # Expose service
 EXPOSE 80
