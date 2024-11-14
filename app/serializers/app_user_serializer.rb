@@ -47,9 +47,12 @@ class AppUserSerializer
   # Filtered to only supply candos for current app_context
   attribute :tenants do |user, params|
     _app = params[:current_app_actor]
+    next unless _app
+
     tenants = user.tenants
     tenants.each do |tenant|
-      tenant[:candos] = tenant.symbolize_keys[:candos].select{|c|c.start_with?("#{_app.name}/")} if _app.present?
+      candos = tenant.symbolize_keys[:candos]
+      tenant[:candos] = candos.select { |c| c.start_with?("#{_app.name}/") }
     end
     tenants
   end
