@@ -114,7 +114,12 @@ class Api::V1::App::Doorkeeper::TokensController < Doorkeeper::TokensController
         opts[:meta][:invite_token] = params[:invite_token]
       end
 
-      render json: AppUserSerializer.new(user, opts).serializable_hash
+      render json: AppUserSerializer.new(user, opts).serializable_hash.merge(
+        token_type: 'Bearer',
+        access_token: opts.dig(:meta, :token),
+        refresh_token: opts.dig(:meta, :refresh_token),
+        expires_in: opts.dig(:meta, :expires_in)
+      )
     end
   end
 
