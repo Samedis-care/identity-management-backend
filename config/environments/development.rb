@@ -76,4 +76,20 @@ Rails.application.configure do
   require "awesome_print"
   AwesomePrint.irb!
 
+  if ENV['RAILS_LOG_TO_STDOUT'].present?
+    config.log_level = :info
+    config.colorize_logging = false
+
+    if defined? SemanticLogger
+      $stdout.sync = true
+      config.rails_semantic_logger.add_file_appender = false
+      config.semantic_logger.backtrace_level = :error
+      config.semantic_logger.add_appender(io: $stdout, formatter: config.rails_semantic_logger.format)
+    else
+      logger           = ActiveSupport::Logger.new($stdout)
+      logger.formatter = config.log_formatter
+      config.logger    = ActiveSupport::TaggedLogging.new(logger)
+    end
+  end
+
 end

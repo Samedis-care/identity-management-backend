@@ -81,8 +81,6 @@ gem 'awesome_print'
 gem 'parallel'
 gem 'ruby-progressbar'
 
-gem 'rails_semantic_logger'
-
 group :development, :test, :live, :local_dev, :staging do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'brakeman'
@@ -101,3 +99,8 @@ end
 group :development do
   gem 'listen'
 end
+
+group :local_dev, :live, :dev do
+  gem 'rails_semantic_logger', require: false
+end
+

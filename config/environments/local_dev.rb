@@ -61,6 +61,7 @@ Rails.application.configure do
   require "awesome_print"
   AwesomePrint.irb!
 
+  require 'rails_semantic_logger'
   if ENV['RAILS_LOG_TO_STDOUT'].present?
     # config.log_level = :info
     # logger           = ActiveSupport::Logger.new(STDOUT)
