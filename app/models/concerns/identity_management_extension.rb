@@ -5,7 +5,6 @@ module IdentityManagementExtension
   extend ActiveSupport::Concern
 
   included do
-
     class OtpTooManyTries < StandardError
       def message
         I18n.t('auth.error.otp_too_many_tries')
@@ -53,30 +52,33 @@ module IdentityManagementExtension
     belongs_to :user, foreign_key: :resource_owner_id, optional: true
 
     after_save do
-      if (self.im_ip_changed? || self.im_navigator_changed? || self.im_app_changed?)
-        AccountActivity.where(token_id: self.id, user_id: self.resource_owner_id)
-        .first_or_create(created_at: self.created_at)
-        .update_attributes(
-          app: self.im_app,
-          ip: self.im_ip,
-          navigator: self.im_navigator,
-          updated_at: self.updated_at,
-          location: self.im_location,
-          device: self.im_device
-        )
+      if im_ip_previously_changed? ||
+         im_navigator_previously_changed? ||
+         im_app_previously_changed?
+        AccountActivity.where(token_id: id, user_id: resource_owner_id)
+                       .first_or_create(created_at: created_at)
+                       .update_attributes(
+                         app: im_app,
+                         ip: im_ip,
+                         navigator: im_navigator,
+                         updated_at: updated_at,
+                         location: im_location,
+                         device: im_device
+                       )
       end
     end
 
     # helper for otp to check if this access token is valid
     # when the user has otp/mfa enabled
     def otp_satisfied?
-      return true if self.im_otp_required.eql?(false)
-      return true if self.im_otp_provided.eql?(true)
+      return true if im_otp_required.eql?(false)
+      return true if im_otp_provided.eql?(true)
+
       false
     end
 
     def tries_left?
-      self.im_otp_tries.to_i < OTP_MAX_TRIES
+      im_otp_tries.to_i < OTP_MAX_TRIES
     end
 
     def authenticate_otp(otp)
