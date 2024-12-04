@@ -96,10 +96,23 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
 
   def user
     @user ||= begin
+      Sentry.add_breadcrumb(Sentry::Breadcrumb.new(
+        category: "pre-oauth",
+        message: auth.inspect,
+        level: "info"
+      ))
+
       _user = User.from_omniauth(auth)
       _user.app_context = current_app
       _user.invite_token = invite_token
       _user.redirect_path = _user.redirect_host = state[:redirect_host] || params[:redirect_host]
+
+      Sentry.add_breadcrumb(Sentry::Breadcrumb.new(
+        category: "post-oauth",
+        message: _user.inspect,
+        level: "info"
+      ))
+
       _user
     end
   end
