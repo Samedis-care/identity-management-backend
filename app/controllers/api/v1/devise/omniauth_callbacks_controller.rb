@@ -16,16 +16,6 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
     failure
   end
 
-  def failure
-    redirect_to after_omniauth_failure_path_for, allow_other_host: true
-  end
-
-  def after_omniauth_failure_path_for(_scope = nil)
-    _uri = URI.parse(User.redirect_url_login(current_app, invite_token: invite_token || ''))
-    _uri.query = { failure_message:, redirect_host: state[:redirect_host] }.to_query
-    _uri.to_s
-  end
-
   def do_oauth
     unless user.errors.empty?
       generic_error(user.errors)
@@ -136,6 +126,18 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
 
   def set_locale
     I18n.locale = state[:locale].presence || super
+  end
+
+  protected
+
+  def failure
+    redirect_to after_omniauth_failure_path_for, allow_other_host: true
+  end
+
+  def after_omniauth_failure_path_for(_scope = nil)
+    _uri = URI.parse(User.redirect_url_login(current_app, invite_token: invite_token || ''))
+    _uri.query = { failure_message:, redirect_host: state[:redirect_host] }.to_query
+    _uri.to_s
   end
 
 end
