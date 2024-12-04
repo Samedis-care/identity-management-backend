@@ -282,7 +282,7 @@ GEM
       oauth2 (~> 2.0)
       omniauth (~> 2.0)
       omniauth-oauth2 (~> 1.8)
-    omniauth-microsoft_graph (2.0.1)
+    omniauth-microsoft_graph (2.0.0)
       jwt (~> 2.0)
       omniauth (~> 2.0)
       omniauth-oauth2 (~> 1.8.0)
@@ -514,7 +514,7 @@ DEPENDENCIES
   omniauth (>= 1.9.2)
   omniauth-apple
   omniauth-google-oauth2
-  omniauth-microsoft_graph
+  omniauth-microsoft_graph (= 2.0.0)
   omniauth-rails_csrf_protection
   parallel
   prism

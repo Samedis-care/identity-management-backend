@@ -96,25 +96,16 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
 
   def user
     @user ||= begin
-      Sentry.add_breadcrumb(Sentry::Breadcrumb.new(
-        category: "pre-oauth",
-        message: auth.inspect,
-        level: "info"
-      ))
-
       _user = User.from_omniauth(auth)
       _user.app_context = current_app
       _user.invite_token = invite_token
       _user.redirect_path = _user.redirect_host = state[:redirect_host] || params[:redirect_host]
-
-      Sentry.add_breadcrumb(Sentry::Breadcrumb.new(
-        category: "post-oauth",
-        message: _user.inspect,
-        level: "info"
-      ))
-
       _user
     end
+  end
+
+  def current_app
+    (state[:app] || params[:app]).to_s.gsub(/\./, '-').to_slug
   end
 
   def oauth_params
@@ -125,8 +116,28 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
     request.env['omniauth.auth']
   end
 
+  def state
+    @state ||= (JSON.parse(params[:state]) rescue {}).with_indifferent_access
+  end
+
+  def invite_token
+    state[:invite_token]
+  end
+
   def set_locale
     I18n.locale = state[:locale].presence || super
+  end
+
+  protected
+
+  def failure
+    redirect_to after_omniauth_failure_path_for, allow_other_host: true
+  end
+
+  def after_omniauth_failure_path_for(_scope = nil)
+    _uri = URI.parse(User.redirect_url_login(current_app, invite_token: invite_token || ''))
+    _uri.query = { failure_message:, redirect_host: state[:redirect_host] }.to_query
+    _uri.to_s
   end
 
 end
