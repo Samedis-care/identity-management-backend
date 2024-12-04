@@ -42,21 +42,10 @@ module BaseControllerMethods
     @current_token ||= current_user.oauth_tokens.where(token: token).first
   end
 
-  def state
-    @state ||= (JSON.parse(params[:state]) rescue {}).with_indifferent_access
-  end
-
-  def invite_token
-    state[:invite_token]
-  end
-
   # app actor from session! can be overwritten by supplying custom app parameter (unless app parameter is IM)
   def current_app(doorkeeper_token=nil)
     @current_app ||= begin
-      if params[:state].present?
-        # for oauth logins
-        state[:app]
-      elsif params[:app].present? && !params[:app].eql?('identity-management')
+      if params[:app].present? && !params[:app].eql?('identity-management')
         params[:app]
       else
         (doorkeeper_token || current_token).try(:im_app) || params[:app]

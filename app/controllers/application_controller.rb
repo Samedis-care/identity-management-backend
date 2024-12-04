@@ -56,17 +56,4 @@ class ApplicationController < ActionController::Base
       MaintenanceMode.current.raise_error :write
     end
   end
-
-  protected
-
-  def failure
-    redirect_to after_omniauth_failure_path_for, allow_other_host: true
-  end
-
-  def after_omniauth_failure_path_for(_scope = nil)
-    _uri = URI.parse(User.redirect_url_login(current_app, invite_token: invite_token || ''))
-    _uri.query = { failure_message:, redirect_host: state[:redirect_host] }.to_query
-    _uri.to_s
-  end
-
 end
