@@ -44,8 +44,15 @@ module JsonApi
     end
     return if performed?
 
-    render json: {
-      meta: meta.merge({
+    if ENV['SHOW_ERRORS'].to_s.to_boolean
+      error = {
+        exception: exception.class.name,
+        message: exception.message,
+        backtrace: exception.backtrace
+      }
+    end
+
+    meta = meta.merge({
                          locale: I18n.locale,
                          msg: {
                            success: false,
@@ -53,7 +60,8 @@ module JsonApi
                            error:
                          }
                        })
-    }, status:
+
+    render json: { meta: }, status:
   end
 
   def render_jsonapi_msg(msg = {}, status = 200, meta = {})

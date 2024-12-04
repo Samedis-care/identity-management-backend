@@ -94,6 +94,7 @@ module BaseControllerMethods
   end
 
   def render_generic_error(e)
+    raise e unless silence_errors?
     if Rails.env.production?
       generic_error(e)
       render status: 400, json: { message: e.message } and return

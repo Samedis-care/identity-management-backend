@@ -12,6 +12,10 @@ class String
     self.encode(Encoding::UTF_8, invalid: :replace, undef: :replace, replace: "�").strip.tr("\u{202E}%$|:;/\t\r\n\\", "-")
   end
 
+  def to_boolean
+    ActiveModel::Type::Boolean.new.cast(self.downcase)
+  end
+
   #unicode aware function
   def to_slug
     # become case-insensitive

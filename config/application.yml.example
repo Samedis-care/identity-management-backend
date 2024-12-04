@@ -1,4 +1,5 @@
 development: &defaults
+  SHOW_ERRORS: 'false'
   WEB_APP_HOST: 'http://dev.ident.services'
   API_HOST: 'http://dev.ident.services'
   SENTRY_DSN_BACKEND: https://20f6124f01774657a1b5c0a2af8cfde8@sentry.domain.local/1
