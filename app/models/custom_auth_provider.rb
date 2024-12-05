@@ -74,6 +74,14 @@ class CustomAuthProvider < ApplicationDocument
     super.presence || '/oauth2/userinfo'
   end
 
+  def userinfo_host
+    URI.parse(userinfo_url).host || host
+  end
+
+  def userinfo_path
+    URI.parse(userinfo_url).path
+  end
+
   def query_params
     { 
       client_id:,
@@ -120,12 +128,6 @@ class CustomAuthProvider < ApplicationDocument
 
     _authorization = "Basic #{Base64.strict_encode64([client_id, client_secret].join(':'))}"
 
-    # JSON is not supported by microsoft.com
-    # response = Faraday.post(uri) do |req|
-    #   req.headers['Content-Type'] = 'application/json'
-    #   req.headers['Authorization'] = _authorization
-    #   req.body = params.to_json
-    # end
     response = Faraday.post(uri) do |req|
       req.headers['Content-Type'] = 'application/x-www-form-urlencoded'
       req.headers['Authorization'] = _authorization
@@ -155,10 +157,13 @@ class CustomAuthProvider < ApplicationDocument
   end
 
   def user_info(access_token)
-    uri = URI::HTTPS.build(host:, path: userinfo_url, query: { schema: :openid }.to_query)
+    uri = URI::HTTPS.build(host: userinfo_host, path: userinfo_path, query: { schema: :openid }.to_query)
 
     _authorization = "Bearer #{access_token}"
 
+    # microsoft does not care aput content-type json
+    # and will ignore schema requests in query as well
+    # as claims
     response = Faraday.get(uri) do |req|
       req.headers['Content-Type'] = 'application/json'
       req.headers['Authorization'] = _authorization
