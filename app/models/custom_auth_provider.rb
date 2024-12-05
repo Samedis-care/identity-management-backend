@@ -192,6 +192,12 @@ class CustomAuthProvider < ApplicationDocument
     expires_at = expires ? token['expires_in'].to_i.seconds.from_now : nil
 
     unless email_trusted?(email)
+      Sentry.add_breadcrumb(Sentry::Breadcrumb.new(
+        category: "user_info",
+        message: "Fetching user_info for #{domain} returned no or only untrusted email.",
+        level: "warn",
+        data: user_info
+      ))
       raise UntrustedEmailError.new(I18n.t('json_api.oauth_untrusted_email', email:, host:))
     end
 
