@@ -184,7 +184,7 @@ class CustomAuthProvider < ApplicationDocument
   def auth(token)
     user_info = user_info(token['access_token'])
 
-    email = user_info['email'] || user_info['sub']
+    email = user_info['email'] || user_info['sub'] || user_info['mail']
     first_name = user_info['given_name']
     last_name = user_info['family_name']
     _name = user_info['name'] || "#{first_name} #{last_name}"
