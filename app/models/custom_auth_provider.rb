@@ -157,7 +157,10 @@ class CustomAuthProvider < ApplicationDocument
   end
 
   def user_info(access_token)
-    uri = URI::HTTPS.build(host: userinfo_host, path: userinfo_path, query: { schema: :openid }.to_query)
+    # special handling for microsoft
+    is_microsoft = userinfo_host.eql?('graph.microsoft.com')
+    query = is_microsoft ? {} : { schema: :openid }.to_query
+    uri = URI::HTTPS.build(host: userinfo_host, path: userinfo_path, query:)
 
     _authorization = "Bearer #{access_token}"
 
@@ -167,7 +170,7 @@ class CustomAuthProvider < ApplicationDocument
     response = Faraday.get(uri) do |req|
       req.headers['Content-Type'] = 'application/json'
       req.headers['Authorization'] = _authorization
-      req.body = { claims: }.to_json
+      req.body = { claims: }.to_json unless is_microsoft
     end
 
     user_info = JSON.parse(response.body) rescue nil
