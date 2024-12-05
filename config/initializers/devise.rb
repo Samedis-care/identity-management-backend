@@ -9,18 +9,22 @@ Rails.application.config.middleware.use OmniAuth::Builder do
              pem: (File.read('config/apple.pem') + "\n" rescue nil) # newline at end of file required
            }
 
-
-  provider :google_oauth2, ENV["GOOGLE_OAUTH_CLIENT_ID"], ENV["GOOGLE_OAUTH_SECRET"], {
-    scope: "userinfo.email, userinfo.profile",
-    image_aspect_ratio: 'square',
-    image_size: 800
+  provider :google_oauth2,
+           ENV['GOOGLE_OAUTH_CLIENT_ID'],
+           ENV['GOOGLE_OAUTH_SECRET'], {
+           scope: 'userinfo.email, userinfo.profile',
+           image_aspect_ratio: 'square',
+           image_size: 800
   }
 
-  provider :microsoft_graph, ENV["AZURE_APPLICATION_CLIENT_ID"], ENV["AZURE_APPLICATION_CLIENT_SECRET"], {
-    scope: "User.read",
-    provider_ignores_state: true # necessary to use state or CSRF error gets triggered
+  provider :microsoft_graph,
+           ENV['AZURE_APPLICATION_CLIENT_ID'], 
+           ENV['AZURE_APPLICATION_CLIENT_SECRET'], {
+           #scope: 'User.read',
+           scope: 'User.read email',
+           #skip_domain_verification: true,
+           provider_ignores_state: true # necessary to use state or CSRF error gets triggered
   }
-
   # provider :facebook, ENV["FACEBOOK_KEY"], ENV["FACEBOOK_SECRET"], {
   #   scope: "email",
   #   provider_ignores_state: true, # necessary to use state or CSRF error gets triggered
@@ -36,10 +40,10 @@ Rails.application.config.middleware.use OmniAuth::Builder do
 end
 
 Rails.application.reloader.to_prepare do
-
   # include ::CommonEncryption
   class CustomFailureApp < Devise::FailureApp
     include JsonApi
+    include BaseControllerMethods
 
     def respond
       json_error_response
@@ -67,7 +71,6 @@ Rails.application.reloader.to_prepare do
   # Use this hook to configure devise mailer, warden hooks and so forth.
   # Many of these configuration options can be set straight in your model.
   Devise.setup do |config|
-
     Devise::Doorkeeper.configure_devise(config)
 
     # The secret key used by Devise. Devise uses this key to generate
@@ -352,7 +355,6 @@ Rails.application.reloader.to_prepare do
     # so you need to do it manually. For the users scope, it would be:
     # config.omniauth_path_prefix = '/my_engine/users/auth'
   end
-
 end
 
 # Override to allow finishing unconfirmed (email) registrations of a user
@@ -388,7 +390,6 @@ module Devise
     end
   end
 end
-
 
 # simple alias to user bearer=... in development
 module Doorkeeper
