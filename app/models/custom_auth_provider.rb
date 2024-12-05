@@ -125,7 +125,17 @@ class CustomAuthProvider < ApplicationDocument
       req.body = params.to_json
     end
 
-    raise FailedAuthError.new(I18n.t('json_api.oauth_failed', host:)) unless response.status.eql?(200)
+    unless response.status.eql?(200)
+      e = FailedAuthError.new(I18n.t('json_api.oauth_failed', host:))
+      Sentry.add_breadcrumb(Sentry::Breadcrumb.new(
+        category: "custom_auth_provider",
+        message: "Fetching an oauth access_token for #{domain} failed with status: #{response.status}",
+        level: "warn",
+        data: response.body
+      ))
+      Sentry.capture_exception(e)
+      raise e
+    end
     user_info = JSON.parse(response.body) rescue nil
 
     user_info
