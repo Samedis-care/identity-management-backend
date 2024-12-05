@@ -4,6 +4,7 @@ Doorkeeper.configure do
   # orm :mongoid6 # or :mongoid7, :mongoid4, :mongoid5, :mongo_mapper
 
   # Devise::Doorkeeper.configure_doorkeeper(self)
+  base_controller 'ApplicationController'
 
   allow_token_introspection false
 

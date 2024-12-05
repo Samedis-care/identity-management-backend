@@ -514,7 +514,7 @@ DEPENDENCIES
   omniauth (>= 1.9.2)
   omniauth-apple
   omniauth-google-oauth2
-  omniauth-microsoft_graph (= 2.0.0)
+  omniauth-microsoft_graph
   omniauth-rails_csrf_protection
   parallel
   prism
