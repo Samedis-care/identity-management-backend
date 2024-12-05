@@ -13,7 +13,9 @@ class CustomAuthProvider < ApplicationDocument
   field :host, type: String
   field :trusted_email_domains, type: Array
   field :scope, type: String
-  field :path, type: String
+  field :authorize_url, type: String
+  field :token_url, type: String
+  field :userinfo_url, type: String
 
   validates :domain, uniqueness: true
   validate :unique_trusted_email_domains
@@ -59,8 +61,16 @@ class CustomAuthProvider < ApplicationDocument
     super.presence || 'openid profile email'
   end
 
-  def path
+  def authorize_url
     super.presence || '/oauth2/authorize'
+  end
+
+  def token_url
+    super.presence || '/oauth2/token'
+  end
+
+  def userinfo_url
+    super.presence || '/oauth2/userinfo'
   end
 
   def query_params
@@ -90,13 +100,13 @@ class CustomAuthProvider < ApplicationDocument
     _query_params = _query_params.merge(state:) if state.present?
     _query_params[:state] ||= { app: 'identity-management', redirect_host: ENV['WEB_APP_HOST'] }.to_json
 
-    URI::HTTPS.build(host:, path: , query: _query_params.to_query)
+    URI::HTTPS.build(host:, path: authorize_url, query: _query_params.to_query)
   end
 
   def access_token(code, code_verifier: nil)
     raise FailedAuthError.new("Missing code_verifier") unless code_verifier.present?
 
-    uri = URI::HTTPS.build(host:, path: '/oauth2/token')
+    uri = URI::HTTPS.build(host:, path: token_url)
 
     params = {
       code:,
@@ -126,7 +136,7 @@ class CustomAuthProvider < ApplicationDocument
   end
 
   def user_info(access_token)
-    uri = URI::HTTPS.build(host:, path: '/oauth2/userinfo', query: { schema: :openid }.to_query)
+    uri = URI::HTTPS.build(host:, path: userinfo_url, query: { schema: :openid }.to_query)
 
     _authorization = "Bearer #{access_token}"
 
