@@ -159,7 +159,7 @@ class CustomAuthProvider < ApplicationDocument
   def user_info(access_token)
     # special handling for microsoft
     is_microsoft = userinfo_host.eql?('graph.microsoft.com')
-    query = is_microsoft ? {} : { schema: :openid }.to_query
+    query = is_microsoft ? nil : { schema: :openid }.to_query
     uri = URI::HTTPS.build(host: userinfo_host, path: userinfo_path, query:)
 
     _authorization = "Bearer #{access_token}"
