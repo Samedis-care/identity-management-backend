@@ -22,7 +22,7 @@ Rails.application.config.middleware.use OmniAuth::Builder do
            ENV['AZURE_APPLICATION_CLIENT_SECRET'], {
            #scope: 'User.read',
            scope: 'openid profile User.read email',
-           #skip_domain_verification: true,
+           skip_domain_verification: true,
            provider_ignores_state: true # necessary to use state or CSRF error gets triggered
   }
   # provider :facebook, ENV["FACEBOOK_KEY"], ENV["FACEBOOK_SECRET"], {
