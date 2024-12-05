@@ -198,7 +198,9 @@ class CustomAuthProvider < ApplicationDocument
         level: "warn",
         data: user_info
       ))
-      raise UntrustedEmailError.new(I18n.t('json_api.oauth_untrusted_email', email:, host:))
+      e = UntrustedEmailError.new(I18n.t('json_api.oauth_untrusted_email', email:, host:))
+      Sentry.capture_exception(e)
+      raise e
     end
 
     OpenStruct.new(
