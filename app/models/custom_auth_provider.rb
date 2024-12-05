@@ -16,6 +16,7 @@ class CustomAuthProvider < ApplicationDocument
   field :authorize_url, type: String
   field :token_url, type: String
   field :userinfo_url, type: String
+  field :claims
 
   validates :domain, uniqueness: true
   validate :unique_trusted_email_domains
@@ -78,18 +79,18 @@ class CustomAuthProvider < ApplicationDocument
       client_id:,
       redirect_uri:,
       response_type:,
-      scope: ,
+      scope:,
       code_challenge:,
-      code_challenge_method:,
+      code_challenge_method:
       # prompt: :consent
     }
   end
 
   def claims
-    {
+    super || {
       userinfo: {
         given_name: { essential: true },
-        email: { essential: true },
+        email: { essential: true }
       }
     }
   end
@@ -119,20 +120,28 @@ class CustomAuthProvider < ApplicationDocument
 
     _authorization = "Basic #{Base64.strict_encode64([client_id, client_secret].join(':'))}"
 
+    # JSON is not supported by microsoft.com
+    # response = Faraday.post(uri) do |req|
+    #   req.headers['Content-Type'] = 'application/json'
+    #   req.headers['Authorization'] = _authorization
+    #   req.body = params.to_json
+    # end
     response = Faraday.post(uri) do |req|
-      req.headers['Content-Type'] = 'application/json'
+      req.headers['Content-Type'] = 'application/x-www-form-urlencoded'
       req.headers['Authorization'] = _authorization
-      req.body = params.to_json
+      req.body = URI.encode_www_form(params)  # Correctly encode params as x-www-form-urlencoded
     end
 
+    Sentry.add_breadcrumb(Sentry::Breadcrumb.new(
+      category: "custom_auth_provider",
+      message: "Fetching an oauth access_token for #{domain} returned status: #{response.status}",
+      level: "warn",
+      data: response.body
+    ))
+
     unless response.status.eql?(200)
+      return response
       e = FailedAuthError.new(I18n.t('json_api.oauth_failed', host:))
-      Sentry.add_breadcrumb(Sentry::Breadcrumb.new(
-        category: "custom_auth_provider",
-        message: "Fetching an oauth access_token for #{domain} failed with status: #{response.status}",
-        level: "warn",
-        data: response.body
-      ))
       Sentry.capture_exception(e)
       raise e
     end
