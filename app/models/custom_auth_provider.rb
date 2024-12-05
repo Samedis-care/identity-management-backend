@@ -12,6 +12,8 @@ class CustomAuthProvider < ApplicationDocument
   field :client_secret, type: String
   field :host, type: String
   field :trusted_email_domains, type: Array
+  field :scope, type: String
+  field :path, type: String
 
   validates :domain, uniqueness: true
   validate :unique_trusted_email_domains
@@ -54,11 +56,11 @@ class CustomAuthProvider < ApplicationDocument
   end
 
   def scope
-    'openid profile email'
+    super.presence || 'openid profile email'
   end
 
   def path
-    '/oauth2/authorize'
+    super.presence || '/oauth2/authorize'
   end
 
   def query_params

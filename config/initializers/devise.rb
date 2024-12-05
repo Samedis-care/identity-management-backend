@@ -20,8 +20,8 @@ Rails.application.config.middleware.use OmniAuth::Builder do
   provider :microsoft_graph,
            ENV['AZURE_APPLICATION_CLIENT_ID'], 
            ENV['AZURE_APPLICATION_CLIENT_SECRET'], {
-           #scope: 'User.read',
-           scope: 'User.read email',
+           scope: 'User.read',
+           #scope: 'openid profile User.read email',
            #skip_domain_verification: true,
            provider_ignores_state: true # necessary to use state or CSRF error gets triggered
   }
