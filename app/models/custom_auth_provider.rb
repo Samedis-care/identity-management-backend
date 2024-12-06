@@ -16,6 +16,8 @@ class CustomAuthProvider < ApplicationDocument
   field :authorize_url, type: String
   field :token_url, type: String
   field :userinfo_url, type: String
+  field :userinfo_schema, type: Hash
+  field :userinfo_mapping, type: Hash
   field :claims
 
   validates :domain, uniqueness: true
@@ -70,6 +72,10 @@ class CustomAuthProvider < ApplicationDocument
     super.presence || '/oauth2/token'
   end
 
+  # microsoft does not have this endpoint
+  # set to 'https://graph.microsoft.com/v1.0/me'
+  # to get the AD data which will automatically be mapped
+  # to the proper keys via #map_userinfo
   def userinfo_url
     super.presence || '/oauth2/userinfo'
   end
@@ -80,6 +86,36 @@ class CustomAuthProvider < ApplicationDocument
 
   def userinfo_path
     URI.parse(userinfo_url).path
+  end
+
+  def userinfo_schema
+    return nil if is_microsoft?
+
+    (super || { schema: :openid }).presence
+  end
+
+  def self.default_mapping
+    {
+      email: %w(email sub mail),
+      first_name: %w(given_name givenName),
+      last_name: %w(family_name surname),
+      name:  %w(name displayName),
+      sub: %w(sub userPrincipalName)
+    }
+  end
+
+  def userinfo_mapping
+    (super || self.class.default_mapping).symbolize_keys
+  end
+
+  def map_userinfo(userinfo)
+    mapped_userinfo = {}
+    userinfo_mapping.each do |k,v|
+      mapped_userinfo[k.to_sym] = [v].flatten.collect do |mapping|
+        userinfo[mapping]
+      end.reject(&:blank?).first
+    end
+    mapped_userinfo
   end
 
   def query_params
@@ -113,7 +149,10 @@ class CustomAuthProvider < ApplicationDocument
   end
 
   def access_token(code, code_verifier: nil)
-    raise FailedAuthError.new("Missing code_verifier") unless code_verifier.present?
+    if code_verifier.blank?
+      e = FailedAuthError.new('Missing code_verifier')
+      raise e
+    end
 
     uri = URI::HTTPS.build(host:, path: token_url)
 
@@ -128,38 +167,40 @@ class CustomAuthProvider < ApplicationDocument
 
     _authorization = "Basic #{Base64.strict_encode64([client_id, client_secret].join(':'))}"
 
+    # must be form based as Microsoft does not support JSON requests
     response = Faraday.post(uri) do |req|
       req.headers['Content-Type'] = 'application/x-www-form-urlencoded'
       req.headers['Authorization'] = _authorization
-      req.body = URI.encode_www_form(params)  # Correctly encode params as x-www-form-urlencoded
+      req.body = URI.encode_www_form(params)
     end
 
-    Sentry.add_breadcrumb(Sentry::Breadcrumb.new(
-      category: "custom_auth_provider",
-      message: "Fetching an oauth access_token for #{domain} returned status: #{response.status}",
-      level: "warn",
-      data: response.body
-    ))
-
     unless response.status.eql?(200)
-      return response
+      c = Sentry::Breadcrumb.new(
+        category: 'access_token',
+        message: "Fetching access_token for #{domain} failed with HTTP status #{response.status}.",
+        level: 'warn',
+        data: response.body
+      )
+      Sentry.add_breadcrumb(c)
       e = FailedAuthError.new(I18n.t('json_api.oauth_failed', host:))
       Sentry.capture_exception(e)
       raise e
     end
-    user_info = JSON.parse(response.body) rescue nil
 
-    user_info
+    JSON.parse(response.body) rescue nil
   end
 
   def jwt_decode(token)
     JWT.decode(token, nil, false)
   end
 
+  def is_microsoft?
+    userinfo_host.eql?('graph.microsoft.com')
+  end
+
   def user_info(access_token)
     # special handling for microsoft
-    is_microsoft = userinfo_host.eql?('graph.microsoft.com')
-    query = is_microsoft ? nil : { schema: :openid }.to_query
+    query = userinfo_schema.to_query
     uri = URI::HTTPS.build(host: userinfo_host, path: userinfo_path, query:)
 
     _authorization = "Bearer #{access_token}"
@@ -170,7 +211,7 @@ class CustomAuthProvider < ApplicationDocument
     response = Faraday.get(uri) do |req|
       req.headers['Content-Type'] = 'application/json'
       req.headers['Authorization'] = _authorization
-      req.body = { claims: }.to_json unless is_microsoft
+      req.body = { claims: }.to_json unless is_microsoft?
     end
 
     user_info = JSON.parse(response.body) rescue nil
@@ -185,32 +226,31 @@ class CustomAuthProvider < ApplicationDocument
   # so the default `do_oauth` can be used from there onwards
   # https://github.com/omniauth/omniauth/wiki/Auth-Hash-Schema
   def auth(token)
-    user_info = user_info(token['access_token'])
+    userinfo = user_info(token['access_token'])
 
-    email = user_info['email'] || user_info['sub'] || user_info['mail']
-    first_name = user_info['given_name']
-    last_name = user_info['family_name']
-    _name = user_info['name'] || "#{first_name} #{last_name}"
-    expires = token['expires_in'].to_i > 0
+    mapped_userinfo = map_userinfo(userinfo)
+
+    expires = token['expires_in'].to_i.positive?
     expires_at = expires ? token['expires_in'].to_i.seconds.from_now : nil
 
-    unless email_trusted?(email)
-      Sentry.capture_message("user_info from oauth: #{user_info.inspect}")
+    unless email_trusted?(mapped_userinfo[:email])
+      Sentry.capture_message("user_info from oauth: #{userinfo.inspect}")
 
-      Sentry.add_breadcrumb(Sentry::Breadcrumb.new(
-        category: "user_info",
+      c = Sentry::Breadcrumb.new(
+        category: 'user_info',
         message: "Fetching user_info for #{domain} returned no or only untrusted email.",
-        level: "warn",
-        data: user_info
-      ))
-      e = UntrustedEmailError.new(I18n.t('json_api.oauth_untrusted_email', email:, host:))
+        level: 'warn',
+        data: userinfo
+      )
+      Sentry.add_breadcrumb(c)
+      e = UntrustedEmailError.new(I18n.t('json_api.oauth_untrusted_email', email: mapped_userinfo[:email], host:))
       Sentry.capture_exception(e)
       raise e
     end
 
     OpenStruct.new(
       provider: host,
-      uid: "#{user_info['sub']}@#{host}",
+      uid: "#{mapped_userinfo[:sub]}@#{host}",
       credentials: OpenStruct.new(
         token: token['access_token'],
         refresh_token: token['refresh_token'],
@@ -219,10 +259,10 @@ class CustomAuthProvider < ApplicationDocument
         expires_at:
       ),
       info: OpenStruct.new(
-        email:,
-        name: _name,
-        first_name:,
-        last_name:
+        email: mapped_userinfo[:email],
+        name: mapped_userinfo[:name],
+        first_name: mapped_userinfo[:first_name],
+        last_name: mapped_userinfo[:last_name]
       ),
       extra: OpenStruct.new(
         raw_info: token.to_json
