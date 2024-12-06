@@ -113,7 +113,9 @@ class Invite < ApplicationDocument
     user = get_user
     raise 'NO SUCH USER' unless user.is_a?(User)
 
-    employee_group = tenant.descendants.groups.where(system: true, name: :staff_read_device_briefings).first
+    employee_group = tenant.descendants
+                           .groups
+                           .where(system: true, name: :employee).first
     raise 'NO EMPLOYEE GROUP FOUND' unless employee_group.is_a?(Actor)
 
     employee_group.map_into!(user.actor)
