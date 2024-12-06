@@ -89,7 +89,7 @@ class CustomAuthProvider < ApplicationDocument
   end
 
   def userinfo_schema
-    return nil if is_microsoft?
+    return {} if is_microsoft?
 
     (super || { schema: :openid }).presence
   end
@@ -200,7 +200,7 @@ class CustomAuthProvider < ApplicationDocument
 
   def user_info(access_token)
     # special handling for microsoft
-    query = userinfo_schema.to_query
+    query = userinfo_schema&.to_query
     uri = URI::HTTPS.build(host: userinfo_host, path: userinfo_path, query:)
 
     _authorization = "Bearer #{access_token}"
