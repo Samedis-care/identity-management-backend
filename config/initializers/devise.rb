@@ -17,12 +17,33 @@ Rails.application.config.middleware.use OmniAuth::Builder do
            image_size: 800
   }
 
+  # control skipping domain verification for microsoft graph
+  # https://github.com/advisories/GHSA-5g66-628f-7cvj
+  # which breaks everything if not skipped for practically every
+  # login attempt as it requires complicated settings in azure AD
+  # that seemingly don't even work.
+  skip_domain_verification = true
+  if ENV['AZURE_SKIP_DOMAIN_VERIFICATION'].to_s.to_boolean === false
+    # allows setting this to false via application.yml
+    # currently this is set to true as domain verification
+    # will break microsoft_graph logins
+    skip_domain_verification = false
+  else
+    # this also allows skipping only for an array of domains
+    # test for these (allow multiple space separated domains)
+    skip_domains = ENV['AZURE_SKIP_DOMAIN_VERIFICATION'].to_s.split(' ')
+                                                        .collect(&:strip)
+                                                        .reject(&:blank?)
+                                                        .select do |d|
+                                                          URI.parse("http://#{d}").host rescue false
+                                                        end
+    skip_domain_verification = skip_domains if skip_domains.any?
+  end
   provider :microsoft_graph,
            ENV['AZURE_APPLICATION_CLIENT_ID'], 
            ENV['AZURE_APPLICATION_CLIENT_SECRET'], {
-           #scope: 'User.read',
            scope: 'openid profile User.read email',
-           skip_domain_verification: true,
+           skip_domain_verification:,
            provider_ignores_state: true # necessary to use state or CSRF error gets triggered
   }
   # provider :facebook, ENV["FACEBOOK_KEY"], ENV["FACEBOOK_SECRET"], {
