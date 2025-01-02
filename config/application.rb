@@ -38,8 +38,8 @@ module IdentityManagement
     # allows for defining `format` in locale yamls to get rid of attribute name in front
     config.active_model.i18n_customize_full_message = true
 
-    # allows for defining `format` in locale yamls to get rid of attribute name in front
-    config.active_model.i18n_customize_full_message = true
+    # new default starting with Rails 8.1
+    config.active_support.to_time_preserves_timezone = :zone
 
     # Only loads a smaller set of middleware suitable for API only apps.
     # Middleware like session, flash, cookies can be added back manually.
