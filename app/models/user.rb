@@ -261,8 +261,11 @@ class User < ApplicationDocument
       throw(:abort)
     end
     if record.deleted_changed? && record.deleted?
+      # revoke all current tokens
+      record.oauth_tokens.where(revoked_at: nil).set(revoked_at: Time.now)
       # adds uuid after the email so the account can be re-created with same address
       record.email_uniquely_disabled!
+      record.cache_expire!
     end
     # persist changed access groups
     if record.access_group_ids_changed.is_a?(Array)
