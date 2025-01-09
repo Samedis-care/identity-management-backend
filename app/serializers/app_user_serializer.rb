@@ -51,7 +51,7 @@ class AppUserSerializer
 
     tenants = user.tenants
     tenants.each do |tenant|
-      candos = tenant.symbolize_keys[:candos]
+      candos = tenant.symbolize_keys[:candos] || []
       tenant[:candos] = candos.select { |c| c.start_with?("#{_app.name}/") }
     end
     tenants
