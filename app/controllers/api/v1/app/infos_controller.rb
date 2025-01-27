@@ -16,9 +16,8 @@ class Api::V1::App::InfosController < Api::V1::JsonApiController
   undef_method :update
   undef_method :create
 
-
   def record_show
-    ::Actors::App.named(params_json_api[:name]).only(:system, :name, :short_name, :full_name, :url, :image_data, :config).first
+    ::Actors::App.only(:system, :name, :short_name, :full_name, :url, :image_data, :config).find_by(name: params_json_api[:name].to_s.to_slug)
   end
 
 end
