@@ -126,8 +126,8 @@
     <center>
       <table class="mail" cellpadding="0" cellspacing="0" border="0" width="530" style="border-collapse: collapse;">
         <tr>
-          <td class="content" style="<% @tag_style.td %>;<% @style.white_background %>; vertical-align: top; padding-top: 0;"><div class="logo" style="padding-top: 25px"><center><%= image_tag((attachments['logo.png'].url rescue ''), alt: @app_context, xsize: "#{(@logo.width/2).abs}x#{(@logo.height/2).abs}", style: "xwidth:#{(@logo.width/2).abs}px;xheight:#{(@logo.height/2).abs}px;" ) %></center>
-            </div>
+          <td class="content" style="<% @tag_style.td %>;<% @style.white_background %>; vertical-align: top; padding-top: 0;"><% if @logo %><div class="logo" style="padding-top: 25px"><center><%= image_tag((attachments['logo.png'].url rescue ''), alt: @app_context, xsize: "#{(@logo.width/2).abs}x#{(@logo.height/2).abs}", style: "xwidth:#{(@logo.width/2).abs}px;xheight:#{(@logo.height/2).abs}px;" ) %></center>
+            </div><% end %>
 
             <%= yield %>
           </td>

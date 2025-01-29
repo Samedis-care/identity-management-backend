@@ -1,5 +1,5 @@
 class ApplicationMailer < ActionMailer::Base
-  default from: (ENV['MAIL_FROM'].present? ? ENV['MAIL_FROM'] : 'no-reply@ident.services')
+  default from: ENV['MAIL_FROM'].presence || 'no-reply@ident.services'
 
   layout 'mailer'
 
