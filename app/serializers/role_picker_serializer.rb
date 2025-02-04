@@ -1,7 +1,5 @@
-class RoleSerializer
+class RolePickerSerializer
   include JSONAPI::Serializer
-
-  has_many :functionalities, record_type: :functionality, serializer: FunctionalityOverviewSerializer
 
   attribute(:id) do |record|
     record.id.to_s
@@ -12,15 +10,9 @@ class RoleSerializer
     :title_translations,
     :description,
     :description_translations,
-    :app,
-    :name,
     :created_at,
     :updated_at
   )
-
-  attribute :functionality_ids do |record|
-    record.functionality_ids.collect(&:to_s)
-  end
 
   class Schema < JsonApi::Schema
 
@@ -42,14 +34,6 @@ class RoleSerializer
           object :description_translations, description: 'language keys here are dynamic and can consist of any supported language, minimum should be those languages of the configured app locales' do
             string :en, description: 'the english locale description'
             string :de, description: 'the german locale description'
-          end
-
-          string :app, default: 'app-name', description: 'name of app this role belongs to'
-
-          array :functionality_ids do
-            items do
-              string :id, description: 'id of a functionality assigned to this role'
-            end
           end
         end
       end

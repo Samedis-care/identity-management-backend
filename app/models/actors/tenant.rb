@@ -70,6 +70,31 @@ module Actors
       @enterprises || []
     end
 
+    # this makes sure an up-to-date node
+    # to hold custom profiles is directly
+    # below the tenant organization node
+    def profiles_ou
+      @profiles_ou ||= begin
+        _attrs = organization.defaults[:children].detect do
+          it['name'].eql?('tenant_profiles')
+        end.slice(*%w(title_translations))
+        return nil unless _attrs.is_a?(Hash)
+
+        _ou = organization
+              .children
+              .available
+              .where(name: 'tenant_profiles')
+              .first_or_create(**_attrs)
+        _ou.attributes = _attrs
+        _ou.save if _ou.changes.any?
+        _ou
+      end
+    end
+
+    def profiles
+      profiles_ou.children.reorder(nil).where(_type: Actors::Group, parent_id: profiles_ou.id)
+    end
+
     def self.enterprises(tenant_ids)
       begin
         _enterprise_ids = Actors::Mapping.unscoped.available.where(:map_actor_id.in => ensure_bson(tenant_ids)).pluck(:parent_id)

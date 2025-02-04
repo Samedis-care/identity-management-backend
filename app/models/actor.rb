@@ -146,6 +146,14 @@ class Actor < ApplicationDocument
   field :children_count, type: Integer, default: 0
   field :actor_settings, type: Hash, default: {}
 
+  def title=(t)
+    _title = super
+    self.title_translations = I18n.available_locales.collect do
+      [it.to_s, self.title_translations[it.to_s] || t]
+    end.to_h
+    _title
+  end
+
   def merge_group_candos!
     _mappings = Actors::Mapping.where(parent_ids: self.id)
     _mappings.merge_group_candos!

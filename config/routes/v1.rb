@@ -13,6 +13,8 @@ namespace :v1 do
     resources :tenant, module: :tenant, only: [] do
       resources :groups, only: %i(index)
       resources :users, only: %i(index show update destroy)
+      resources :profiles
+      resources :roles, only: %i(index show)
     end
   end
 
