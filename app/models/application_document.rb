@@ -270,6 +270,41 @@ class ApplicationDocument
     end
   end
 
+  def self.sample
+    return nil unless respond_to?(:find)
+
+    where(:_id => sample_id).first
+  end
+
+  def self.samples(size)
+    return [nil] unless respond_to?(:find)
+
+    where(:_id.in => sample_ids(size)).to_a
+  end
+
+  def self.sample_id
+    sample_ids(1)[0]
+  end
+
+  def self.sample_ids(size)
+    return [] unless respond_to?(:collection)
+    # must fetch via pluck(:_id) as some chained criteria
+    # might get lost otherwise
+    collection.aggregate(
+      [
+        {
+          '$match': {
+            '_id': {
+              '$in': pluck(:_id)
+            }
+          }
+        },
+        { '$sample' => { 'size' => size } },
+        { '$project' => { _id: true } }
+      ]
+    ).to_a.pluck('_id')
+  end
+
   private
   # The _gridfilter_* methods implement server side filtering with AG-Grid style
   # filterModel data by turning these into Mongoid syntax.

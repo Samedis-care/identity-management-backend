@@ -15,7 +15,7 @@ class Api::V1::AccessControl::Tenant::GroupsController < Api::V1::JsonApiControl
   SWAGGER = {
     tag: 'Access Control',
     action_suffix: 'available groups of this tenant'
-  }
+  }.freeze
 
   undef_method :update
   undef_method :create

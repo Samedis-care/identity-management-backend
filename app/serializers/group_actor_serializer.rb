@@ -12,7 +12,7 @@ class GroupActorSerializer
   end
 
   attribute(:role_ids) do |record|
-    record.actor_roles.pluck(:role_id).collect(&:to_s)
+    record.role_ids.collect(&:to_s)
   end
 
   attribute(:map_actor_ids) do |record|
