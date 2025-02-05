@@ -95,6 +95,12 @@ module Actors
       profiles_ou.children.reorder(nil).where(_type: Actors::Group, parent_id: profiles_ou.id)
     end
 
+    def available_role_ids
+      @available_role_ids ||= organization
+                              .descendants
+                              .groups.pluck(:role_ids).flatten.compact.uniq
+    end
+
     def self.enterprises(tenant_ids)
       begin
         _enterprise_ids = Actors::Mapping.unscoped.available.where(:map_actor_id.in => ensure_bson(tenant_ids)).pluck(:parent_id)
