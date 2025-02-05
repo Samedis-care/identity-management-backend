@@ -2,7 +2,7 @@ class Api::V1::AccessControl::Tenant::RolesController < Api::V1::JsonApiControll
 
   MODEL_BASE = Role
   MODEL = -> {
-    current_app_actor.roles.available
+    current_app_actor.roles.where(:_id.in => tenant_role_ids).available
   }
   MODEL_OVERVIEW = MODEL
   SERIALIZER = RolePickerSerializer
@@ -16,6 +16,15 @@ class Api::V1::AccessControl::Tenant::RolesController < Api::V1::JsonApiControll
   undef_method :destroy
 
   private
+
+  # ensures the roles returned are reduced
+  # to only those that the current_tenant has available
+  # within the organization structure (as defined by app orga)
+  # this is critical to avoid exposing highly privileged
+  # administative roles
+  def tenant_role_ids
+    @tenant_role_ids ||= current_tenant_actor.available_role_ids
+  end
 
   def cando
     CANDO.merge({
