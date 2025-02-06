@@ -38,6 +38,10 @@ en:
       otp_too_many_tries: Too many invalid one time password tries.
       unauthorized: Insufficient rights to access this resource.
       unauthorized_tenant: Permission denied. No access to this tenant allowed.
+      confirmation_token_invalid: >-
+        The confirmation token that was sent is invalid.
+        Your account couldn't be verified.
+        Please check you copied the full confirmation link.
   devise:
     mailer:
       recovery_email_confirm: Thank you for the confirmation. Your account is now set up

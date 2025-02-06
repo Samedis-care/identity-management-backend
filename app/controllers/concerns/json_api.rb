@@ -45,7 +45,7 @@ module JsonApi
     return if performed?
 
     if ENV['SHOW_ERRORS'].to_s.to_boolean
-      error = {
+      error_details = {
         exception: exception.class.name,
         message: exception.message,
         backtrace: exception.backtrace
@@ -57,8 +57,9 @@ module JsonApi
                          msg: {
                            success: false,
                            message: message.to_s.encode('utf-8', invalid: :replace, undef: :replace),
-                           error:
-                         }
+                           error:,
+                           error_details:
+                         }.compact
                        })
 
     render json: { meta: }, status:
