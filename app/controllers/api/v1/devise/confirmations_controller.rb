@@ -32,10 +32,21 @@ class Api::V1::Devise::ConfirmationsController < Devise::ConfirmationsController
           app: user.app_context
         }
       })
-    elsif user.is_a?(User)
-      render_jsonapi_error(user.errors.full_messages * ', ', 'error', 400)
     else
-      render_jsonapi_error(I18n.t('auth.error.token_invalid'), 'invalid_token', 400)
+      message = I18n.t('auth.error.token_invalid')
+      error = 'invalid_token'
+
+      if user.is_a?(User) && user.errors.any?
+        message = user.errors.full_messages * ', '
+        error = 'record_error'
+
+        errors = user.errors.collect { [it.attribute, it.type].join('_').underscore }
+        if errors.include?('confirmation_token_invalid')
+          message = I18n.t('auth.error.confirmation_token_invalid')
+          error = 'confirmation_token_invalid'
+        end
+      end
+      render_jsonapi_error(message, error, 400)
     end
   end
 

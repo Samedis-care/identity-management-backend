@@ -44,6 +44,10 @@ de:
       otp_too_many_tries: Zu viele ungültige Einmalkennwortversuche.
       unauthorized: Nicht authorisiert. Unzureichende Berechtigung.
       unauthorized_tenant: Zugriff verweigert. Kein Zugriff auf diesen Mandanten erlaubt.
+      confirmation_token_invalid: >-
+        Der Bestätigungscode war ungültig.
+        Dein Konto konnte daher nicht aktiviert werden.
+        Bitte überprüfe das der vollständige Bestätigungslink verwendet wurde.
   devise:
     mailer:
       account_confirm: Vielen Dank für Deine Bestätigung. Dein Zugang wurde aktiviert.
