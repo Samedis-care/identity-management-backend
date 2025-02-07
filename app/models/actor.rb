@@ -118,11 +118,12 @@ class Actor < ApplicationDocument
   index user_id: 1
   index parent_ids: 1, _type: 1, deleted: 1
   # undefine redundant parent_ids index which comes as default from `include Mongoid::Tree`
-  index_specifications.reject! {|idx| idx.key == { parent_ids: 1} }
+  index_specifications.reject! {|idx| idx.key == { parent_ids: 1 } }
 
   index tenant_id: 1, cached_role_ids: 1
   index tenant_id: 1, cached_role_names: 1
   index tenant_id: 1, cached_candos: 1
+  index parent_id: 1, parent_ids: 1, user_id: 1, friendlyname: 1, _id: 1
 
   index role_ids: 1
 
@@ -410,7 +411,7 @@ class Actor < ApplicationDocument
       end
       _name = self.name = self.get_name
       base_path << _name
-      base_path * '/'
+      base_path * ' / '
     end
   end
 

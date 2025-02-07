@@ -4,7 +4,7 @@ class Api::V1::Apps::UsersController < Api::V1::JsonApiController
   MODEL = -> {
     current_app_actor.users.available.includes(:actor)
   }
-  MODEL_OVERVIEW  = -> {
+  MODEL_OVERVIEW = -> {
     current_app_actor.users.available
   }
   SERIALIZER = AppUserSerializer
@@ -28,7 +28,7 @@ class Api::V1::Apps::UsersController < Api::V1::JsonApiController
     :gender,
     :invalid_at,
     :mobile
-  ]
+  ].freeze
 
   undef_method :create
 
@@ -49,6 +49,7 @@ class Api::V1::Apps::UsersController < Api::V1::JsonApiController
   end
 
   private
+
   def cando
     CANDO.merge({
       show:    %w(~/apps.admin+identity-management/users.reader),
