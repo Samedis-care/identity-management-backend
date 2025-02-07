@@ -8,9 +8,11 @@ module Actors
     after_save :merge_group_candos!
 
     validates :map_actor_id, presence: true
-    belongs_to :mapped_into, class_name: Actor, primary_key: :map_actor_id, inverse_of: :mappings, optional: true
+    belongs_to :mapped_into, class_name: '::Actor', primary_key: :map_actor_id, inverse_of: :mappings, optional: true
 
     belongs_to :user, class_name: '::User', optional: true, inverse_of: nil
+
+    field :friendlyname, type: String
 
     field :app_id, type: BSON::ObjectId
     field :user_id, type: BSON::ObjectId
@@ -36,6 +38,7 @@ module Actors
     def ensure_user_data
       _user = self.map_actor.user
       self.name = _user.email
+      self.friendlyname = _user.friendlyname
       self.short_name = _user.name
       self.full_name = _user.name
     end
