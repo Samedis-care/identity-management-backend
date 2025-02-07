@@ -41,7 +41,7 @@ class Actor < ApplicationDocument
   DEFAULTS = YAML.load_file('config/actor_defaults.yml')
 
   MAPPABLE_TYPES = %i(user group ou position tenant)
-  QUICKFILTER_COLUMNS = [:short_name]
+  QUICKFILTER_COLUMNS = %i(short_name name)
   search_in *QUICKFILTER_COLUMNS
 
   # fix mongoid-tree descendants to be used as
@@ -113,6 +113,7 @@ class Actor < ApplicationDocument
   )
 
   index parent_id: 1, name: 1
+  index parent_id: 1, user_id: 1, _keywords: 1
   index tenant_id: 1, parent_template_actor_id: 1, user_id: 1
   index parent_template_actor_id: 1, user_id: 1
   index user_id: 1
