@@ -282,8 +282,9 @@ class User < ApplicationDocument
   after_save do
     next if actor.nil?
 
-    if deleted? || deleted_previously_changed?
-      Actor.where('$or' => [{ user_id: id }, { _id: actor_id }]).set(
+    if previous_changes.any?
+      related_actors.set(
+        _keywords:,
         deleted:,
         active:,
         short_name: get_short_name,
@@ -300,6 +301,10 @@ class User < ApplicationDocument
       errors.add :system, 'protection flag set'
       throw(:abort)
     end
+  end
+
+  def related_actors
+    @related_actors ||= Actor.where('$or' => [{ user_id: id }, { _id: actor_id }])
   end
 
   def self.writable
