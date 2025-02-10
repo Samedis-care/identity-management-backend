@@ -77,8 +77,9 @@ module Actors
       @profiles_ou ||= begin
         _attrs = organization.defaults[:children].detect do
           it['name'].eql?('tenant_profiles')
-        end.slice(*%w(title_translations))
+        end
         return nil unless _attrs.is_a?(Hash)
+        _attrs = _attrs.slice(*%w(title_translations))
 
         _ou = organization
               .children
