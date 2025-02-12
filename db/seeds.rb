@@ -59,6 +59,7 @@ puts '=' * 80
 
 # Insert Candos, Roles and locales for these apps
 Actors::App.seed!
+Actors::App.create_app_views!
 Actors::App.each(&:ensure_defaults!)
 
 Dir.glob('config/apps/*').each do |app_dir|
