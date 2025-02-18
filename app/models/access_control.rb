@@ -1,7 +1,7 @@
 class AccessControl
   include ActiveModel::API
 
-  attr_accessor :id, :name, :label, :group, :group_name, :description
+  attr_accessor :id, :name, :label, :group, :group_name, :description, :role_ids
   alias_attribute :_id, :id
 
   def initialize(params = {})
@@ -17,7 +17,8 @@ class AccessControl
       name:,
       label:,
       group:,
-      description:
+      description:,
+      role_ids:
     }
   end
 
@@ -141,6 +142,9 @@ class AccessControl
               'input': '$title'
             }
           }, 
+          'role_ids': {
+            '$setUnion': "$roles._id"
+          },
           'description': {
             '$reduce': {
               'input': {
