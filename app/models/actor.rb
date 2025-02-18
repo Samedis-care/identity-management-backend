@@ -57,11 +57,11 @@ class Actor < ApplicationDocument
   has_one :user, class_name: '::User', inverse_of: :actor, dependent: :destroy
   has_and_belongs_to_many :roles, inverse_of: nil # this creates role_ids on the actor # rubocop:disable Rails/HasAndBelongsToMany
 
-  belongs_to :map_actor, class_name: 'Actor', optional: true
-  belongs_to :template_actor, inverse_of: :templates, class_name: 'Actor', optional: true
-  has_many :templates, inverse_of: :template_actor, class_name: 'Actor', dependent: :nullify
+  belongs_to :map_actor, class_name: Actor, optional: true
+  belongs_to :template_actor, inverse_of: :templates, class_name: Actor, optional: true
+  has_many :templates, inverse_of: :template_actor, class_name: Actor
 
-  has_many :mappings, class_name: 'Actors::Mapping', foreign_key: :parent_id, inverse_of: :mapped_into, dependent: :nullify
+  has_many :mappings, class_name: 'Actors::Mapping', foreign_key: :parent_id, inverse_of: :mapped_into
 
   validate :proper_name
   validates :name, uniqueness: {
