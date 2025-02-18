@@ -77,14 +77,17 @@ module Actors
     end
 
     def ensure_profiles_ou_defaults!
+      @profiles_ou ||= self.profiles_ou
+      return if @profiles_ou.blank?
+
       (profiles_ou_defaults['children'] || []).collect do |group|
         # ensure default group(s) like "Standard user"
         group['role_ids'] = Role.where(:name.in => group['roles']).pluck(:_id)
         _group_attrs = group.to_h.slice(*%w(title_translations role_ids))
-        _group = Actors::Group.where(parent: profiles_ou, name: group['name']).first_or_initialize(**_group_attrs)
+        _group = Actors::Group.where(parent: @profiles_ou, name: group['name']).first_or_initialize(**_group_attrs)
         _group.system = true
         _group.attributes = _group_attrs
-        _group.save if _group.changes.any?
+        _group.save! if _group.changes.any?
         _group
       end
     end
@@ -99,10 +102,11 @@ module Actors
 
         _ou = Actors::Ou.where(parent: organization, name: 'tenant_profiles').first_or_initialize(**_attrs)
         _ou.attributes = _attrs
-        _ou.save if _ou.changes.any?
+        _ou.save! if _ou.new_record? || _ou.changes.any?
         _ou
       end
-      if @profiles_ou.previous_changes.try(:key?, '_id')
+      # check if properly persisted and if previous changes created an _id (so newly created)
+      if @profiles_ou&.persisted? && @profiles_ou.previous_changes.try(:key?, '_id')
         # ou was just created, seed children to it
         # otherwise keep as is to avoid possible user-made changes
         ensure_profiles_ou_defaults!
