@@ -26,48 +26,49 @@ class Actor < ApplicationDocument
 
   attr_accessor :actor_type
 
-  TYPES = [
-    :mapping,
-    :container,
-    :apps, :app,
-    :tenants,
-    :organization,
-    :tenant,
-    :group,
-    :ou,
-    :user,
-    :enterprise
-  ]
+  TYPES = %i(
+    mapping
+    container
+    apps
+    app
+    tenants
+    organization
+    tenant
+    group
+    ou
+    user
+    enterprise
+  ).freeze
   DEFAULTS = YAML.load_file('config/actor_defaults.yml')
 
-  MAPPABLE_TYPES = %i(user group ou position tenant)
-  QUICKFILTER_COLUMNS = %i(short_name name)
-  search_in *QUICKFILTER_COLUMNS
+  MAPPABLE_TYPES = %i(user group ou position tenant).freeze
+  QUICKFILTER_COLUMNS = %i(short_name name).freeze
+  search_in(*QUICKFILTER_COLUMNS)
 
   # fix mongoid-tree descendants to be used as
   # chained criteria for new instances
   # e.g. descendants.new would break because parent_ids must be Array
   def descendants
-    base_class.where(:parent_ids.in => [self.id])
+    base_class.where(:parent_ids.in => [id])
   end
 
   strip_attributes collapse_spaces: true
 
   has_one :user, class_name: '::User', inverse_of: :actor, dependent: :destroy
-  has_and_belongs_to_many :roles, inverse_of: nil # this creates role_ids on the actor
+  has_and_belongs_to_many :roles, inverse_of: nil # this creates role_ids on the actor # rubocop:disable Rails/HasAndBelongsToMany
 
   belongs_to :map_actor, class_name: 'Actor', optional: true
-  belongs_to :template_actor, inverse_of: :templates, class_name: Actor, optional: true
-  has_many :templates, inverse_of: :template_actor, class_name: Actor
+  belongs_to :template_actor, inverse_of: :templates, class_name: 'Actor', optional: true
+  has_many :templates, inverse_of: :template_actor, class_name: 'Actor', dependent: :nullify
 
-  has_many :mappings, class_name: 'Actors::Mapping', foreign_key: :parent_id, inverse_of: :mapped_into
+  has_many :mappings, class_name: 'Actors::Mapping', foreign_key: :parent_id, inverse_of: :mapped_into, dependent: :nullify
 
   validate :proper_name
   validates :name, uniqueness: {
     scope: :parent_id,
     conditions: -> { all.available },
-    message: Proc.new { I18n.t('mongoid.errors.models.actor.attributes.name.uniqueness') },
-    unless: Proc.new {|a| a.deleted? || a.is_mapping? || a.is_user? }
+    message: -> { I18n.t('mongoid.errors.models.actor.attributes.name.uniqueness') },
+    unless: ->(a) { a.deleted? || a.is_mapping? || a.is_user? }
   }
 
   with_options unless: :skip_all_callbacks? do
@@ -91,7 +92,7 @@ class Actor < ApplicationDocument
   before_destroy :destroy_mappings, unless: :is_mapping?
   after_destroy :cache_expire!, unless: :is_mapping?
   def destroy_mappings
-    self.mappings.destroy_all
+    mappings.destroy_all
   end
 
   index _type: 1, deleted: 1, map_actor_id: 1
@@ -151,7 +152,7 @@ class Actor < ApplicationDocument
   def title=(t)
     _title = super
     self.title_translations = I18n.available_locales.collect do
-      [it.to_s, self.title_translations[it.to_s] || t]
+      [it.to_s, title_translations.fetch(it.to_s, t)]
     end.to_h
     _title
   end

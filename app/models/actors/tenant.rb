@@ -70,26 +70,44 @@ module Actors
       @enterprises || []
     end
 
+    def profiles_ou_defaults
+      @profiles_ou_defaults ||= organization.defaults[:children].detect do
+        it['name'].eql?('tenant_profiles')
+      end.try(:with_indifferent_access)
+    end
+
+    def ensure_profiles_ou_defaults!
+      (profiles_ou_defaults['children'] || []).collect do |group|
+        # ensure default group(s) like "Standard user"
+        group['role_ids'] = Role.where(:name.in => group['roles']).pluck(:_id)
+        _group_attrs = group.to_h.slice(*%w(title_translations role_ids))
+        _group = Actors::Group.where(parent: profiles_ou, name: group['name']).first_or_initialize(**_group_attrs)
+        _group.system = true
+        _group.attributes = _group_attrs
+        _group.save if _group.changes.any?
+        _group
+      end
+    end
+
     # this makes sure an up-to-date node
     # to hold custom profiles is directly
     # below the tenant organization node
     def profiles_ou
       @profiles_ou ||= begin
-        _attrs = organization.defaults[:children].detect do
-          it['name'].eql?('tenant_profiles')
-        end
-        return nil unless _attrs.is_a?(Hash)
-        _attrs = _attrs.slice(*%w(title_translations))
+        return nil unless profiles_ou_defaults.is_a?(Hash)
+        _attrs = profiles_ou_defaults.slice(*%w(title_translations)).merge(_type: 'Actors::Ou')
 
-        _ou = organization
-              .children
-              .available
-              .where(name: 'tenant_profiles')
-              .first_or_create(**_attrs)
+        _ou = Actors::Ou.where(parent: organization, name: 'tenant_profiles').first_or_initialize(**_attrs)
         _ou.attributes = _attrs
         _ou.save if _ou.changes.any?
         _ou
       end
+      if @profiles_ou.previous_changes.try(:key?, '_id')
+        # ou was just created, seed children to it
+        # otherwise keep as is to avoid possible user-made changes
+        ensure_profiles_ou_defaults!
+      end
+      @profiles_ou
     end
 
     def profiles
