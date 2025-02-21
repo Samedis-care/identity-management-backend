@@ -85,8 +85,7 @@ module Actors
         group['role_ids'] = Role.where(:name.in => group['roles']).pluck(:_id)
         _group_attrs = group.to_h.slice(*%w(title_translations role_ids))
         _group = Actors::Group.where(parent: @profiles_ou, name: group['name']).first_or_initialize(**_group_attrs)
-        _group.system = true
-        _group.attributes = _group_attrs
+        _group.attributes = { system: true }.merge(_group_attrs)
         _group.save! if _group.changes.any?
         _group
       end
@@ -98,10 +97,12 @@ module Actors
     def profiles_ou
       @profiles_ou ||= begin
         return nil unless profiles_ou_defaults.is_a?(Hash)
+
         _attrs = profiles_ou_defaults.slice(*%w(title_translations)).merge(_type: 'Actors::Ou')
 
         _ou = Actors::Ou.where(parent: organization, name: 'tenant_profiles').first_or_initialize(**_attrs)
         _ou.attributes = _attrs
+        _ou.system = true
         _ou.save! if _ou.new_record? || _ou.changes.any?
         _ou
       end
@@ -121,7 +122,7 @@ module Actors
     def available_role_ids
       @available_role_ids ||= organization
                               .descendants
-                              .groups.pluck(:role_ids).flatten.compact.uniq
+                              .groups.pluck(:role_ids).flatten.compact.uniq.presence
     end
 
     def self.enterprises(tenant_ids)
