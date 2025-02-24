@@ -174,7 +174,7 @@ de:
       actor:
         short_name: Kurzname
       user:
-        active: Aktiv
+        active: aktiv
         confirmed_at: Verifiziert am
         created_at: Erstellt am
         deleted: Gelöscht
