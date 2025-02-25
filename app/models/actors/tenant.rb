@@ -195,6 +195,16 @@ module Actors
       end
     end
 
+    def self.ensure_defaults!
+      available.each(&:ensure_defaults!)
+    end
+
+    def self.ensure_defaults_threaded!(in_threads: 4)
+      logs! false
+      self.debug = false
+      Parallel.each(available, in_threads:, progress: 'Ensuring defaults on tenants...') { it.ensure_defaults! }
+    end
+
   end
 
 end
