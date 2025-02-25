@@ -130,6 +130,9 @@ class Actor < ApplicationDocument
 
   # fields
   strip_attributes
+  # stores checksum of last run "ensure_defaults!" to skip those already processed
+  field :defaults_checksum, type: String
+
   field :auto, type: Boolean, default: false
   field :deleted, type: Boolean, default: false
   field :deleted_at, type: Time
@@ -767,7 +770,6 @@ class Actor < ApplicationDocument
     raise "Can only map actors!" unless actor.is_a?(Actor)
     raise "Can only map persisted actors!" if actor.new_record?
 
-
     # mapped_actor = self.children.mappings.where(map_actor: actor).first_or_initialize()
     mapped_actor = Actors::Mapping.where(parent: self, map_actor: actor).first_or_initialize(user_id: user&.id)
     return mapped_actor if mapped_actor.persisted?
@@ -820,11 +822,10 @@ class Actor < ApplicationDocument
     self.path.split('/').second.strip
   end
 
-  def ensure_defaults!(with_defaults: nil, cache_expire: true)
+  def ensure_defaults!(with_defaults: nil, cache_expire: true, ignore_checksum: false)
     return if deleted?
     return if is_mapping?
     @ensure_defaults ||= begin
-
       debug_puts "\n" * 5
       debug_puts "=" * 80
       debug_puts "ensuring defaults for: #{self.path} of #{self.class} are"
@@ -832,11 +833,20 @@ class Actor < ApplicationDocument
       debug_puts "\n" * 2
 
       _defaults = with_defaults || self.defaults
-      if _defaults.is_a?(Hash)
-        debug_puts "-"*80
+      checksum = self.is_a?(Actors::Organization)
+      checksum = false if ignore_checksum
+      _current_defaults_checksum = checksum ? _defaults&.stable_checksum : nil
+      _needs_update = true
+      if defaults_checksum.presence && _current_defaults_checksum &&
+         _current_defaults_checksum == defaults_checksum
+        _needs_update = false
+      end
+
+      if _defaults.is_a?(Hash) && _needs_update
+        debug_puts '-' * 80
         debug_puts "defaults #{self.path} of #{self.class} are"
         debug_ap _defaults
-        debug_puts "-"*80
+        debug_puts '-' * 80
         begin
           # disable costly callbacks until we're done
           _roles = _defaults[:roles]
@@ -846,23 +856,28 @@ class Actor < ApplicationDocument
           end
           if _roles.present?
             # ensure default roles
-            debug_puts "-"*80
+            debug_puts '-' * 80
             debug_puts " to actor: #{self.id} / #{self.name}"
             debug_puts "   - adding roles #{_roles.present? ? _roles : 'NONE'}"
             ensure_named_roles(_roles)
-            debug_puts "   - adding roles DONE!"
-            debug_puts "-"*80
+            debug_puts '   - adding roles DONE!'
+            debug_puts '-' * 80
           end
           # ensure default groups
           return unless _defaults[:children] && _defaults[:children].try(:any?)
           recursion_defaults(self, _defaults[:children], cache_expire: false)
+          self.set(defaults_checksum: _current_defaults_checksum)
         ensure
           # re-instate callbacks previously disabled
-          debug_puts "=" * 80
+          debug_puts '=' * 80
           debug_puts "finalizing #{self.path} with child counter updates..."
-          debug_puts "=" * 80
+          debug_puts '=' * 80
           #set_children_count!
         end
+      # elsif _defaults.is_a?(Hash) && !_needs_update
+      #   puts '-' * 80
+      #   puts "Skipping since checksum unchanged: defaults:#{_defaults.is_a?(Hash)} / needs_update:#{_needs_update} > checksum:#{_current_defaults_checksum} / old_checksum:#{defaults_checksum}"
+      #   puts '-' * 80
       end
       self.cache_expire! if cache_expire
       true
