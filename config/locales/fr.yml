@@ -42,6 +42,9 @@ fr:
       otp_too_many_tries: Trop de tentatives de mot de passe à usage unique non valides.
       unauthorized: Une inscription est requise pour accéder à cette ressource.
       unauthorized_tenant: Permission refusée. Aucun accès à ce locataire autorisé.
+      confirmation_token_invalid: Le jeton de confirmation qui a été envoyé n'est
+        pas valide. Votre compte n'a pas pu être vérifié. Veuillez vérifier que vous
+        avez copié le lien de confirmation complet.
   devise:
     mailer:
       account_confirm: Merci pour votre confirmation. Votre accès a été activé.
