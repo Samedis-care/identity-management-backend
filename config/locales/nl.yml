@@ -41,6 +41,9 @@ nl:
       otp_too_many_tries: Te veel ongeldige eenmalige wachtwoordpogingen.
       unauthorized: Onvoldoende rechten voor toegang tot deze bron.
       unauthorized_tenant: Geen toestemming. Geen toegang tot dit account toegestaan.
+      confirmation_token_invalid: Het bevestigingstoken dat is verzonden is ongeldig.
+        Uw account kon niet worden geverifieerd. Controleer of u de volledige bevestigingslink
+        hebt gekopieerd.
   devise:
     mailer:
       account_confirm: Dank u voor uw bevestiging. Uw toegang is geactiveerd.
