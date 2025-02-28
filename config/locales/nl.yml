@@ -4,7 +4,7 @@ nl:
     argument_error: Verkeerd aantal argumenten
     gridfilter_error: Grid filter fout
     general_error: Algemene fout
-    database_error: Database error
+    database_error: Database fout
     authorization_error: Autorisatie fout
     object_id_invalid_error: Er is een ongeldige object-ID opgegeven
     malformed_csv_error: >-
