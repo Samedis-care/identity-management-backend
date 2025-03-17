@@ -107,3 +107,8 @@ Metrics/PerceivedComplexity:
 
 Style/DoubleNegation:
   Enabled: false
+
+# there is no find_each in mongoid
+Rails/FindEach:
+  Enabled: false
+
