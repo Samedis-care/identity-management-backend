@@ -113,12 +113,11 @@ class Invite < ApplicationDocument
     user = get_user
     raise 'NO SUCH USER' unless user.is_a?(User)
 
-    employee_group = tenant.descendants
+    standard_group = tenant.descendants
                            .groups
-                           .where(system: true, name: :employee).first
-    raise 'NO EMPLOYEE GROUP FOUND' unless employee_group.is_a?(Actor)
+                           .where(system: true, name: :standard_user).first
 
-    employee_group.map_into!(user.actor)
+    standard_group.map_into!(user.actor) unless standard_group.is_a?(Actor)
 
     true
   end
