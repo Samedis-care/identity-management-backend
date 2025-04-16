@@ -71,9 +71,13 @@ module Actors
     end
 
     def profiles_ou_defaults
-      @profiles_ou_defaults ||= organization.defaults[:children].detect do
-        it['name'].eql?('tenant_profiles')
-      end.try(:with_indifferent_access)
+      @profiles_ou_defaults ||= begin
+        return nil unless organization
+
+        organization.defaults[:children].detect do
+          it['name'].eql?('tenant_profiles')
+        end.try(:with_indifferent_access)
+      end
     end
 
     def ensure_profiles_ou_defaults!
