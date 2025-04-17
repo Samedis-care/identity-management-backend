@@ -87,9 +87,10 @@ module Actors
       (profiles_ou_defaults['children'] || []).collect do |group|
         # ensure default group(s) like "Standard user"
         group['role_ids'] = Role.where(:name.in => group['roles']).pluck(:_id)
-        _group_attrs = group.to_h.slice(*%w(title_translations role_ids))
+        _group_attrs = group.to_h.slice(*%w(title_translations role_ids system))
         _group = Actors::Group.where(parent: @profiles_ou, name: group['name']).first_or_initialize(**_group_attrs)
-        _group.attributes = { system: true }.merge(_group_attrs)
+        _group.system = true unless _group_attrs.has_key?('system')
+        _group.attributes = _group_attrs
         _group.save! if _group.new_record?
         _group
       end

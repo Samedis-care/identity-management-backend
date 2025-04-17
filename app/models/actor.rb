@@ -214,12 +214,13 @@ class Actor < ApplicationDocument
 
   def get_app_orga(without: [])
     @get_app_orga = app.organization.descendants.available.includes(:roles).order(depth: 1, name: 1).collect do |node|
-      _node = HashWithIndifferentAccess.new({
+      _node = {
         _id: node.id,
         parent_id: node.parent_id,
         name: node.name,
-        _type: node._type
-      })
+        _type: node._type,
+        system: node.system
+      }.with_indifferent_access
       _node[:template_actor_id] = node.id unless without.include?(:template_actor_id)
       _node[:title_translations] = node.title_translations unless without.include?(:title_translations)
       _node.merge!(roles: node.roles.pluck(:name)) unless without.include?(:roles)
@@ -233,7 +234,7 @@ class Actor < ApplicationDocument
     nested_hash.each do |id, item|
       parent = nested_hash[item[:parent_id]]
       if parent
-        parent[:children] << item.slice(:name, :_type, :template_actor_id, :title_translations, :roles)
+        parent[:children] << item.slice(:name, :_type, :system, :template_actor_id, :title_translations, :roles)
         nested_hash.delete id # remove what was sorted
       end
     end.values.collect do |item|
