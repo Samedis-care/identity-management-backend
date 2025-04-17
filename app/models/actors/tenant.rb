@@ -90,7 +90,7 @@ module Actors
         _group_attrs = group.to_h.slice(*%w(title_translations role_ids))
         _group = Actors::Group.where(parent: @profiles_ou, name: group['name']).first_or_initialize(**_group_attrs)
         _group.attributes = { system: true }.merge(_group_attrs)
-        _group.save! if _group.changes.any?
+        _group.save! if _group.new_record?
         _group
       end
     end
