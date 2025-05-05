@@ -44,8 +44,8 @@ en:
         Please check you copied the full confirmation link.
   devise:
     mailer:
-      recovery_email_confirm: Thank you for the confirmation. Your account is now set up
-        for email recovery.
+      recovery_email_confirm: Thank you for the confirmation. Your account is now
+        set up for email recovery.
       email_change_confirm: Thank you for your confirmation. Your email has been changed.
       account_confirm: Thank you for your confirmation. Your access has been activated.
       account_confirm_resend: 'We have sent a confirmation email to your email address
@@ -65,7 +65,7 @@ en:
         subject: 'Confirm your %{app_name} recovery email address'
         header: 'Hello from %{app_name}!'
         message: >-
-          With the recovery e-mail address, if you no longer have access to the e-mail
+          With the recovery email address, if you no longer have access to the e-mail
           address stored in your account (e.g. if you no longer work at the facility),
           you can log in to the account and then change the primary e-mail address
           to regain full access to your account.
@@ -78,7 +78,7 @@ en:
         subject: 'Account recovery...'
         header: 'Hello from %{app_name}!'
         message: >-
-          With the recovery e-mail address, if you no longer have access to the e-mail
+          With the recovery email address, if you no longer have access to the e-mail
           address stored in your account (e.g. if you no longer work at the facility),
           you can log in to the account and then change the primary e-mail address
           to regain full access to your account.
@@ -109,7 +109,7 @@ en:
           You didn't change your password?<br /> Please contact our support immediately
           at: <a href="mailto:%{support_email}">%{support_email}</a>
       registered: >-
-        Please check your e-mails to confirm the registration. Your account %{email}
+        Please check your emails to confirm the registration. Your account %{email}
         was created successfully and will be activated after confirmation.
       reset_password_instructions:
         subject: Instructions on how to reset your password
@@ -153,7 +153,8 @@ en:
       recovery_token:
         unset: The recovery process has not been started.
         recovery_email_unset: This user does not have a recovery email configured.
-        no_match: The provided recovery token does not match the expected recovery token.
+        no_match: The provided recovery token does not match the expected recovery
+          token.
         expired: The recovery token has expired. Please re-try the recovery process.
         verification_error: The recovery token couldn't be verified.
         decode_error: The recovery token couldn't be decoded.
@@ -172,7 +173,7 @@ en:
         confirmed_at: Verified on
         created_at: Created on
         deleted: Deleted
-        email: e-mail
+        email: email
         first_name: First name
         gender: gender
         last_name: Surname
@@ -225,8 +226,8 @@ en:
             email:
               already_confirmed: The email address has already been confirmed.
               blank: Address cannot be empty.
-              syntax: Invalid e-mail address.
-              taken: The e-mail address is already registered for access.
+              syntax: Invalid email address.
+              taken: The email address is already registered for access.
             first_name:
               blank: must not be empty.
             last_name:
