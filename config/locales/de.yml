@@ -112,11 +112,11 @@ de:
           klicke bitte auf den folgenden Link:"
         started: Eine E-Mail mit Anweisungen zum Wiederherstellungsprozess wurde gesendet.
         action: Konto wiederherstellen
-        subject: Konto-Wiederherstellung...
+        subject: Kontowiederherstellung...
         header: Hallo von %{app_name}!
       recovery_confirmation_instructions:
         action: Bestätige Deine Wiederherstellungs-E-Mail-Adresse
-        message: "Mit der Recovery-Email-Adresse kannst Du, wenn Du nicht mehr über
+        message: "Mit der Recovery-E-Mail-Adresse kannst Du, wenn Du nicht mehr über
           den Zugriff Deiner im Konto hinterlegten E-Mail Adresse verfügst (z.B. wenn
           Du nicht mehr in der Einrichtung arbeitest), Dich an dem Konto anmelden
           und anschließend die primäre E-Mail Adresse ändern um so wieder vollen Zugriff
