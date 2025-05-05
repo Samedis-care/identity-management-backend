@@ -167,7 +167,7 @@ nl:
         confirmed_at: Geverifieerd op
         created_at: Gemaakt op
         deleted: Verwijderd
-        email: e-mail
+        email: email
         first_name: Voornaam
         gender: geslacht
         last_name: Achternaam
@@ -221,7 +221,7 @@ nl:
               already_confirmed: Het e-mailadres is al bevestigd.
               blank: Adres mag niet leeg zijn.
               syntax: Ongeldig e-mailadres.
-              taken: Het e-mailadres is al geregistreerd voor toegang.
+              taken: Het emailadres is al geregistreerd voor toegang.
             first_name:
               blank: mag niet leeg zijn.
             last_name:
