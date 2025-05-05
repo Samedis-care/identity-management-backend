@@ -179,7 +179,7 @@ fr:
         confirmed_at: Vérifié le
         created_at: Créé sur
         deleted: Supprimé
-        email: e-mail
+        email: email
         first_name: Prénom
         gender: le genre
         last_name: Nom de famille
@@ -232,8 +232,8 @@ fr:
             email:
               already_confirmed: L'adresse e-mail a déjà été confirmée.
               blank: L'adresse ne peut pas être vide.
-              syntax: Adresse e-mail invalide.
-              taken: L'adresse e-mail est déjà enregistrée pour l'accès.
+              syntax: Adresse email invalide.
+              taken: L'adresse email est déjà enregistrée pour l'accès.
             first_name:
               blank: ne doit pas être vide.
             last_name:
