@@ -19,6 +19,7 @@ class Api::V1::AppAdminController < Api::V1::JsonApiController
           mailer: [
             :from,
             :reply_to,
+            :support_email,
             :logo_b64,
             :footer_html,
             :footer_html_translations => {},
