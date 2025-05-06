@@ -79,10 +79,10 @@ class Actor < ApplicationDocument
     # This auto creates the default groups and assigns default roles
     # to these groups dependeing on actor type by the settings
     # coming from DEFAULTS
-    after_save :ensure_defaults!
+    after_save :ensure_defaults!, unless: :is_app?
     after_save :rebuild_path!, if: -> { name_previously_changed? || deleted_previously_changed? }
-    after_save :set_children_count!
-    after_save :merge_group_candos!, if: :role_ids
+    after_save :set_children_count!, unless: :is_app?
+    after_save :merge_group_candos!, if: :role_ids, unless: :is_app?
   end
 
   # Strategy to handle deletion of a node with children
