@@ -343,12 +343,12 @@ class Actor < ApplicationDocument
     end
 
     # sync deleted to mappings
-    if record.deleted_changed? && record.persisted?
+    if record.persisted?
       if record.is_user?
         u = User.where(actor: record).first
         u.set(deleted: record.deleted?) unless u.nil?
       end
-       # adds uuid after the name so the account can be re-created
+      # adds uuid after the name so the account can be re-created
       record.name_uniquely_disabled! if record.deleted?
       record.mappings.set(deleted: record.deleted?)
       record.descendants.set(deleted: record.deleted?)
