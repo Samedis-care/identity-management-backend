@@ -271,6 +271,10 @@ module Actors
             'as': 'group', 
             'pipeline': [
               {
+                '$match': {
+                  'deleted': false
+                }
+              }, {
                 '$project': {
                   'role_ids': 1
                 }
