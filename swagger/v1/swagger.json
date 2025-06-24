@@ -1956,11 +1956,18 @@
             "description": "Grant Type"
           },
           {
+            "name": "username",
+            "in": "formData",
+            "type": "string",
+            "x-example": "email@domain.local",
+            "description": "The email that the user registered with"
+          },
+          {
             "name": "email",
             "in": "formData",
             "type": "string",
             "x-example": "email@domain.local",
-            "description": "Email"
+            "description": "Alias for username"
           },
           {
             "name": "password",

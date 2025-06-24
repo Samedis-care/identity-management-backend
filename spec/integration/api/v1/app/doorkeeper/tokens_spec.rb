@@ -22,7 +22,6 @@ describe 'Login API', swagger_doc: 'v1/swagger.json', users: true  do
     }
   }
 
-
   path "/api/v1/{app}/oauth/token" do
     post 'Login user with email' do
       tags 'Access Tokens'
@@ -38,10 +37,15 @@ describe 'Login API', swagger_doc: 'v1/swagger.json', users: true  do
                 enum: %w(password refresh_token google),
                 description: 'Grant Type'
 
+      parameter name: 'username', in: :formData,
+                type: :string,
+                'x-example': 'email@domain.local',
+                description: 'The email that the user registered with'
+
       parameter name: 'email', in: :formData,
                 type: :string,
                 'x-example': 'email@domain.local',
-                description: 'Email'
+                description: 'Alias for username'
 
       parameter name: 'password', in: :formData,
                 type: :string,
