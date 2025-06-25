@@ -20,6 +20,8 @@ class Api::V1::App::Doorkeeper::TokensController < Doorkeeper::TokensController
       render_jsonapi_error(I18n.t('auth.error.grant_type_invalid'), 'grant_type_invalid', 400) and return
     end
 
+    # `authorize_response` is using
+    # `resource_owner_from_credentials`proc from config/initializers/doorkeeper.rb
     response = authorize_response
 
     _im_otp_provided = grant_type.eql?('refresh_token')
