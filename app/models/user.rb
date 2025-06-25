@@ -83,6 +83,7 @@ class User < ApplicationDocument
     class_name: AccountActivity, dependent: :delete_all
 
   field :email, type: String
+  alias_attribute :username, :email
   field :email_change, type: String
   field :active, type: Boolean, default: true
   field :deleted, type: Boolean, default: false
@@ -958,6 +959,12 @@ class User < ApplicationDocument
       @audience[:tenant_count] = _tenant_count
     end
     @audience
+  end
+
+  def self.find_for_authentication(args)
+    return nil if args.compact.blank?
+
+    super
   end
 
 end
