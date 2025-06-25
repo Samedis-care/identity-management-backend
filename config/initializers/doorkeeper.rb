@@ -19,7 +19,7 @@ Doorkeeper.configure do
 
   resource_owner_from_credentials do |_|
     conditions = {
-      email: params[:email],
+      email: params[:username] || params[:email],
       recovery_email: params[:recovery_email],
       google_uid: params[:google_uid]
     }.reject { |_, v| v.nil? || v.empty? }
