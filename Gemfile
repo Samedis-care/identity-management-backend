@@ -3,6 +3,7 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
 gem 'rails', '~> 8.0'
 
+gem 'async'
 gem 'bcrypt'
 gem 'bootsnap', require: false
 gem 'csv'
@@ -32,7 +33,8 @@ gem 'rspec-rails'
 gem 'rswag'
 
 # Replacement for ActiveStorage to use S3 stored file uploads with mongodb
-gem 'aws-sdk-s3', '~> 1.14'
+gem 'aws-sdk-s3'
+gem 'aws-sdk-sesv2'
 gem 'shrine'
 gem 'shrine-mongoid'
 
