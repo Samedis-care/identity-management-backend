@@ -39,6 +39,8 @@ module BaseControllerMethods
   def current_token
     token = bearer_token
     return if token.blank?
+    return if current_user.nil?
+
     @current_token ||= current_user.oauth_tokens.where(token: token).first
   end
 
