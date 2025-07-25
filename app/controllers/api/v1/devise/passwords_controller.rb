@@ -26,6 +26,7 @@ module Api::V1::Devise
       user = User.login_allowed.where(reset_password_token: reset_password_token, :reset_password_sent_at.gte => 1.day.ago).first
 
       if user.nil?
+        Sentry.capture_message("reset_token_invalid - original_token: #{original_token} / reset_password_token: #{reset_password_token} / reset_password_sent_at.gte: #{1.day.ago}")
         render_jsonapi_error(I18n.t('auth.error.password_token_invalid'), 'reset_token_invalid', 400) and return
       else
         user.app_context = current_app
