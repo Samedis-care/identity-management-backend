@@ -115,7 +115,7 @@ en:
         subject: Instructions on how to reset your password
         header: We have received your request
         action: Change Password
-        validity: This link will be valid for 72 hours
+        validity: This link will be valid for 24 hours
         thanks: 'Your %{app_name} Team'
         message_1_html: You can change your password now
         message_2_html: >-
