@@ -20,10 +20,14 @@ module Api::V1::Devise
     end
 
     # PUT /resource/password
+    # config/initializers/devise.rb is the place to configure how long a token is valid
+    # e.g. `config.reset_password_within = 24.hours`
     def update
       original_token = params.dig(:user, :reset_password_token)
       reset_password_token = Devise.token_generator.digest(resource_class, :reset_password_token, original_token)
-      user = User.login_allowed.where(reset_password_token: reset_password_token, :reset_password_sent_at.gte => 1.day.ago).first
+      user = User.login_allowed
+                 .where(:reset_password_token => reset_password_token,
+                        :reset_password_sent_at.gte => Devise.reset_password_within.ago).first
 
       if user.nil?
         Sentry.capture_message("reset_token_invalid - original_token: #{original_token} / reset_password_token: #{reset_password_token} / reset_password_sent_at.gte: #{1.day.ago}")

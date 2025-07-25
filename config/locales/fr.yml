@@ -83,7 +83,7 @@ fr:
         subject: Instructions pour réinitialiser votre mot de passe
         header: Nous avons reçu votre demande
         action: Changer le mot de passe
-        validity: Ce lien sera valide pendant 72 heures
+        validity: Ce lien sera valide pendant 24 heures
         thanks: 'Votre équipe %{app_name}'
         message_1_html: Vous pouvez changer votre mot de passe maintenant
         message_2_html: >-

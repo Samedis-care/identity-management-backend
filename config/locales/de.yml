@@ -84,7 +84,7 @@ de:
         subject: Anweisungen zum Zurücksetzen des Passworts
         header: Wir haben deine Anfrage erhalten
         action: Passwort zurücksetzen
-        validity: Dieser Link verliert nach 72 Stunden seine Gültigkeit
+        validity: Dieser Link verliert nach 24 Stunden seine Gültigkeit
         thanks: 'Dein %{app_name} Team'
         message_1_html: Du kannst dein Passwort jetzt zurücksetzen
         message_2_html: >-

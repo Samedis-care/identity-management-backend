@@ -79,7 +79,7 @@ nl:
         subject: Instructies voor het opnieuw instellen van jouw wachtwoord
         header: We hebben je aanvraag ontvangen
         action: Wachtwoord wijzigen
-        validity: Deze link is 72 uur geldig
+        validity: Deze link is 24 uur geldig
         thanks: 'Jouw %{app_name}Team'
         message_1_html: Je kunt jouw wachtwoord nu wijzigen
         message_2_html: >-
