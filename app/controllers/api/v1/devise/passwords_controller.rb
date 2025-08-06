@@ -13,6 +13,9 @@ module Api::V1::Devise
       email = params.dig(:user, :email).to_s.downcase
       user = User.login_allowed.where(email: email).first
       if user.present?
+        if user.reset_password_sent_at && user.reset_password_sent_at > 5.minutes.ago
+          render_jsonapi_error(I18n.t('devise.mailer.reset_password_delayed', email: email), 'reset_password_delayed', 400) and return
+        end
         user.app_context = current_app
         user.send_reset_password_instructions
       end

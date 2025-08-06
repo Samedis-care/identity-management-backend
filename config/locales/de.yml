@@ -90,6 +90,10 @@ de:
         message_2_html: >-
           Du hast nicht um ein neues Passwort gebeten?<br /> Dann kannst Du diese
           E-Mail ignorieren.
+      reset_password_delayed: >-
+        Ein Link zum Zurücksetzen deines Passworts wurde bereits an deine E-Mail-Adresse gesendet
+        (%{email}).
+        Bitte warte einige Minuten bis diese eintrifft und folge dann den dortigen Anweisungen.
       reset_password_msg: >-
         Ein Link zum Zurücksetzen deines Passworts wurde an deine E-Mail-Adresse gesendet
         (%{email}). Bitte folge diesem Link, um ein neues Passwort zu vergeben.
