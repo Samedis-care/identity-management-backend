@@ -18,32 +18,36 @@ nl:
       het later opnieuw. Reden:%{reason}"
     maintenance_error: "Het systeem bevindt zich momenteel in de onderhoudsmodus.
       Probeer het later opnieuw. Reden:%{reason}"
-    oauth_error: De externe authenticatieserver heeft niet de minimaal vereiste informatie
-      geretourneerd om in te loggen (vertrouwd e-mailadres, voornaam en achternaam).
-    oauth_untrusted_email: Het e-mailadres %{email} dat is geretourneerd door %{host}
-      wordt niet vertrouwd!
-    oauth_failed: Contact opnemen met de externe authenticatieserver op %{host} is
-      mislukt!
+    oauth_error: De externe authenticatieserver heeft niet de minimaal vereiste 
+      informatie geretourneerd om in te loggen (vertrouwd e-mailadres, voornaam 
+      en achternaam).
+    oauth_untrusted_email: Het e-mailadres %{email} dat is geretourneerd door 
+      %{host} wordt niet vertrouwd!
+    oauth_failed: Contact opnemen met de externe authenticatieserver op %{host} 
+      is mislukt!
   auth:
     error:
       forbidden: Verboden.
       grant_type_invalid: Niet bevoegd. Het subsidietype is ongeldig.
-      invalid_request: Het verzoek is ongeldig of de vereiste parameter ontbreekt.
+      invalid_request: Het verzoek is ongeldig of de vereiste parameter 
+        ontbreekt.
       login_incorrect: De ingediende referenties zijn onjuist.
-      password_token_invalid: De link om uw wachtwoord opnieuw in te stellen is niet
-        meer geldig.
+      password_token_invalid: De link om uw wachtwoord opnieuw in te stellen is 
+        niet meer geldig.
       missing_tenant_context: Tenantcontext ontbreekt.
       token_expired: Niet bevoegd. Het beveiligingstoken is verlopen.
       token_invalid: Niet bevoegd. Het beveiligingstoken is ongeldig.
-      unauthenticated: Inloggen mislukt. Het beveiligingstoken is ongeldig of ontbreekt.
+      unauthenticated: Inloggen mislukt. Het beveiligingstoken is ongeldig of 
+        ontbreekt.
       otp_required: Inloggen onvolledig. Eenmalig wachtwoord nog niet opgegeven.
       otp_invalid: Eenmalig wachtwoord ongeldig of verlopen.
       otp_too_many_tries: Te veel ongeldige eenmalige wachtwoordpogingen.
       unauthorized: Onvoldoende rechten voor toegang tot deze bron.
-      unauthorized_tenant: Geen toestemming. Geen toegang tot dit account toegestaan.
-      confirmation_token_invalid: Het bevestigingstoken dat is verzonden is ongeldig.
-        Uw account kon niet worden geverifieerd. Controleer of u de volledige bevestigingslink
-        hebt gekopieerd.
+      unauthorized_tenant: Geen toestemming. Geen toegang tot dit account 
+        toegestaan.
+      confirmation_token_invalid: Het bevestigingstoken dat is verzonden is 
+        ongeldig. Uw account kon niet worden geverifieerd. Controleer of u de 
+        volledige bevestigingslink hebt gekopieerd.
   devise:
     mailer:
       account_confirm: Dank u voor uw bevestiging. Uw toegang is geactiveerd.
@@ -104,7 +108,8 @@ nl:
           U zult dus nieuwe uitnodigingen moeten ontvangen van de faciliteiten waartoe
           u nog steeds toegang nodig heeft.\n\nOm het herstel te starten, klikt u
           op de volgende link:"
-        started: Er is een e-mail verzonden met instructies over het herstelproces.
+        started: Er is een e-mail verzonden met instructies over het 
+          herstelproces.
         action: Herstel uw account
         subject: Accountherstel...
         header: Hallo van %{app_name}!
@@ -118,14 +123,18 @@ nl:
         action: Bevestig uw herstel-e-mailadres
         subject: Bevestig uw %{app_name} herstel-e-mailadres
         header: Hallo van %{app_name}!
-      recovery_email_confirm: Bedankt voor de bevestiging. Uw account is nu ingesteld
-        voor e-mailherstel.
-      email_change_confirm: Dank u voor uw bevestiging. Uw e-mailadres is gewijzigd.
+      recovery_email_confirm: Bedankt voor de bevestiging. Uw account is nu 
+        ingesteld voor e-mailherstel.
+      email_change_confirm: Dank u voor uw bevestiging. Uw e-mailadres is 
+        gewijzigd.
       confirmation_email_change:
         action: Bevestig je e-mailadres
         subject: Bevestig uw %{app_name} e-mailadres
         header: Bevestig uw bijgewerkte e-mailadres
         message: 'Klik op de volgende link om jouw e-mailadres te bevestigen:'
+      reset_password_delayed: Er is al een link naar je e-mailadres (%{email}) 
+        gestuurd om je wachtwoord opnieuw in te stellen. Wacht minstens een paar
+        minuten tot je deze e-mail ontvangt en volg de instructies.
     user:
       recaptcha_invalid: De vastgelegde captcha is helaas niet geldig.
       unverified: >-
@@ -144,16 +153,20 @@ nl:
     missing_app: Er is geen app gedefinieerd om deze actie uit te voeren
     user:
       quit_failed: Er is een fout opgetreden bij het verlaten van de app.
-      leaving_tenant_failed: Er is een fout opgetreden bij het verlaten van de huurder.
+      leaving_tenant_failed: Er is een fout opgetreden bij het verlaten van de 
+        huurder.
       recovery_token:
-        no_match: Het opgegeven hersteltoken komt niet overeen met het verwachte hersteltoken.
-        expired: Het hersteltoken is verlopen. Probeer het herstelproces opnieuw.
+        no_match: Het opgegeven hersteltoken komt niet overeen met het verwachte
+          hersteltoken.
+        expired: Het hersteltoken is verlopen. Probeer het herstelproces 
+          opnieuw.
         verification_error: Het hersteltoken kan niet worden geverifieerd.
         decode_error: Het hersteltoken kan niet worden gedecodeerd.
-        recovery_email_unset: Voor deze gebruiker is geen herstel-e-mailadres geconfigureerd.
+        recovery_email_unset: Voor deze gebruiker is geen herstel-e-mailadres 
+          geconfigureerd.
         unset: Het herstelproces is niet gestart.
-      record_not_found_error: We konden geen gebruikersaccount met dat e-mailadres
-        vinden.
+      record_not_found_error: We konden geen gebruikersaccount met dat 
+        e-mailadres vinden.
     invalid_app: App-context ontbreekt of is onjuist
     undeletable:
       one: Een record van %{total} kan niet worden verwijderd.
@@ -249,16 +262,16 @@ nl:
         other: Apps
       actors/container_apps:
         one: Container voor apps
-        other: ''
+        other:
       actors/container_enterprises:
         one: Container voor ondernemingen
-        other: ''
+        other:
       actors/container_tenants:
         one: Container voor huurder
-        other: ''
+        other:
       actors/container_users:
         one: Container voor ondernemingen
-        other: ''
+        other:
       actors/group:
         one: Groep
         other: Groepen
