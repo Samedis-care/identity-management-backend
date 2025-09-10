@@ -6,6 +6,7 @@ module Actors
     before_validation :ensure_references
     after_save :user_cache_expire!
     after_save :merge_group_candos!
+    after_destroy :user_cache_expire!
 
     validates :map_actor_id, presence: true
     belongs_to :mapped_into, class_name: '::Actor', primary_key: :map_actor_id, inverse_of: :mappings, optional: true
