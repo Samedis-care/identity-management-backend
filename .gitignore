@@ -30,6 +30,7 @@
 /config/master.key
 
 .idea*
+/config/evironments/seed.rb
 /config/s3.yml
 /config/application.yml
 /config/per_app_settings.yml

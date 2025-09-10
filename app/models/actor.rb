@@ -274,6 +274,7 @@ class Actor < ApplicationDocument
 
   validates :name, presence: true
   validates :title, presence: true, if: ->() {
+    return false if self.system && self.name.present?
     return true if self.is_a?(Actors::Ou)
     return true if self.is_a?(Actors::Group)
     false
@@ -938,7 +939,7 @@ class Actor < ApplicationDocument
           debug_puts "   - adding roles #{_roles.present? ? _roles : 'NONE'}"
           debug_puts "-"*80
           _actor.ensure_named_roles(_roles) if _roles.present?
-          _actor.save if _actor.changed? #validate: false
+          _actor.save! if _actor.changed? #validate: false
           debug_puts "   - adding roles done!"
           # This ensures the "owner" of a tenant get's access everywhere
           if owner.is_a?(Actor) && _actor.is_group?
