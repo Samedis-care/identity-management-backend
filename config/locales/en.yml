@@ -121,6 +121,9 @@ en:
         message_2_html: >-
           You didn't request a password change?<br /> Then please just ignore this
           email.
+      reset_password_delayed: >-
+        A link to reset your password has already been sent to your email address (%{email}).
+        Please wait at least a couple of minutes for this mail to arrive and follow the instructions.
       reset_password_msg: >-
         A link to reset your password has been sent to your email address (%{email}).
         Please follow this link to assign a new password.

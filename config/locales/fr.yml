@@ -18,33 +18,39 @@ fr:
       de maintenance. Veuillez réessayer plus tard. Raison: %{reason}"
     maintenance_error: "Le système est actuellement en mode de maintenance. Veuillez
       réessayer plus tard. Raison: %{reason}"
-    oauth_error: Le serveur d'authentification distant n'a pas renvoyé les informations
-      minimales requises pour la connexion (e-mail de confiance, prénom et nom).
-    oauth_failed: La communication avec le serveur d'authentification distant %{host}
-      a échoué !
-    oauth_untrusted_email: L'adresse e-mail %{email} qui a été renvoyée par %{host}
-      n'est pas fiable!
+    oauth_error: Le serveur d'authentification distant n'a pas renvoyé les 
+      informations minimales requises pour la connexion (e-mail de confiance, 
+      prénom et nom).
+    oauth_failed: La communication avec le serveur d'authentification distant 
+      %{host} a échoué !
+    oauth_untrusted_email: L'adresse e-mail %{email} qui a été renvoyée par 
+      %{host} n'est pas fiable!
   auth:
     error:
       forbidden: Interdit.
       grant_type_invalid: Non autorisé. Le type d'octroi n'est pas valide.
-      invalid_request: La demande est invalide ou il manque un paramètre obligatoire.
-      login_incorrect: Les informations d'identification soumises sont incorrectes.
-      password_token_invalid: Le lien pour réinitialiser votre mot de passe n'est
-        plus valide.
+      invalid_request: La demande est invalide ou il manque un paramètre 
+        obligatoire.
+      login_incorrect: Les informations d'identification soumises sont 
+        incorrectes.
+      password_token_invalid: Le lien pour réinitialiser votre mot de passe 
+        n'est plus valide.
       missing_tenant_context: Le contexte du locataire est manquant.
       token_expired: Non autorisé. Le jeton de sécurité a expiré.
       token_invalid: Non autorisé. Le jeton de sécurité n'est pas valide.
-      unauthenticated: Échec de la connexion. Le jeton de sécurité est invalide ou
-        manquant.
-      otp_required: Connexion incomplète. Mot de passe à usage unique pas encore fourni.
+      unauthenticated: Échec de la connexion. Le jeton de sécurité est invalide 
+        ou manquant.
+      otp_required: Connexion incomplète. Mot de passe à usage unique pas encore
+        fourni.
       otp_invalid: Mot de passe à usage unique invalide ou expiré.
-      otp_too_many_tries: Trop de tentatives de mot de passe à usage unique non valides.
+      otp_too_many_tries: Trop de tentatives de mot de passe à usage unique non 
+        valides.
       unauthorized: Une inscription est requise pour accéder à cette ressource.
-      unauthorized_tenant: Permission refusée. Aucun accès à ce locataire autorisé.
-      confirmation_token_invalid: Le jeton de confirmation qui a été envoyé n'est
-        pas valide. Votre compte n'a pas pu être vérifié. Veuillez vérifier que vous
-        avez copié le lien de confirmation complet.
+      unauthorized_tenant: Permission refusée. Aucun accès à ce locataire 
+        autorisé.
+      confirmation_token_invalid: Le jeton de confirmation qui a été envoyé 
+        n'est pas valide. Votre compte n'a pas pu être vérifié. Veuillez 
+        vérifier que vous avez copié le lien de confirmation complet.
   devise:
     mailer:
       account_confirm: Merci pour votre confirmation. Votre accès a été activé.
@@ -111,8 +117,8 @@ fr:
         subject: Confirmez votre adresse e-mail de récupération %{app_name}
         header: Bonjour de %{app_name} !
       recovery_instructions:
-        started: Un e-mail contenant des instructions sur le processus de récupération
-          a été envoyé.
+        started: Un e-mail contenant des instructions sur le processus de 
+          récupération a été envoyé.
         action: Récupérez votre compte
         subject: Récupération du compte...
         header: Bonjour de %{app_name} !
@@ -123,17 +129,21 @@ fr:
           à votre compte.\n\nRemarque : Si vous continuez et vous connectez à votre
           adresse e-mail de récupération, nous supprimerons toutes les installations
           associées pour des raisons de sécurité. Vous devrez donc recevoir de nouvelles
-          invitations des installations auxquelles vous avez encore besoin d'accéder.\n
-          \nPour démarrer la récupération, veuillez cliquer sur le lien suivant :"
-      recovery_email_confirm: Merci pour la confirmation. Votre compte est maintenant
-        configuré pour la récupération des e-mails.
-      email_change_confirm: Merci pour votre confirmation. Votre email a été modifié.
+          invitations des installations auxquelles vous avez encore besoin d'accéder.\n\
+          \ \nPour démarrer la récupération, veuillez cliquer sur le lien suivant :"
+      recovery_email_confirm: Merci pour la confirmation. Votre compte est 
+        maintenant configuré pour la récupération des e-mails.
+      email_change_confirm: Merci pour votre confirmation. Votre email a été 
+        modifié.
       confirmation_email_change:
         action: Confirmez votre adresse email
         subject: Confirmez votre adresse e-mail %{app_name}
         header: Confirmez votre adresse e-mail mise à jour
         message: 'Pour confirmer votre adresse e-mail, veuillez cliquer sur le lien
           suivant:'
+      reset_password_delayed: Un lien pour réinitialiser votre mot de passe a 
+        déjà été envoyé à votre adresse e-mail (%{email}). Veuillez patienter 
+        quelques minutes avant de le recevoir et de suivre les instructions.
     user:
       recaptcha_invalid: Le captcha capturé n'est malheureusement pas valide.
       unverified: >-
@@ -153,18 +163,20 @@ fr:
     missing_app: Aucune application n'a été définie pour effectuer cette action
     user:
       quit_failed: Une erreur s'est produite en quittant l'application.
-      leaving_tenant_failed: Une erreur s'est produite lors du départ du locataire.
+      leaving_tenant_failed: Une erreur s'est produite lors du départ du 
+        locataire.
       recovery_token:
-        no_match: Le jeton de récupération fourni ne correspond pas au jeton de récupération
-          attendu.
-        expired: Le jeton de récupération a expiré. Veuillez réessayer le processus
-          de récupération.
+        no_match: Le jeton de récupération fourni ne correspond pas au jeton de 
+          récupération attendu.
+        expired: Le jeton de récupération a expiré. Veuillez réessayer le 
+          processus de récupération.
         decode_error: Le jeton de récupération n'a pas pu être décodé.
         unset: Le processus de récupération n'a pas démarré.
-        recovery_email_unset: Cet utilisateur n'a pas configuré d'e-mail de récupération.
+        recovery_email_unset: Cet utilisateur n'a pas configuré d'e-mail de 
+          récupération.
         verification_error: Le jeton de récupération n'a pas pu être vérifié.
-      record_not_found_error: Nous n'avons pas trouvé de compte utilisateur avec cette
-        adresse e-mail.
+      record_not_found_error: Nous n'avons pas trouvé de compte utilisateur avec
+        cette adresse e-mail.
     invalid_app: Le contexte de l'application est manquant ou incorrect
     undeletable:
       one: Un enregistrement de %{total} n'a pas pu être supprimé.
@@ -213,7 +225,8 @@ fr:
         content:
           attributes:
             name:
-              uniqueness: Il y a déjà du contenu avec cette version pour l'application.
+              uniqueness: Il y a déjà du contenu avec cette version pour 
+                l'application.
         functionality:
           attributes:
             ident:
@@ -266,20 +279,20 @@ fr:
         other: applications
       actors/container_apps:
         one: Conteneur pour les applications
-        many: ''
-        other: ''
+        many:
+        other:
       actors/container_enterprises:
         one: Conteneur pour les entreprises
-        many: ''
-        other: ''
+        many:
+        other:
       actors/container_tenants:
         one: Conteneur pour locataire
-        many: ''
-        other: ''
+        many:
+        other:
       actors/container_users:
         one: Conteneur pour les entreprises
-        many: ''
-        other: ''
+        many:
+        other:
       actors/group:
         one: Groupe
         many: Groupes
