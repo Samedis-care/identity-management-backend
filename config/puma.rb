@@ -51,6 +51,31 @@ before_worker_boot do
     puts "WORKER CRASH DETECTED"
     $sentry_report_worker_crash = true # this will trigger a Sentry.capture_message in sentry.rb, thus reporting the issue to Sentry after init.
   end
+
+  MaintenanceMode.start
+  puts "[#{Process.pid}] Maintenance mode started."
+end
+
+before_worker_shutdown do
+  # runs in each worker on shutdown
+  MaintenanceMode.stop
+  puts "[#{Process.pid}] Maintenance mode stopped."
+end
+
+after_booted do
+  # single mode callbacks for non-cluster setup, but are also called for master process in clustered mode
+  unless puma_in_cluster_mode
+    MaintenanceMode.start
+    puts "[#{Process.pid}] Maintenance mode started."
+  end
+end
+
+after_stopped do
+  # single mode callbacks for non-cluster setup, but are also called for master process in clustered mode
+  unless puma_in_cluster_mode
+    MaintenanceMode.stop
+    puts "[#{Process.pid}] Maintenance mode stopped."
+  end
 end
 
 # Allow puma to be restarted by `rails restart` command.
