@@ -28,19 +28,53 @@ environment ENV.fetch("RAILS_ENV") { "development" }
 # before forking the application. This takes advantage of Copy On Write
 # process behavior so workers use less memory.
 #
-# preload_app!
+preload_app!
 
 persistent_timeout 90
 
 start_time = Time.now.to_f # captured in main process (process managing workers)
 $sentry_report_worker_crash = false # global variable
-on_worker_boot do
+puma_in_cluster_mode = false
+
+before_fork do
+  # if we fork we're in cluster mode
+  puma_in_cluster_mode = true
+end
+
+before_worker_boot do
+  # runs in worker context
+
   # code run inside worker processes. workers are copies of the main process, so start_time is filled with the main process start time.
   # this code runs very early. Sentry is not initialized here, so we can't report to Sentry yet.
   now = Time.now.to_f
   if now - start_time > 5 # if time of worker start is >5 seconds (usually < 0.1 sec) after main process start
     puts "WORKER CRASH DETECTED"
     $sentry_report_worker_crash = true # this will trigger a Sentry.capture_message in sentry.rb, thus reporting the issue to Sentry after init.
+  end
+
+  MaintenanceMode.start
+  puts "[#{Process.pid}] Maintenance mode started."
+end
+
+before_worker_shutdown do
+  # runs in each worker on shutdown
+  MaintenanceMode.stop
+  puts "[#{Process.pid}] Maintenance mode stopped."
+end
+
+after_booted do
+  # single mode callbacks for non-cluster setup, but are also called for master process in clustered mode
+  unless puma_in_cluster_mode
+    MaintenanceMode.start
+    puts "[#{Process.pid}] Maintenance mode started."
+  end
+end
+
+after_stopped do
+  # single mode callbacks for non-cluster setup, but are also called for master process in clustered mode
+  unless puma_in_cluster_mode
+    MaintenanceMode.stop
+    puts "[#{Process.pid}] Maintenance mode stopped."
   end
 end
 
