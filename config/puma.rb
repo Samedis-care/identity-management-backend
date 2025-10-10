@@ -28,13 +28,22 @@ environment ENV.fetch("RAILS_ENV") { "development" }
 # before forking the application. This takes advantage of Copy On Write
 # process behavior so workers use less memory.
 #
-# preload_app!
+preload_app!
 
 persistent_timeout 90
 
 start_time = Time.now.to_f # captured in main process (process managing workers)
 $sentry_report_worker_crash = false # global variable
-on_worker_boot do
+puma_in_cluster_mode = false
+
+before_fork do
+  # if we fork we're in cluster mode
+  puma_in_cluster_mode = true
+end
+
+before_worker_boot do
+  # runs in worker context
+
   # code run inside worker processes. workers are copies of the main process, so start_time is filled with the main process start time.
   # this code runs very early. Sentry is not initialized here, so we can't report to Sentry yet.
   now = Time.now.to_f
