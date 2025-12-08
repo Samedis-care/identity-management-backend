@@ -1,6 +1,10 @@
 #
 name: Create and publish a Docker image
 
+permissions:
+  contents: read
+  packages: write
+
 # Configures this workflow to run every time a change is pushed to the branch called `release`.
 on:
   push:
