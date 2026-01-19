@@ -8,10 +8,10 @@ RUN apk add --no-cache curl
 RUN curl -L -f -o 'GeoLite2-City.mmdb' 'https://github.com/P3TERX/GeoLite.mmdb/raw/download/GeoLite2-City.mmdb'
 
 
-FROM ruby:3.4.4-bullseye
+FROM ruby:4.0.1-trixie
 
 RUN apt-get update --fix-missing \
-  && apt-get install -y --no-install-recommends libvips-dev openssl libjemalloc2 libsnappy-dev \
+  && apt-get install -y --no-install-recommends libvips-dev openssl libsnappy-dev \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /home/app/webapp
@@ -26,10 +26,10 @@ ENV HOME=/root
 # Set Rails ENV variables
 ENV RAILS_LOG_TO_STDOUT=true
 # Use jemalloc
-RUN ln -s /usr/lib/*-linux-gnu/libjemalloc.so.2 /usr/lib/libjemalloc.so.2
-ENV LD_PRELOAD=/usr/lib/libjemalloc.so.2
+#RUN ln -s /usr/lib/*-linux-gnu/libjemalloc.so.2 /usr/lib/libjemalloc.so.2
+#ENV LD_PRELOAD=/usr/lib/libjemalloc.so.2
 
-ENV MALLOC_CONF=narenas:2,background_thread:true,abort_conf:true
+#ENV MALLOC_CONF=narenas:2,background_thread:true,abort_conf:true
 # Glibc malloc
 #ENV MALLOC_ARENA_MAX 2
 

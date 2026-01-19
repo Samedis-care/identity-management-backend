@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
-gem 'rails', '~> 8'
+gem 'rails', '~> 8.1'
 
 gem 'async'
 gem 'bcrypt'
@@ -15,7 +15,7 @@ gem 'mongoid_rails_migrations'
 gem 'mongoid_search'
 gem 'mongoid-tree', require: 'mongoid/tree'
 gem 'nokogiri'
-gem 'psych', '< 4' # https://stackoverflow.com/a/71192990/9156535
+gem 'psych'
 gem 'snappy'
 gem 'strip_attributes'
 
@@ -51,7 +51,7 @@ gem 'active_model_otp', git: 'https://github.com/neongrau/active_model_otp.git'
 gem 'devise-doorkeeper'
 gem 'doorkeeper'
 gem 'doorkeeper-mongodb', '~> 5'
-gem 'figaro'
+gem 'figjam'
 gem 'omniauth', '>= 1.9.2'
 gem 'omniauth-apple'
 gem 'omniauth-google-oauth2'
