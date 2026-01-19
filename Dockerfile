@@ -41,6 +41,9 @@ ENV RUBY_YJIT_ENABLE=1
 # Copy GeoIP database
 COPY --from=preperation /root/GeoLite2-City.mmdb /home/app/webapp
 
+# ensure application.yml exists (required for git build checks)
+RUN touch config/application.yaml
+
 # Generate Swagger Docs
 RUN SHRINE_STORAGE=local FILES_DIRECTORY=/tmp rails rswag:specs:swaggerize
 
