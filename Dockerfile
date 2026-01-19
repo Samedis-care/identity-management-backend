@@ -47,7 +47,7 @@ RUN touch config/application.yaml
 # Generate Swagger Docs
 RUN SHRINE_STORAGE=local FILES_DIRECTORY=/tmp rails rswag:specs:swaggerize
 
-CMD puma -b 'tcp://0.0.0.0:80' -e "${RAILS_ENV-production}" -v -t 64:64 -w "${WORKER_COUNT-$(nproc)}"
+CMD puma -b 'tcp://0.0.0.0:80' -e "${RAILS_ENV-production}" -v -w "${WORKER_COUNT-$(nproc)}"
 
 # Expose service
 EXPOSE 80
