@@ -19,7 +19,7 @@ class String
   #unicode aware function
   def to_slug
     # become case-insensitive
-    value = self.mb_chars.downcase
+    value = self.downcase
 
     # replace dots with spaces
     value.gsub!(/\.+/, ' ')
