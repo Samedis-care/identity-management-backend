@@ -1,4 +1,10 @@
 class ApplicationController < ActionController::Base
+  helper_method :new_user_session_path
+
+  def new_user_session_path(*)
+    '/login'
+  end
+
   protect_from_forgery unless: -> { request.format.json? }
   include ActionController::MimeResponds
   include JsonApi

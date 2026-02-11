@@ -57,7 +57,7 @@ module IdentityManagementExtension
          im_app_previously_changed?
         AccountActivity.where(token_id: id, user_id: resource_owner_id)
                        .first_or_create(created_at: created_at)
-                       .update(
+                       .update_attributes(
                          app: im_app,
                          ip: im_ip,
                          navigator: im_navigator,

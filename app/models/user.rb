@@ -146,13 +146,6 @@ class User < ApplicationDocument
   field :write_protected, type: Boolean, default: false
   field :system, type: Boolean, default: false
 
-  ## Lockable
-  field :failed_attempts, type: Integer, default: 0
-  field :unlock_token,    type: String
-  field :locked_at,       type: Time
-
-  index({ unlock_token: 1 }, { unique: true, sparse: true })
-
   index({ actor_id: 1, deleted: 1 }, { sparse: true, unique: true, name: 'user_actors' })
   index({ email: 1 }, { sparse: true, unique: true, name: 'user_emails' })
   index({ deleted: 1, active: 1, invalid_at: 1 }, { sparse: false })
@@ -160,9 +153,9 @@ class User < ApplicationDocument
   # Include default devise modules. Others available are:
   # :confirmable, :lockable, :timeoutable, :trackable and :omniauthable
   devise :database_authenticatable, :registerable, :confirmable,
-         :recoverable, :rememberable, :trackable, :validatable, :lockable
+         :recoverable, :rememberable, :trackable, :validatable
 
-  devise :omniauthable, :omniauth_providers => [:google_oauth2, :microsoft_graph, :apple]
+  devise :omniauthable, :omniauth_providers => [:facebook, :google_oauth2, :microsoft_graph, :twitter, :apple]
 
   # Set DoorKeeper for Devise
   devise :doorkeeper
