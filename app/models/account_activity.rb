@@ -11,7 +11,7 @@ class AccountActivity < ApplicationDocument
   field :location, type: String
   field :device, type: String
 
-  QUICKFILTER_COLUMNS = [:ip, :app]
+  QUICKFILTER_COLUMNS = [:app, :device]
   search_in *QUICKFILTER_COLUMNS
 
   has_one :user, inverse_of: :account_activities, class_name: User
