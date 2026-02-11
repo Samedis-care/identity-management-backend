@@ -25,7 +25,7 @@ class Api::V1::Doorkeeper::TokensController < Doorkeeper::TokensController
       tokens_to_revoke.each do |_token|
         if token_type_hint.downcase.eql?('access_token')
           # expires the access token, but leaves the refresh_token still valid
-          _token.update_attributes(expires_in: -1)
+          _token.update(expires_in: -1)
         else
           # invalidates the whole token by revoking the refresh token
           _token.revoke

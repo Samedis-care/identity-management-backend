@@ -50,7 +50,7 @@ class Api::V1::App::Doorkeeper::TokensController < Doorkeeper::TokensController
         im_otp_provided: _im_otp_provided,
         expires_in: Doorkeeper.configuration.access_token_expires_in
       }
-      response.token.update_attributes(**_token_attrs)
+      response.token.update(**_token_attrs)
 
       user = User.login_allowed.find(response.token.resource_owner_id)
       if user.nil? # handle inactive or deleted
