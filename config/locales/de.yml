@@ -77,6 +77,13 @@ de:
         message_html: >-
           Solltest Du diese Anfrage nicht vorgenommen haben, setze dich bitte umgehend
           mit unserem Support in Verbindung: <a href="mailto:%{support_email}">%{support_email}</a>
+      unlock_instructions:
+        subject: Zugang entsperren
+        header: Dein Zugang wurde wegen wiederholter fehlerhafter Anmeldeversuche zur Sicherheit gesperrt.
+        action: Zugang entsperren
+        message: >-
+          Du kannst deinen Zugang selbst wieder entsperren und dich anschließend mit deinem bekannten
+          Passwort anmelden. Oder du benutzt Alternativ die Passwort-vergessen Funktion.
       registered: >-
         Bitte überprüfe deine E-Mails, um die Registrierung zu bestätigen. Dein Konto
         %{email} wurde erfolgreich erstellt und wird nach Bestätigung aktiviert.

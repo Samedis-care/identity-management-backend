@@ -8,7 +8,8 @@ namespace :v1 do
   end
 
   devise_for :users, skip: [:confirmations, :passwords, :sessions, :registration], controllers: {
-    omniauth_callbacks: "api/v1/devise/omniauth_callbacks"
+    unlocks: 'api/v1/app/unlocks',
+    omniauth_callbacks: 'api/v1/devise/omniauth_callbacks'
   }, noswagger: true
 
   constraints(DomainConstraint) do
