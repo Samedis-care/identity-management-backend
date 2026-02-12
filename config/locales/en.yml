@@ -111,13 +111,6 @@ en:
       registered: >-
         Please check your emails to confirm the registration. Your account %{email}
         was created successfully and will be activated after confirmation.
-      unlock_instructions:
-        subject: Unlock account
-        header: Your account has been locked for security reasons.
-        action: Unlock account
-        message: >-
-          You can unlock it yourself by following the provided link and log-in with your current password.
-          Alternatively you can use the forgot-password functionality.
       reset_password_instructions:
         subject: Instructions on how to reset your password
         header: We have received your request

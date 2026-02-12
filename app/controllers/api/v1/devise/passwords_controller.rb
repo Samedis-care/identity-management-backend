@@ -53,8 +53,8 @@ module Api::V1::Devise
         end
 
         if user.errors.empty?
-          user.unlock_access! if unlockable?(user) # this also removes multi fail login caused lock (from lockable)
-          user.update(reset_password_token: nil, reset_password_sent_at: nil)
+          user.unlock_access! if unlockable?(user)
+          user.update_attributes(reset_password_token: nil, reset_password_sent_at: nil)
           # changed password revokes all current logins of this user
           Doorkeeper::AccessToken.where(resource_owner_id: user.id).each &:revoke
           render_jsonapi_msg({ success: true, message: I18n.t('devise.mailer.password_change.header', user_name: user.name) }, 200) and return

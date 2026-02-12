@@ -26,32 +26,15 @@ Doorkeeper.configure do
 
     u = User.login_allowed.find_for_database_authentication(conditions)
 
-    return unless u.is_a?(User)
-
-    u.app_context = params[:app]
-
-    if conditions[:google_uid]
-      # Decide policy: should lockable apply to this path?
-      # If yes, wrap it too. If no, leave as-is.
-      return u
+    if u.is_a?(User) && conditions[:google_uid]
+      u
+    elsif u.is_a?(User) && conditions[:recovery_email] &&
+          u.recovery.valid_token?(params[:password])
+      u&.account_recovered! # does after recover things like dropping tenants
+      u
+    elsif u.is_a?(User) && u.valid_password?(params[:password])
+      u
     end
-
-    if conditions[:recovery_email]
-      ok = u.valid_for_authentication? do
-        u.recovery.valid_token?(params[:password])
-      end
-      if ok
-        u.account_recovered!
-        return u
-      end
-      return
-    end
-
-    ok = u.valid_for_authentication? do
-      u.valid_password?(params[:password])
-    end
-
-    ok ? u : nil
   end
 
   # If you want to restrict access to the web interface for adding oauth authorized applications, you need to declare the block below.
