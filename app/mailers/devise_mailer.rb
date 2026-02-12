@@ -1,6 +1,24 @@
 class DeviseMailer < Devise::Mailer
   layout 'mailer'
 
+  def unlock_instructions(user, token, opts = {})
+    headers ApplicationMailer.default_headers
+
+    @token = token
+
+    @app_context = user.app_context
+    @app = app
+    prepare_logo
+
+    opts[:from] = @app.config.mailer.from
+    opts[:reply_to] = @app.config.mailer.reply_to
+    use_styles
+
+    @url = v1_user_unlock_url(unlock_token: token, app: @app_context)
+
+    devise_mail(user, :unlock_instructions, opts)
+  end
+
   def confirmation_instructions(user, token, opts = {})
     headers ApplicationMailer.default_headers
 
