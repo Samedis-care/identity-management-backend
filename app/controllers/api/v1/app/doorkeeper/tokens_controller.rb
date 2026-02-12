@@ -45,8 +45,8 @@ class Api::V1::App::Doorkeeper::TokensController < Doorkeeper::TokensController
       headers.merge! response.headers
       _token_attrs = {
         im_app: params[:app],
-        im_ip: request.remote_ip,
-        im_navigator: request.user_agent,
+        im_ip: request.remote_ip.to_s.to_utf8.presence,
+        im_navigator: request.user_agent.to_s.to_utf8.presence,
         im_otp_provided: _im_otp_provided,
         expires_in: Doorkeeper.configuration.access_token_expires_in
       }
