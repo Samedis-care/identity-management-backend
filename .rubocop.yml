@@ -112,3 +112,6 @@ Style/DoubleNegation:
 Rails/FindEach:
   Enabled: false
 
+# this prevents nagging about update_attributes, which is fine for mongoid
+Rails/ActiveRecordAliases:
+  Enabled: false
