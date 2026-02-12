@@ -16,6 +16,10 @@ class String
     ActiveModel::Type::Boolean.new.cast(self.downcase)
   end
 
+  def to_utf8
+    self.encode('UTF-8', invalid: :replace, undef: :replace, replace: '')
+  end
+
   #unicode aware function
   def to_slug
     # become case-insensitive
