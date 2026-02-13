@@ -13,6 +13,10 @@ class Api::V1::App::Doorkeeper::TokensController < Doorkeeper::TokensController
 
   before_action :set_locale
 
+  rescue_from Oauth::InvalidGrantWithReason do |e|
+    render_jsonapi_error(I18n.t("auth.error.#{e.reason}"), 'account_locked', 401)
+  end
+
   def create
     grant_type = params[:grant_type].to_s.strip.downcase
 

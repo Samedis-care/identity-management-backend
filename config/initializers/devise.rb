@@ -289,7 +289,7 @@ Rails.application.reloader.to_prepare do
     # config.unlock_in = 1.hour
 
     # Warn on the last attempt before the account is locked.
-    # config.last_attempt_warning = true
+    # config.last_attempt_warning = true # !! THIS WORKS VIA FLASH AND HTML VIEWS NOT FOR API MODE
 
     # ==> Configuration for :recoverable
     #

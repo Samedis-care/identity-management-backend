@@ -47,8 +47,17 @@ Doorkeeper.configure do
       next
     end
 
-    ok = u.valid_for_authentication? do
-      u.valid_password?(params[:password])
+    ok = u.valid_for_authentication? { u.valid_password?(params[:password]) }
+
+    unless ok
+      if u.access_locked? || u.unauthenticated_message == :locked
+        raise Oauth::InvalidGrantWithReason.new(:account_locked)
+      end
+      # remaining = Devise.maximum_attempts - u.failed_attempts.to_i
+      # if remaining == 1
+      #   raise Oauth::InvalidGrantWithReason.new(:last_attempt, meta: { remaining_attempts: remaining })
+      # end
+      #raise Oauth::InvalidGrantWithReason.new(:invalid_credentials, meta: { remaining_attempts: remaining })
     end
 
     ok ? u : nil
