@@ -151,8 +151,14 @@ class User < ApplicationDocument
   field :unlock_token,    type: String
   field :locked_at,       type: Time
 
-  index({ unlock_token: 1 }, { unique: true, sparse: true })
-
+  index(
+    { unlock_token: 1 },
+    {
+      name: 'user_unlock_tokens',
+      unique: true,
+      partial_filter_expression: { unlock_token: { '$type': 'string' } }
+    }
+  )
   index({ actor_id: 1, deleted: 1 }, { sparse: true, unique: true, name: 'user_actors' })
   index({ email: 1 }, { sparse: true, unique: true, name: 'user_emails' })
   index({ deleted: 1, active: 1, invalid_at: 1 }, { sparse: false })
