@@ -135,6 +135,13 @@ nl:
       reset_password_delayed: Er is al een link naar je e-mailadres (%{email}) 
         gestuurd om je wachtwoord opnieuw in te stellen. Wacht minstens een paar
         minuten tot je deze e-mail ontvangt en volg de instructies.
+      unlock_instructions:
+        subject: Account ontgrendelen
+        header: Je account is om veiligheidsredenen vergrendeld.
+        action: Account ontgrendelen
+        message: Je kunt het zelf ontgrendelen door de bijgeleverde link te 
+          volgen en in te loggen met je huidige wachtwoord. Je kunt ook de 
+          wachtwoord vergeten functionaliteit gebruiken.
     user:
       recaptcha_invalid: De vastgelegde captcha is helaas niet geldig.
       unverified: >-
