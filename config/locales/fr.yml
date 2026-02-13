@@ -144,6 +144,13 @@ fr:
       reset_password_delayed: Un lien pour réinitialiser votre mot de passe a 
         déjà été envoyé à votre adresse e-mail (%{email}). Veuillez patienter 
         quelques minutes avant de le recevoir et de suivre les instructions.
+      unlock_instructions:
+        subject: Déverrouiller le compte
+        header: Votre compte a été verrouillé pour des raisons de sécurité.
+        action: Déverrouiller le compte
+        message: Vous pouvez le déverrouiller vous-même en suivant le lien 
+          fourni et en vous connectant avec votre mot de passe actuel. Vous 
+          pouvez également utiliser la fonctionnalité "mot de passe oublié".
     user:
       recaptcha_invalid: Le captcha capturé n'est malheureusement pas valide.
       unverified: >-
