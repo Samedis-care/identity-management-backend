@@ -83,7 +83,7 @@ de:
         action: Zugang entsperren
         message: >-
           Du kannst deinen Zugang selbst wieder entsperren und dich anschließend mit deinem bekannten
-          Passwort anmelden. Oder du benutzt Alternativ die Passwort-vergessen Funktion.
+          Passwort anmelden. Oder du benutzt alternativ die Passwort-vergessen Funktion.
       registered: >-
         Bitte überprüfe deine E-Mails, um die Registrierung zu bestätigen. Dein Konto
         %{email} wurde erfolgreich erstellt und wird nach Bestätigung aktiviert.
@@ -305,7 +305,7 @@ de:
     greeting: 'Hallo %{user_name}.'
     manual_link_instructions: >-
       Wenn der Klick auf den Button nicht funktioniert, kopiere die folgende Adresse
-      in Deinen Web-Browser:
+      in deinen Web-Browser:
     regards: 'Dein %{app_name} Team'
     footer_html: |-
       Diese Mail wurde von Identity-Management (https://github.com/Samedis-care/identity-management) gesendet<br />
