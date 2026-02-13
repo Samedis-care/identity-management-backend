@@ -27,6 +27,11 @@ de:
       %{host} ist fehlgeschlagen!
   auth:
     error:
+      account_locked: |-
+        Zu viele Anmeldeversuche. Dein Konto wurde gesperrt.
+        Eine E-Mail mit einer Anleitung zum entsperren wurde an dich gesendet.
+        Du kannst die auch Passwort-zurücksetzen Funktion verwenden um die
+        Sperrung aufzuheben.
       forbidden: Unzureichende Rechte.
       grant_type_invalid: Nicht autorisiert. Die Übergabe Daten sind ungültig.
       invalid_request: Die Anforderung ist ungültig oder der erforderliche Parameter

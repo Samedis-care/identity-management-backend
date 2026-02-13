@@ -24,6 +24,10 @@ en:
       later. Reason: %{reason}"
   auth:
     error:
+      account_locked: |-
+        Too many login attempts. Your account has been locked.
+        An email with instructions on how to unlock your account has been sent to you.
+        You can also use the password reset function to remove the lock.
       forbidden: Forbidden.
       grant_type_invalid: Not authorised. The grant type is invalid.
       invalid_request: The request is invalid or missing required parameter.
