@@ -35,8 +35,8 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
       scopes: 'api',
       im_otp_required: false,
       im_app: user.app_context,
-      im_ip: request.remote_ip,
-      im_navigator: request.user_agent
+      im_ip: request.remote_ip.to_s.to_utf8.presence,
+      im_navigator: request.user_agent.to_s.to_utf8.presence
     )
 
     url_values = {
