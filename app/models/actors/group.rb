@@ -6,6 +6,7 @@ module Actors
 
     def safe_role_ids
       @safe_role_ids ||= begin
+        return if system_override
         return if system? && new_record?
         return unless parent_ids.include?(tenant&.profiles_ou&.id) # only needs to check profiles (below that OU)
         return unless (role_ids - tenant.available_role_ids).any? # prevent unsafe/non organization roles
