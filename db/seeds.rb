@@ -83,6 +83,7 @@ Dir.glob('config/apps/*').each do |app_dir|
     rescue StandardError => e
       raise e
     end
+    Actor.system_override = true
     puts "ensuring tenant #{tenant.name} in #{app_name}"
     tenant.save
     tenant.ensure_defaults!
