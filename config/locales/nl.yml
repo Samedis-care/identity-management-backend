@@ -48,6 +48,10 @@ nl:
       confirmation_token_invalid: Het bevestigingstoken dat is verzonden is 
         ongeldig. Uw account kon niet worden geverifieerd. Controleer of u de 
         volledige bevestigingslink hebt gekopieerd.
+      account_locked: "Te veel aanmeldingspogingen. Je account is vergrendeld.\nJe
+        hebt een e-mail ontvangen met instructies om je account te ontgrendelen.\n\
+        Je kunt ook de functie voor het resetten van je wachtwoord gebruiken om de
+        vergrendeling op te heffen."
   devise:
     mailer:
       account_confirm: Dank u voor uw bevestiging. Uw toegang is geactiveerd.
