@@ -51,6 +51,10 @@ fr:
       confirmation_token_invalid: Le jeton de confirmation qui a été envoyé 
         n'est pas valide. Votre compte n'a pas pu être vérifié. Veuillez 
         vérifier que vous avez copié le lien de confirmation complet.
+      account_locked: "Trop de tentatives de connexion. Votre compte a été verrouillé.\n\
+        Un courriel contenant des instructions sur la manière de déverrouiller votre
+        compte vous a été envoyé.\nVous pouvez également utiliser la fonction de réinitialisation
+        du mot de passe pour lever le verrou."
   devise:
     mailer:
       account_confirm: Merci pour votre confirmation. Votre accès a été activé.
