@@ -18,44 +18,48 @@ de:
       Bitte versuche es später erneut. Grund: %{reason}"
     maintenance_error: "Das System befindet sich derzeit im Wartungsmodus. Bitte versuche
       es später noch einmal. Grund: %{reason}"
-    oauth_error: Der Remote-Authentifizierungsserver hat nicht die für die Anmeldung
-      erforderlichen Mindestinformationen zurückgegeben (vertrauenswürdige E-Mail,
-      Vor- und Nachname).
-    oauth_untrusted_email: Die von %{host} zurückgegebene E-Mail-Adresse %{email}
-      ist nicht vertrauenswürdig!
-    oauth_failed: Die Kontaktaufnahme mit dem Remote-Authentifizierungsserver unter
-      %{host} ist fehlgeschlagen!
+    oauth_error: Der Remote-Authentifizierungsserver hat nicht die für die 
+      Anmeldung erforderlichen Mindestinformationen zurückgegeben 
+      (vertrauenswürdige E-Mail, Vor- und Nachname).
+    oauth_untrusted_email: Die von %{host} zurückgegebene E-Mail-Adresse 
+      %{email} ist nicht vertrauenswürdig!
+    oauth_failed: Die Kontaktaufnahme mit dem Remote-Authentifizierungsserver 
+      unter %{host} ist fehlgeschlagen!
   auth:
     error:
       account_locked: |-
         Zu viele Anmeldeversuche. Dein Konto wurde gesperrt.
         Eine E-Mail mit einer Anleitung zum entsperren wurde an dich gesendet.
-        Du kannst die auch Passwort-zurücksetzen Funktion verwenden um die
+        Du kannst auch die Passwort-zurücksetzen Funktion verwenden, um die
         Sperrung aufzuheben.
       forbidden: Unzureichende Rechte.
       grant_type_invalid: Nicht autorisiert. Die Übergabe Daten sind ungültig.
-      invalid_request: Die Anforderung ist ungültig oder der erforderliche Parameter
-        fehlt.
-      login_incorrect: Die übermittelten Anmeldeinformationen sind nicht korrekt.
-      password_token_invalid: Der Link zum zurücksetzen des Passworts ist nicht länger
-        gültig.
+      invalid_request: Die Anforderung ist ungültig oder der erforderliche 
+        Parameter fehlt.
+      login_incorrect: Die übermittelten Anmeldeinformationen sind nicht 
+        korrekt.
+      password_token_invalid: Der Link zum zurücksetzen des Passworts ist nicht 
+        länger gültig.
       missing_tenant_context: Mandantenkontext fehlt.
       token_expired: Nicht autorisiert. Das Sicherheitstoken ist abgelaufen.
       token_invalid: Nicht autorisiert. Das Sicherheitstoken ist ungültig.
-      unauthenticated: Anmeldung fehlgeschlagen. Der Sicherheitstoken ist ungültig
-        oder fehlt.
-      otp_required: Anmeldung unvollständig. Einmalpasswort noch nicht angegeben.
+      unauthenticated: Anmeldung fehlgeschlagen. Der Sicherheitstoken ist 
+        ungültig oder fehlt.
+      otp_required: Anmeldung unvollständig. Einmalpasswort noch nicht 
+        angegeben.
       otp_invalid: Dein Einmalpasswort ist ungültig oder abgelaufen.
       otp_too_many_tries: Zu viele ungültige Einmalkennwortversuche.
       unauthorized: Nicht authorisiert. Unzureichende Berechtigung.
-      unauthorized_tenant: Zugriff verweigert. Kein Zugriff auf diesen Mandanten erlaubt.
+      unauthorized_tenant: Zugriff verweigert. Kein Zugriff auf diesen Mandanten
+        erlaubt.
       confirmation_token_invalid: >-
         Der Bestätigungscode war ungültig.
         Dein Konto konnte daher nicht aktiviert werden.
         Bitte überprüfe das der vollständige Bestätigungslink verwendet wurde.
   devise:
     mailer:
-      account_confirm: Vielen Dank für Deine Bestätigung. Dein Zugang wurde aktiviert.
+      account_confirm: Vielen Dank für Deine Bestätigung. Dein Zugang wurde 
+        aktiviert.
       account_confirm_resend: 'Wir haben eine Bestätigungsmail an deine E-Mail Adresse
         (%{email}) gesendet.'
       confirmation_instructions:
@@ -84,10 +88,12 @@ de:
           mit unserem Support in Verbindung: <a href="mailto:%{support_email}">%{support_email}</a>
       unlock_instructions:
         subject: Zugang entsperren
-        header: Dein Zugang wurde wegen wiederholter fehlerhafter Anmeldeversuche zur Sicherheit gesperrt.
+        header: Dein Zugang wurde wegen wiederholter fehlerhafter 
+          Anmeldeversuche zur Sicherheit gesperrt.
         action: Zugang entsperren
         message: >-
-          Du kannst deinen Zugang selbst wieder entsperren und dich anschließend mit deinem bekannten
+          Du kannst deinen Zugang selbst wieder entsperren und dich anschließend mit
+          deinem bekannten
           Passwort anmelden. Oder du benutzt alternativ die Passwort-vergessen Funktion.
       registered: >-
         Bitte überprüfe deine E-Mails, um die Registrierung zu bestätigen. Dein Konto
@@ -103,9 +109,11 @@ de:
           Du hast nicht um ein neues Passwort gebeten?<br /> Dann kannst Du diese
           E-Mail ignorieren.
       reset_password_delayed: >-
-        Ein Link zum Zurücksetzen deines Passworts wurde bereits an deine E-Mail-Adresse gesendet
+        Ein Link zum Zurücksetzen deines Passworts wurde bereits an deine E-Mail-Adresse
+        gesendet
         (%{email}).
-        Bitte warte einige Minuten bis diese eintrifft und folge dann den dortigen Anweisungen.
+        Bitte warte einige Minuten bis diese eintrifft und folge dann den dortigen
+        Anweisungen.
       reset_password_msg: >-
         Ein Link zum Zurücksetzen deines Passworts wurde an deine E-Mail-Adresse gesendet
         (%{email}). Bitte folge diesem Link, um ein neues Passwort zu vergeben.
@@ -126,7 +134,8 @@ de:
           Das bedeutet, dass du neue Einladungen von den Einrichtungen erhalten musst,
           zu denen du weiterhin Zugang benötigst.\n\nUm die Wiederherstellung zu starten,
           klicke bitte auf den folgenden Link:"
-        started: Eine E-Mail mit Anweisungen zum Wiederherstellungsprozess wurde gesendet.
+        started: Eine E-Mail mit Anweisungen zum Wiederherstellungsprozess wurde
+          gesendet.
         action: Konto wiederherstellen
         subject: Kontowiederherstellung...
         header: Hallo von %{app_name}!
@@ -140,9 +149,10 @@ de:
           zu bestätigen, klicken bitte auf den folgenden Link:"
         subject: Bestätige Deine %{app_name}-Wiederherstellungs-E-Mail-Adresse
         header: Hallo von %{app_name}!
-      recovery_email_confirm: Vielen Dank für die Bestätigung. Dein Konto ist nun
-        für die E-Mail-Wiederherstellung eingerichtet.
-      email_change_confirm: Vielen Dank für Deine Bestätigung. Die E-Mail wurde geändert.
+      recovery_email_confirm: Vielen Dank für die Bestätigung. Dein Konto ist 
+        nun für die E-Mail-Wiederherstellung eingerichtet.
+      email_change_confirm: Vielen Dank für Deine Bestätigung. Die E-Mail wurde 
+        geändert.
       confirmation_email_change:
         action: Bestätige Deine E-Mail-Adresse
         subject: Bestätige Deine %{app_name}-E-Mail-Adresse
@@ -171,16 +181,17 @@ de:
       leaving_tenant_failed: Fehler beim Verlassen der Einrichtung aufgetreten.
       recovery_token:
         unset: Der Wiederherstellungsprozess wurde nicht gestartet.
-        recovery_email_unset: Für diesen Benutzer ist keine Wiederherstellungs-E-Mail
-          konfiguriert.
-        no_match: Das bereitgestellte Wiederherstellungstoken stimmt nicht mit dem
-          erwarteten Wiederherstellungstoken überein.
-        expired: Das Wiederherstellungstoken ist abgelaufen. Bitte versuche den Wiederherstellungsprozess
-          erneut.
-        verification_error: Das Wiederherstellungstoken konnte nicht verifiziert werden.
+        recovery_email_unset: Für diesen Benutzer ist keine 
+          Wiederherstellungs-E-Mail konfiguriert.
+        no_match: Das bereitgestellte Wiederherstellungstoken stimmt nicht mit 
+          dem erwarteten Wiederherstellungstoken überein.
+        expired: Das Wiederherstellungstoken ist abgelaufen. Bitte versuche den 
+          Wiederherstellungsprozess erneut.
+        verification_error: Das Wiederherstellungstoken konnte nicht verifiziert
+          werden.
         decode_error: Das Wiederherstellungstoken konnte nicht dekodiert werden.
-      record_not_found_error: Wir konnten kein Benutzerkonto mit dieser E-Mail-Adresse
-        finden.
+      record_not_found_error: Wir konnten kein Benutzerkonto mit dieser 
+        E-Mail-Adresse finden.
     invalid_app: App-Kontext fehlt oder ist falsch
     undeletable:
       one: Ein Datensatz von %{total} konnte nicht gelöscht werden.
@@ -229,8 +240,8 @@ de:
         content:
           attributes:
             name:
-              uniqueness: Es gibt für die Anwendung bereits einen Inhalt mit dieser
-                Version.
+              uniqueness: Es gibt für die Anwendung bereits einen Inhalt mit 
+                dieser Version.
         functionality:
           attributes:
             ident:
@@ -250,7 +261,8 @@ de:
               already_confirmed: Die E-Mail Adresse wurde bereits bestätigt.
               blank: Adresse darf nicht leer sein.
               syntax: Ungültige E-Mail-Adresse.
-              taken: Die E-Mail Adresse ist bereits für einen Zugang registriert.
+              taken: Die E-Mail Adresse ist bereits für einen Zugang 
+                registriert.
             first_name:
               blank: darf nicht leer sein.
             last_name:
@@ -278,16 +290,16 @@ de:
         other: Apps
       actors/container_apps:
         one: 'Kontäner für Apps '
-        other: ''
+        other:
       actors/container_enterprises:
         one: Kontäner für Enterprises
-        other: ''
+        other:
       actors/container_tenants:
         one: Kontäner für Mandanten
-        other: ''
+        other:
       actors/container_users:
         one: Kontäner für Enterprises
-        other: ''
+        other:
       actors/group:
         one: Gruppe
         other: Gruppen
