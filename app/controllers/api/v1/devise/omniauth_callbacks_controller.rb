@@ -17,6 +17,8 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
   end
 
   def do_oauth
+    return failure if params[:error].presence
+
     unless user.errors.empty?
       generic_error(user.errors)
       login_url = URI.parse(User.redirect_url_login(user.app_context, invite_token: user.invite_token) % { HOST: user.host })
