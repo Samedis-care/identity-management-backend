@@ -1,4 +1,4 @@
-class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksController
+class Api::V1::Devise::OmniauthCallbacksController < ::Devise::OmniauthCallbacksController
 
   include SetLocale
   include BaseControllerMethods
@@ -7,20 +7,11 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
 
   rescue_from CustomAuthProvider::UntrustedEmailError, with: :oauth_error
   rescue_from CustomAuthProvider::FailedAuthError, with: :oauth_error
-  rescue_from Exception, with: :oauth_access_denied
 
   # for CustomAuthProvider this sets the standard failure_message
   def oauth_error(e)
     request.env['omniauth.error.strategy'] = params[:provider]
     request.env['omniauth.error.type'] = e.message
-
-    failure
-  end
-
-  def oauth_access_denied(e)
-    return general_error(e) unless params[:error].presence
-
-    request.env['omniauth.error.type'] = params[:error]
 
     failure
   end
@@ -101,8 +92,6 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
     do_oauth
   end
 
-  private
-
   def user
     @user ||= begin
       _user = User.from_omniauth(auth)
@@ -137,11 +126,11 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
     I18n.locale = state[:locale].presence || super
   end
 
-  protected
-
   def failure
     redirect_to after_omniauth_failure_path_for, allow_other_host: true
   end
+
+  protected
 
   def after_omniauth_failure_path_for(_scope = nil)
     _uri = URI.parse(User.redirect_url_login(current_app, invite_token: invite_token || ''))
