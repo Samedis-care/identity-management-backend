@@ -3,7 +3,10 @@ Rails.application.routes.draw do
   mount Rswag::Ui::Engine => '/api-docs'
   mount Rswag::Api::Engine => '/api-docs'
 
-  devise_for :users, only: [], skip: [:sessions]
+  devise_for :users, only: [], controllers: {
+    unlocks: 'api/v1/app/unlocks',
+    omniauth_callbacks: 'api/v1/devise/omniauth_callbacks'
+  }
 
   scope module: :api, path: :api do
     draw :v1_devise
