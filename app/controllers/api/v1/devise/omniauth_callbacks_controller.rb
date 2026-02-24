@@ -7,6 +7,7 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
 
   rescue_from CustomAuthProvider::UntrustedEmailError, with: :oauth_error
   rescue_from CustomAuthProvider::FailedAuthError, with: :oauth_error
+  rescue_from Exception, with: :oauth_access_denied
 
   # for CustomAuthProvider this sets the standard failure_message
   def oauth_error(e)
@@ -16,9 +17,15 @@ class Api::V1::Devise::OmniauthCallbacksController < Devise::OmniauthCallbacksCo
     failure
   end
 
-  def do_oauth
-    return failure if params[:error].presence
+  def oauth_access_denied(e)
+    return general_error(e) unless params[:error].presence
 
+    request.env['omniauth.error.type'] = params[:error]
+
+    failure
+  end
+
+  def do_oauth
     unless user.errors.empty?
       generic_error(user.errors)
       login_url = URI.parse(User.redirect_url_login(user.app_context, invite_token: user.invite_token) % { HOST: user.host })
