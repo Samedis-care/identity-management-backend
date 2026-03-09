@@ -36,7 +36,7 @@ ENV MALLOC_ARENA_MAX 2
 # Add the Rails app
 ADD . /home/app/webapp
 ENV PATH="$PATH:/home/app/webapp/bin"
-ENV RUBY_YJIT_ENABLE=1
+ENV RUBYOPT="--yjit --yjit-exec-mem-size=32"
 
 # Copy GeoIP database
 COPY --from=preperation /root/GeoLite2-City.mmdb /home/app/webapp
