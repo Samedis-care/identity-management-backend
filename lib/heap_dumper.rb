@@ -2,6 +2,7 @@ require 'rbtrace'
 require 'objspace'
 require 'aws-sdk-s3'
 require 'socket'
+require 'zlib'
 
 class HeapDumper
   def self.dumping_thread
@@ -20,6 +21,7 @@ class HeapDumper
     while @running
       filename = "heap-#{hostname}-#{pid}-#{Time.now.iso8601}.dump"
       filepath = "./tmp/#{filename}"
+      gz_filepath = "#{filepath}.gz"
 
       GC.start
       GC.start
@@ -29,13 +31,21 @@ class HeapDumper
           ObjectSpace.dump_all(output: f)
         end
 
-        s3.upload_file(filepath, bucket: ENV['AWS_S3_BUCKET'], key: "heap_dumps/#{filename}")
+        File.open(filepath, 'r') do |f|
+          Zlib::GzipWriter.open(gz_filepath) do |gz|
+            IO.copy_stream(f, gz)
+          end
+        end
+        File.delete(filepath)
 
-        Rails.logger.info("[HeapDump-#{pid}] success: #{filename}")
+        s3.upload_file(gz_filepath, bucket: ENV['AWS_S3_BUCKET'], key: "heap_dumps/#{filename}.gz")
+
+        Rails.logger.info("[HeapDump-#{pid}] success: #{filename}.gz")
       rescue StandardError => e
         Rails.logger.error("[HeapDump-#{pid}] Failed: #{e.class} #{e.message}")
       ensure
-        File.delete(filepath)
+        File.delete(filepath) if File.exist?(filepath)
+        File.delete(gz_filepath) if File.exist?(gz_filepath)
       end
 
       @thread_stop_signal_mutex.synchronize do
