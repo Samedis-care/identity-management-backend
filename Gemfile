@@ -83,6 +83,8 @@ gem 'awesome_print'
 gem 'parallel'
 gem 'ruby-progressbar'
 
+gem 'rbtrace'
+
 group :development, :test, :live, :local_dev, :staging do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'abbrev'

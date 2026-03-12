@@ -29,6 +29,7 @@
 # Ignore master key for decrypting credentials and more.
 /config/master.key
 
+.devcontainer
 .idea*
 /config/environments/seed.rb
 /config/s3.yml
