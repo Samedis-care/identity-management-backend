@@ -36,6 +36,8 @@ start_time = Time.now.to_f # captured in main process (process managing workers)
 $sentry_report_worker_crash = false # global variable
 puma_in_cluster_mode = false
 
+require_relative '../lib/heap_dumper'
+
 before_fork do
   # if we fork we're in cluster mode
   puma_in_cluster_mode = true
@@ -54,12 +56,14 @@ before_worker_boot do
 
   MaintenanceMode.start
   puts "[#{Process.pid}] Maintenance mode started."
+  HeapDumper.start
 end
 
 before_worker_shutdown do
   # runs in each worker on shutdown
   MaintenanceMode.stop
   puts "[#{Process.pid}] Maintenance mode stopped."
+  HeapDumper.stop
 end
 
 after_booted do
@@ -67,6 +71,7 @@ after_booted do
   unless puma_in_cluster_mode
     MaintenanceMode.start
     puts "[#{Process.pid}] Maintenance mode started."
+    HeapDumper.start
   end
 end
 
@@ -75,6 +80,7 @@ after_stopped do
   unless puma_in_cluster_mode
     MaintenanceMode.stop
     puts "[#{Process.pid}] Maintenance mode stopped."
+    HeapDumper.stop
   end
 end
 
