@@ -38,6 +38,13 @@ ENV MALLOC_ARENA_MAX 2
 # so we need to trigger major GC much sooner to avoid steady memory rise
 # RUBY_GC_HEAP_OLDOBJECT_LIMIT_FACTOR: Perform a full GC when the number of old objects is more than R * N, where R is this factor and N is the number of old objects after the last full GC. (default 2.0)
 ENV RUBY_GC_HEAP_OLDOBJECT_LIMIT_FACTOR="1.2"
+# also force major GC after fixed 64MB memory allocations
+# RUBY_GC_OLDMALLOC_LIMIT    The initial limit of old generation allocation from malloc, a full GC will start when this limit is reached.  (default: 16MB)
+ENV RUBY_GC_OLDMALLOC_LIMIT="64MB"
+# RUBY_GC_OLDMALLOC_LIMIT_MAX The maximum limit of old generation allocation from malloc before a full GC starts.  Prevents excessive malloc growth due to RUBY_GC_OLDMALLOC_LIMIT_GROWTH_FACTOR. (default: 128MB)
+ENV RUBY_GC_OLDMALLOC_LIMIT_MAX="64MB"
+# RUBY_GC_OLDMALLOC_LIMIT_GROWTH_FACTOR Increases the limit of old generation malloc allocation, reducing full GC frequency but increasing malloc growth until RUBY_GC_OLDMALLOC_LIMIT_MAX is reached. (default: 1.2, minimum: 1.0 (no growth))
+ENV RUBY_GC_OLDMALLOC_LIMIT_GROWTH_FACTOR="1.0"
 
 # Add the Rails app
 ADD . /home/app/webapp
