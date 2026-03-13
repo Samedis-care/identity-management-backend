@@ -33,6 +33,12 @@ ENV MALLOC_CONF=narenas:2,background_thread:true,abort_conf:true
 # Glibc malloc
 ENV MALLOC_ARENA_MAX 2
 
+# Ruby GC tuning
+# many objects survive >2 minor GCs because rails holds references to them
+# so we need to trigger major GC much sooner to avoid steady memory rise
+# RUBY_GC_HEAP_OLDOBJECT_LIMIT_FACTOR: Perform a full GC when the number of old objects is more than R * N, where R is this factor and N is the number of old objects after the last full GC. (default 2.0)
+ENV RUBY_GC_HEAP_OLDOBJECT_LIMIT_FACTOR="1.2"
+
 # Add the Rails app
 ADD . /home/app/webapp
 ENV PATH="$PATH:/home/app/webapp/bin"
