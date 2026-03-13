@@ -41,6 +41,10 @@ require_relative '../lib/heap_dumper'
 before_fork do
   # if we fork we're in cluster mode
   puma_in_cluster_mode = true
+
+  # clean up memory before forking to maximize copy on write efficiency
+  3.times { GC.start(full_mark: true, immediate_sweep: true) }
+  GC.compact
 end
 
 before_worker_boot do
