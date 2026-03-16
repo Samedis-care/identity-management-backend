@@ -3,7 +3,6 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
 gem 'rails', '~> 8.1'
 
-gem 'async'
 gem 'bcrypt'
 gem 'bootsnap', require: false
 gem 'csv'
