@@ -9,6 +9,7 @@ Rails.application.routes.draw do
   }
 
   scope module: :api, path: :api do
+    draw :admin
     draw :v1_devise
     draw :v1
   end
