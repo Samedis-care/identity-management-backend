@@ -48,6 +48,7 @@ development: &defaults
   # Memory leak detection helpers
   # enables heap dumping every 10min to AWS S3 bucket (folder heap_dumps)
   HEAP_DUMPING: "false"
+  HEAP_DUMPING_GC_ENABLED: "true" # set to false to skip GC.start calls before heap dump
 production:
   <<: *defaults
 test:

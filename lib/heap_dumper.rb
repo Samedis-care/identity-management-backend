@@ -17,14 +17,17 @@ class HeapDumper
     )
     hostname = Socket.gethostname
     pid = Process.pid
+    gc_enabled = ENV['HEAP_DUMPING_GC_ENABLED'] != 'false'
 
     while @running
       filename = "heap-#{hostname}-#{pid}-#{Time.now.iso8601}.dump"
       filepath = "./tmp/#{filename}"
       gz_filepath = "#{filepath}.gz"
 
-      GC.start
-      GC.start
+      if gc_enabled
+        GC.start
+        GC.start
+      end
 
       begin
         File.open(filepath, 'w') do |f|
