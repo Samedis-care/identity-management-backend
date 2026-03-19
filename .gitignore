@@ -58,3 +58,4 @@ set_local_dev.rb
 set_staging.rb
 set_production.rb
 public/maintenance.json
+/.claude
