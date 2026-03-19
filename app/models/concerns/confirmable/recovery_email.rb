@@ -208,6 +208,10 @@ module Confirmable::RecoveryEmail
 
   def postpone_recovery_email_change_until_confirmation_and_regenerate_confirmation_token
     @recovery_reconfirmation_required = true
+    # Force unconfirmed_recovery_email to be updated, even if the value hasn't changed,
+    # to prevent a race condition (analogous to Devise CVE-2026-32700 fix, see #5783).
+    unconfirmed_recovery_email_will_change!
+    changed_attributes["unconfirmed_recovery_email"] = nil
     self.unconfirmed_recovery_email = recovery_email
     self.recovery_email = recovery_email_was
     self.recovery_confirmation_token = nil
