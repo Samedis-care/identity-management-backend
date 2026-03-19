@@ -210,6 +210,26 @@ module Actors
       Parallel.each(available, in_threads:, progress: 'Ensuring defaults on tenants...') { it.ensure_defaults! }
     end
 
+    def self.move_users(source = nil, target = nil)
+      raise "invalid source tenant" unless source.try(:_type).eql?('Actors::Tenant')
+      raise "invalid target tenant" unless target.try(:_type).eql?('Actors::Tenant')
+
+      source.descendants.mappings.each do |mapping|
+        next if mapping.parent.deleted
+
+        mapping.rebuild_path!
+        dest = target.descendants.where(deleted: false, template_actor_id: mapping.parent_template_actor_id).first
+        unless dest
+          puts "connot find dest for: ".red
+          ap mapping
+          next
+        end
+
+        dest.rebuild_path!
+        dest.map_into!(mapping.user)
+      end
+    end
+
   end
 
 end
