@@ -1,0 +1,4 @@
+# Version: 1.0
+# auto generated path descriptions, update via: (append `-f` to force update if needed)
+#     rails g openapi_spec <%= file_name %>
+<%= { paths: }.as_json.to_yaml %>

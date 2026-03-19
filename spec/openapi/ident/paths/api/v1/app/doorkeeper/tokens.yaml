@@ -1,0 +1,158 @@
+# Manual spec for Doorkeeper OAuth token endpoints
+# These controllers don't inherit from JsonApiController
+---
+paths:
+  "/api/v1/{app}/oauth/token":
+    post:
+      summary: "Access Token: Login [POST]"
+      operationId: doorkeeper-tokens-create
+      tags:
+        - Access Tokens
+      x-controller: Api::V1::App::Doorkeeper::TokensController
+      x-controller-action: create
+      description: |
+        Authenticate a user and obtain an access token.
+
+        Supports multiple grant types:
+        - `password` - Login with email and password
+        - `refresh_token` - Refresh an expired access token
+        - `google_uid` - Login with Google UID
+        - `recovery_email` - Login with recovery email
+
+        On successful login, the user is automatically added to the app's container.
+      parameters:
+        - name: app
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The app identifier to login for
+          example: identity-management
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - grant_type
+              properties:
+                grant_type:
+                  type: string
+                  enum:
+                    - password
+                    - refresh_token
+                    - google_uid
+                    - recovery_email
+                  description: The OAuth2 grant type
+                username:
+                  type: string
+                  description: The email that the user registered with
+                  example: user@example.com
+                email:
+                  type: string
+                  description: Alias for username
+                password:
+                  type: string
+                  description: User password
+                  format: password
+                refresh_token:
+                  type: string
+                  description: Refresh token (for grant_type "refresh_token")
+                invite_token:
+                  type: string
+                  description: Optional token for invites. Will be processed at login and passed through to frontend.
+                otp:
+                  type: string
+                  description: One-Time Password for MFA-enabled accounts
+      responses:
+        "200":
+          description: User logged in successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  token:
+                    type: string
+                    description: The Bearer access token
+                  refresh_token:
+                    type: string
+                    description: Token to refresh the access token
+                  expires_in:
+                    type: number
+                    description: Seconds until the token expires
+                  redirect_url:
+                    type: string
+                    description: URL to redirect to after login
+                  otp_required:
+                    type: boolean
+                    description: Whether OTP is required to complete authentication
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        "423":
+          description: Account locked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+
+  "/api/v1/{app}/oauth/token/info":
+    get:
+      summary: "Access Token: Info [GET]"
+      operationId: doorkeeper-token-info-show
+      tags:
+        - Access Tokens
+      x-controller: Api::V1::App::Doorkeeper::TokenInfoController
+      x-controller-action: show
+      security:
+        - Bearer: []
+      description: |
+        Returns information about the currently authenticated user and token.
+      parameters:
+        - name: app
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The app identifier
+      responses:
+        "200":
+          description: Token info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      type:
+                        type: string
+                      attributes:
+                        "$ref": "#/components/schemas/AppUserSerializer"
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        "401":
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"

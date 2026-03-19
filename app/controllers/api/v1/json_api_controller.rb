@@ -9,6 +9,7 @@ class Api::V1::JsonApiController < ApplicationController
   before_action :request_variant
 
   JSON_API = true
+  API = :ident
 
   MODEL_BASE = nil
   MODEL_BASE_ACTION = {}
@@ -16,6 +17,7 @@ class Api::V1::JsonApiController < ApplicationController
   MODEL_OVERVIEW = nil
   SERIALIZER = nil
   OVERVIEW_SERIALIZER = nil
+  SERIALIZERS = nil
   SCHEMA_ACTION = {}
 
   PAGE_LIMIT = 50
@@ -513,6 +515,37 @@ class Api::V1::JsonApiController < ApplicationController
 
   def default_format_json
     request.format = "json" unless params_json_api[:format].present?
+  end
+
+  # ---------------------------------------------------------------
+  # OpenAPI spec generator support
+  # ---------------------------------------------------------------
+
+  def self.schema(overview: false)
+    return overview_serializer_class::Schema.new.openapi_produces_schema_index if overview == true
+    return serializer_class::Schema.new.openapi_produces_schema if serializer_class
+  end
+
+  def self.serializer_class
+    const_get(:SERIALIZER) rescue nil
+  end
+
+  def self.overview_serializer_class
+    const_get(:OVERVIEW_SERIALIZER) || serializer_class
+  end
+
+  def self.serializers
+    [const_get(:SERIALIZERS)].flatten.compact.presence || [serializer_class].compact
+  end
+
+  def self.api_version
+    name.split('::')[1].downcase
+  end
+
+  def self.spec_file
+    return nil unless const_defined?(:API) && const_get(:API)
+
+    "public/api-docs/#{api_version}/#{const_get(:API)}.yaml"
   end
 
   if Rails.env.development? || Rails.env.local_dev?

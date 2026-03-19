@@ -20,4 +20,12 @@ class Api::V1::App::InfosController < Api::V1::JsonApiController
     ::Actors::App.only(:system, :name, :short_name, :full_name, :url, :image_data, :config).find_by(name: params_json_api[:name].to_s.to_slug)
   end
 
+  private
+
+  def cando
+    CANDO.merge({
+                  show: %w(public)
+                })
+  end
+
 end

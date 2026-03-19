@@ -59,7 +59,7 @@ namespace :v1 do
       resources :actor_roles, only: %i(index show create destroy)
     end
     resources :contents
-    resources :tenants
+    resources :tenants, only: %i(index show update destroy)
     resources :tenants, module: :tenants, only: [] do
       resources :organizations
       resources :organizations_tree, only: %i(index show)
@@ -106,7 +106,7 @@ namespace :v1 do
     resources :content_acceptance, only: [:update]
 
     scope path: ':tenant_id', module: :tenant do
-      resources :invitations, only: %i(create update destroy)
+      resources :invitations, only: %i(create destroy)
     end
   end
 

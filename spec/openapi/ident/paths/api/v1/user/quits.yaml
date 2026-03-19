@@ -1,0 +1,103 @@
+# Version: 1.0
+# auto generated path descriptions, update via: (append `-f` to force update if needed)
+#     rails g openapi_spec v1_user_quit
+---
+paths:
+  "/api/v1/user/quits/{id}":
+    delete:
+      summary: 'user account: Delete [DELETE]'
+      tags:
+      - Current User
+      operationId: user-quits-destroy
+      x-controller: Api::V1::User::QuitsController
+      x-controller-action: destroy
+      x-route-name: v1_user_quit
+      x-candos:
+      - public
+      x-model-type: User
+      x-record-type: app
+      description: |-
+        To use this endpoint the current user needs to be authorized for the
+        tenant to do any of these
+
+         - public
+      security:
+      - Bearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: user account id
+        schema:
+          type: string
+      - name: locale
+        in: query
+        description: to control the language returned
+        schema:
+          "$ref": "#/components/schemas/locales"
+      responses:
+        '200':
+          description: User deleted
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/meta"
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                description: |-
+                  Some server side rule prevented finishing this request.
+                  For example a multi delete might not have worked on all
+                  requested records due to some rule not allowing the delete.
+                  Please refer to the details in the response like
+                  - `meta.msg.error` error identifier
+                  - `meta.msg.message` message being displayed
+                  - `meta.msg.error_details` showing the attribute causing the problem
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '400':
+          description: Some values that were sent couldn't be processed
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Check the returned info in meta/msg for details
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '429':
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Wait for so many seconds as returned in the Retry-After
+                  header before accessing this endpoint again
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '401':
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Requires a valid login
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '403':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                type: object
+                description: User is missing the access rights to do this
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+

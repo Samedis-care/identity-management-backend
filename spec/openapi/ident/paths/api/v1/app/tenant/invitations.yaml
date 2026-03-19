@@ -1,0 +1,249 @@
+# Version: 1.0
+# auto generated path descriptions, update via: (append `-f` to force update if needed)
+#     rails g openapi_spec v1_invitations
+---
+paths:
+  "/api/v1/{app}/{tenant_id}/invitations":
+    post:
+      summary: 'Invite: Create [POST]'
+      tags:
+      - Invite
+      operationId: app-tenant-invitations-create
+      x-controller: Api::V1::App::Tenant::InvitationsController
+      x-controller-action: create
+      x-route-name: v1_invitations
+      x-candos:
+      - "~/invitations.writer"
+      - "~/access-control.writer"
+      - "~/tenant.admin"
+      - "~/app-tenant.admin"
+      x-model-type: Invite
+      x-record-type: invitation
+      description: |-
+        To use this endpoint the current user needs to be authorized for the
+        tenant to do any of these
+
+         - ~/invitations.writer
+         - ~/access-control.writer
+         - ~/tenant.admin
+         - ~/app-tenant.admin
+      security:
+      - Bearer: []
+      parameters:
+      - name: app
+        in: path
+        required: true
+        description: Invite app
+        schema:
+          type: string
+      - name: tenant_id
+        in: path
+        required: true
+        description: Invite tenant_id
+        schema:
+          type: string
+      - name: locale
+        in: query
+        description: to control the language returned
+        schema:
+          "$ref": "#/components/schemas/locales"
+      responses:
+        '200':
+          description: Invite created
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                description: Single endpoints will return an object as data
+                properties:
+                  data:
+                    type: object
+                    required:
+                    - id
+                    - type
+                    - attributes
+                    properties:
+                      id:
+                        type: string
+                      type:
+                        type: string
+                        default: invitation
+                      attributes:
+                        "$ref": "#/components/schemas/InvitationSerializer"
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '400':
+          description: Some values that were sent couldn't be processed
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Check the returned info in meta/msg for details
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '429':
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Wait for so many seconds as returned in the Retry-After
+                  header before accessing this endpoint again
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '401':
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Requires a valid login
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '403':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                type: object
+                description: User is missing the access rights to do this
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: This endpoint does not support sending any attributes
+              nullable: true
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              description: This endpoint does not support sending any attributes
+              nullable: true
+          multipart/form-data:
+            schema:
+              type: object
+              description: This endpoint does not support sending any attributes
+              nullable: true
+  "/api/v1/{app}/{tenant_id}/invitations/{id}":
+    delete:
+      summary: 'Invite: Delete [DELETE]'
+      tags:
+      - Invite
+      operationId: app-tenant-invitations-destroy
+      x-controller: Api::V1::App::Tenant::InvitationsController
+      x-controller-action: destroy
+      x-route-name: v1_invitations
+      x-candos:
+      - "~/invitations.writer"
+      - "~/tenant.admin"
+      - "~/app-tenant.admin"
+      x-model-type: Invite
+      x-record-type: invitation
+      description: |-
+        To use this endpoint the current user needs to be authorized for the
+        tenant to do any of these
+
+         - ~/invitations.writer
+         - ~/tenant.admin
+         - ~/app-tenant.admin
+      security:
+      - Bearer: []
+      parameters:
+      - name: app
+        in: path
+        required: true
+        description: Invite app
+        schema:
+          type: string
+      - name: tenant_id
+        in: path
+        required: true
+        description: Invite tenant_id
+        schema:
+          type: string
+      - name: id
+        in: path
+        required: true
+        description: Invite id
+        schema:
+          type: string
+      - name: locale
+        in: query
+        description: to control the language returned
+        schema:
+          "$ref": "#/components/schemas/locales"
+      responses:
+        '200':
+          description: Invite deleted
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/meta"
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                description: |-
+                  Some server side rule prevented finishing this request.
+                  For example a multi delete might not have worked on all
+                  requested records due to some rule not allowing the delete.
+                  Please refer to the details in the response like
+                  - `meta.msg.error` error identifier
+                  - `meta.msg.message` message being displayed
+                  - `meta.msg.error_details` showing the attribute causing the problem
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '400':
+          description: Some values that were sent couldn't be processed
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Check the returned info in meta/msg for details
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '429':
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Wait for so many seconds as returned in the Retry-After
+                  header before accessing this endpoint again
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '401':
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Requires a valid login
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '403':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                type: object
+                description: User is missing the access rights to do this
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+

@@ -1,0 +1,929 @@
+# Version: 1.0
+# auto generated path descriptions, update via: (append `-f` to force update if needed)
+#     rails g openapi_spec v1_users
+---
+paths:
+  "/api/v1/users":
+    post:
+      summary: 'user account: Create [POST]'
+      tags:
+      - User accounts
+      operationId: users-create
+      x-controller: Api::V1::UsersController
+      x-controller-action: create
+      x-route-name: v1_users
+      x-candos:
+      - identity-management/global.admin+identity-management/users.writer
+      x-model-type: User
+      x-record-type: user
+      description: |-
+        To use this endpoint the current user needs to be authorized for the
+        tenant to do any of these
+
+         - identity-management/global.admin+identity-management/users.writer
+      security:
+      - Bearer: []
+      parameters:
+      - name: tenant_id
+        in: query
+        required: true
+        schema:
+          type: string
+        description: |
+          The tenant context is required to determine if the user has
+          the required privileges.
+      - name: locale
+        in: query
+        description: to control the language returned
+        schema:
+          "$ref": "#/components/schemas/locales"
+      responses:
+        '200':
+          description: User created
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                description: Single endpoints will return an object as data
+                properties:
+                  data:
+                    type: object
+                    required:
+                    - id
+                    - type
+                    - attributes
+                    properties:
+                      id:
+                        type: string
+                      type:
+                        type: string
+                        default: user
+                      attributes:
+                        "$ref": "#/components/schemas/UserSerializer"
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '400':
+          description: Some values that were sent couldn't be processed
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Check the returned info in meta/msg for details
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '429':
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Wait for so many seconds as returned in the Retry-After
+                  header before accessing this endpoint again
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '401':
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Requires a valid login
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '403':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                type: object
+                description: User is missing the access rights to do this
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  description: the main attributes of this record
+                  properties:
+                    active:
+                      type: boolean
+                      description: if set false the login will be disabled
+                    email:
+                      type: string
+                      description: e-mail address
+                    first_name:
+                      type: string
+                      description: first name
+                    gender:
+                      type: number
+                      enum:
+                      - 0
+                      - 1
+                      - 2
+                      description: |
+                        Gender identifier
+                        * 0 - Unspecified
+                        * 1 - Male
+                        * 2 - Female
+                    image:
+                      type: object
+                      description: image in different sizes
+                      properties:
+                        large:
+                          type: string
+                        medium:
+                          type: string
+                        small:
+                          type: string
+                    invalid_at:
+                      type: string
+                      format: date-time
+                      description: if set the login will be disabled after the date
+                    last_name:
+                      type: string
+                      description: last name
+                    locale:
+                      type: string
+                      description: serves as languange preference for the user
+                    mobile:
+                      type: string
+                      description: mobile number
+                    pwd_reset_uid:
+                      type: string
+                      description: in case of a password reset this serves as a substitute
+                        for the old password
+                    short:
+                      type: string
+                      description: short name (combination of first and last names)
+                    title:
+                      type: string
+                      description: an optional user title
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                data[active]:
+                  type: boolean
+                  description: if set false the login will be disabled
+                data[email]:
+                  type: string
+                  description: e-mail address
+                data[first_name]:
+                  type: string
+                  description: first name
+                data[gender]:
+                  type: number
+                  enum:
+                  - 0
+                  - 1
+                  - 2
+                  description: |
+                    Gender identifier
+                    * 0 - Unspecified
+                    * 1 - Male
+                    * 2 - Female
+                data[image][large]:
+                  type: string
+                data[image][medium]:
+                  type: string
+                data[image][small]:
+                  type: string
+                data[invalid_at]:
+                  type: string
+                  format: date-time
+                  description: if set the login will be disabled after the date
+                data[last_name]:
+                  type: string
+                  description: last name
+                data[locale]:
+                  type: string
+                  description: serves as languange preference for the user
+                data[mobile]:
+                  type: string
+                  description: mobile number
+                data[pwd_reset_uid]:
+                  type: string
+                  description: in case of a password reset this serves as a substitute
+                    for the old password
+                data[short]:
+                  type: string
+                  description: short name (combination of first and last names)
+                data[title]:
+                  type: string
+                  description: an optional user title
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                data[active]:
+                  type: boolean
+                  description: if set false the login will be disabled
+                data[email]:
+                  type: string
+                  description: e-mail address
+                data[first_name]:
+                  type: string
+                  description: first name
+                data[gender]:
+                  type: number
+                  enum:
+                  - 0
+                  - 1
+                  - 2
+                  description: |
+                    Gender identifier
+                    * 0 - Unspecified
+                    * 1 - Male
+                    * 2 - Female
+                data[image][large]:
+                  type: string
+                data[image][medium]:
+                  type: string
+                data[image][small]:
+                  type: string
+                data[invalid_at]:
+                  type: string
+                  format: date-time
+                  description: if set the login will be disabled after the date
+                data[last_name]:
+                  type: string
+                  description: last name
+                data[locale]:
+                  type: string
+                  description: serves as languange preference for the user
+                data[mobile]:
+                  type: string
+                  description: mobile number
+                data[pwd_reset_uid]:
+                  type: string
+                  description: in case of a password reset this serves as a substitute
+                    for the old password
+                data[short]:
+                  type: string
+                  description: short name (combination of first and last names)
+                data[title]:
+                  type: string
+                  description: an optional user title
+    get:
+      summary: 'User accounts: List [GET]'
+      tags:
+      - User accounts
+      operationId: users-index
+      x-controller: Api::V1::UsersController
+      x-controller-action: index
+      x-route-name: v1_users
+      x-candos:
+      - identity-management/global.admin+identity-management/users.reader
+      x-model-type: User
+      x-record-type: user
+      x-gridfilter-fields:
+      - actor_id
+      - created_at
+      - email
+      - first_name
+      - gender
+      - id
+      - last_name
+      - locale
+      - title
+      description: |-
+        To use this endpoint the current user needs to be authorized for the
+        tenant to do any of these
+
+         - identity-management/global.admin+identity-management/users.reader
+      security:
+      - Bearer: []
+      parameters:
+      - name: tenant_id
+        in: query
+        required: true
+        schema:
+          type: string
+        description: |
+          The tenant context is required to determine if the user has
+          the required privileges.
+      - name: locale
+        in: query
+        description: to control the language returned
+        schema:
+          "$ref": "#/components/schemas/locales"
+      - name: quickfilter
+        in: query
+        schema:
+          type: string
+        description: performs a search in keywords
+      - name: page[number]
+        in: query
+        schema:
+          type: string
+        x-example: '1'
+        description: |
+          the page number (starts at 1, if not given or lower than 1 then
+          page 1 will automatically be assumed)'
+      - name: page[limit]
+        in: query
+        schema:
+          type: string
+        x-example: '10'
+        description: the number of records per page (might be limited on the server
+          side, use 0 to fetch no data to get only the total count)
+      - name: padding
+        in: query
+        schema:
+          type: string
+        x-example: '0'
+        description: 'manually adjust db offset: (page*per_page)+padding not required
+          for normal paging, in doubt omit'
+      - name: sort
+        in: query
+        schema:
+          type: string
+        description: |
+          JSON Array of Objects to sort the results by one
+          or more fields in the requested order.
+          Example:
+          `[{ property: "field1", direction: "ASC" }, { property: "field2", direction: "DESC" }]`
+      - name: gridfilter
+        in: query
+        schema:
+          type: string
+        description: |
+          String in JSON format for grid-based filtering.
+
+          <details>
+            <summary>The model defined these fields as allowed for filtering.</summary>
+
+            `actor_id`, `created_at`, `email`, `first_name`, `gender`, `id`, `last_name`, `locale`, `title`
+
+          </details>
+      responses:
+        '200':
+          description: Users list
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                description: List endpoints will return an array below data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                      - id
+                      - type
+                      - attributes
+                      properties:
+                        id:
+                          type: string
+                        type:
+                          type: string
+                          default: user
+                        attributes:
+                          "$ref": "#/components/schemas/UserOverviewSerializer"
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '400':
+          description: Some values that were sent couldn't be processed
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Check the returned info in meta/msg for details
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '429':
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Wait for so many seconds as returned in the Retry-After
+                  header before accessing this endpoint again
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '401':
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Requires a valid login
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '403':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                type: object
+                description: User is missing the access rights to do this
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+  "/api/v1/users/{id}":
+    delete:
+      summary: 'user account: Delete [DELETE]'
+      tags:
+      - User accounts
+      operationId: users-destroy
+      x-controller: Api::V1::UsersController
+      x-controller-action: destroy
+      x-route-name: v1_users
+      x-candos:
+      - identity-management/global.admin+identity-management/users.deleter
+      x-model-type: User
+      x-record-type: user
+      description: |-
+        To use this endpoint the current user needs to be authorized for the
+        tenant to do any of these
+
+         - identity-management/global.admin+identity-management/users.deleter
+      security:
+      - Bearer: []
+      parameters:
+      - name: tenant_id
+        in: query
+        required: true
+        schema:
+          type: string
+        description: |
+          The tenant context is required to determine if the user has
+          the required privileges.
+      - name: id
+        in: path
+        required: true
+        description: user account id
+        schema:
+          type: string
+      - name: locale
+        in: query
+        description: to control the language returned
+        schema:
+          "$ref": "#/components/schemas/locales"
+      responses:
+        '200':
+          description: User deleted
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/meta"
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                description: |-
+                  Some server side rule prevented finishing this request.
+                  For example a multi delete might not have worked on all
+                  requested records due to some rule not allowing the delete.
+                  Please refer to the details in the response like
+                  - `meta.msg.error` error identifier
+                  - `meta.msg.message` message being displayed
+                  - `meta.msg.error_details` showing the attribute causing the problem
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '400':
+          description: Some values that were sent couldn't be processed
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Check the returned info in meta/msg for details
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '429':
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Wait for so many seconds as returned in the Retry-After
+                  header before accessing this endpoint again
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '401':
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Requires a valid login
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '403':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                type: object
+                description: User is missing the access rights to do this
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+    get:
+      summary: 'user account: Show [GET]'
+      tags:
+      - User accounts
+      operationId: users-show
+      x-controller: Api::V1::UsersController
+      x-controller-action: show
+      x-route-name: v1_users
+      x-candos:
+      - identity-management/global.admin+identity-management/users.reader
+      x-model-type: User
+      x-record-type: user
+      description: |-
+        To use this endpoint the current user needs to be authorized for the
+        tenant to do any of these
+
+         - identity-management/global.admin+identity-management/users.reader
+      security:
+      - Bearer: []
+      parameters:
+      - name: tenant_id
+        in: query
+        required: true
+        schema:
+          type: string
+        description: |
+          The tenant context is required to determine if the user has
+          the required privileges.
+      - name: id
+        in: path
+        required: true
+        description: user account id
+        schema:
+          type: string
+      - name: locale
+        in: query
+        description: to control the language returned
+        schema:
+          "$ref": "#/components/schemas/locales"
+      responses:
+        '200':
+          description: User view
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                description: Single endpoints will return an object as data
+                properties:
+                  data:
+                    type: object
+                    required:
+                    - id
+                    - type
+                    - attributes
+                    properties:
+                      id:
+                        type: string
+                      type:
+                        type: string
+                        default: user
+                      attributes:
+                        "$ref": "#/components/schemas/UserSerializer"
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '400':
+          description: Some values that were sent couldn't be processed
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Check the returned info in meta/msg for details
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '429':
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Wait for so many seconds as returned in the Retry-After
+                  header before accessing this endpoint again
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '401':
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Requires a valid login
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '403':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                type: object
+                description: User is missing the access rights to do this
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+    put:
+      summary: 'user account: Update [PUT]'
+      tags:
+      - User accounts
+      operationId: users-update
+      x-controller: Api::V1::UsersController
+      x-controller-action: update
+      x-route-name: v1_users
+      x-candos:
+      - identity-management/global.admin+identity-management/users.writer
+      x-model-type: User
+      x-record-type: user
+      description: |-
+        To use this endpoint the current user needs to be authorized for the
+        tenant to do any of these
+
+         - identity-management/global.admin+identity-management/users.writer
+      security:
+      - Bearer: []
+      parameters:
+      - name: tenant_id
+        in: query
+        required: true
+        schema:
+          type: string
+        description: |
+          The tenant context is required to determine if the user has
+          the required privileges.
+      - name: id
+        in: path
+        required: true
+        description: user account id
+        schema:
+          type: string
+      - name: locale
+        in: query
+        description: to control the language returned
+        schema:
+          "$ref": "#/components/schemas/locales"
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                description: Single endpoints will return an object as data
+                properties:
+                  data:
+                    type: object
+                    required:
+                    - id
+                    - type
+                    - attributes
+                    properties:
+                      id:
+                        type: string
+                      type:
+                        type: string
+                        default: user
+                      attributes:
+                        "$ref": "#/components/schemas/UserSerializer"
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '400':
+          description: Some values that were sent couldn't be processed
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Check the returned info in meta/msg for details
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '429':
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Wait for so many seconds as returned in the Retry-After
+                  header before accessing this endpoint again
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '401':
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Requires a valid login
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '403':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                type: object
+                description: User is missing the access rights to do this
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  description: the main attributes of this record
+                  properties:
+                    active:
+                      type: boolean
+                      description: if set false the login will be disabled
+                    email:
+                      type: string
+                      description: e-mail address
+                    first_name:
+                      type: string
+                      description: first name
+                    gender:
+                      type: number
+                      enum:
+                      - 0
+                      - 1
+                      - 2
+                      description: |
+                        Gender identifier
+                        * 0 - Unspecified
+                        * 1 - Male
+                        * 2 - Female
+                    image:
+                      type: object
+                      description: image in different sizes
+                      properties:
+                        large:
+                          type: string
+                        medium:
+                          type: string
+                        small:
+                          type: string
+                    invalid_at:
+                      type: string
+                      format: date-time
+                      description: if set the login will be disabled after the date
+                    last_name:
+                      type: string
+                      description: last name
+                    locale:
+                      type: string
+                      description: serves as languange preference for the user
+                    mobile:
+                      type: string
+                      description: mobile number
+                    pwd_reset_uid:
+                      type: string
+                      description: in case of a password reset this serves as a substitute
+                        for the old password
+                    short:
+                      type: string
+                      description: short name (combination of first and last names)
+                    title:
+                      type: string
+                      description: an optional user title
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                data[active]:
+                  type: boolean
+                  description: if set false the login will be disabled
+                data[email]:
+                  type: string
+                  description: e-mail address
+                data[first_name]:
+                  type: string
+                  description: first name
+                data[gender]:
+                  type: number
+                  enum:
+                  - 0
+                  - 1
+                  - 2
+                  description: |
+                    Gender identifier
+                    * 0 - Unspecified
+                    * 1 - Male
+                    * 2 - Female
+                data[image][large]:
+                  type: string
+                data[image][medium]:
+                  type: string
+                data[image][small]:
+                  type: string
+                data[invalid_at]:
+                  type: string
+                  format: date-time
+                  description: if set the login will be disabled after the date
+                data[last_name]:
+                  type: string
+                  description: last name
+                data[locale]:
+                  type: string
+                  description: serves as languange preference for the user
+                data[mobile]:
+                  type: string
+                  description: mobile number
+                data[pwd_reset_uid]:
+                  type: string
+                  description: in case of a password reset this serves as a substitute
+                    for the old password
+                data[short]:
+                  type: string
+                  description: short name (combination of first and last names)
+                data[title]:
+                  type: string
+                  description: an optional user title
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                data[active]:
+                  type: boolean
+                  description: if set false the login will be disabled
+                data[email]:
+                  type: string
+                  description: e-mail address
+                data[first_name]:
+                  type: string
+                  description: first name
+                data[gender]:
+                  type: number
+                  enum:
+                  - 0
+                  - 1
+                  - 2
+                  description: |
+                    Gender identifier
+                    * 0 - Unspecified
+                    * 1 - Male
+                    * 2 - Female
+                data[image][large]:
+                  type: string
+                data[image][medium]:
+                  type: string
+                data[image][small]:
+                  type: string
+                data[invalid_at]:
+                  type: string
+                  format: date-time
+                  description: if set the login will be disabled after the date
+                data[last_name]:
+                  type: string
+                  description: last name
+                data[locale]:
+                  type: string
+                  description: serves as languange preference for the user
+                data[mobile]:
+                  type: string
+                  description: mobile number
+                data[pwd_reset_uid]:
+                  type: string
+                  description: in case of a password reset this serves as a substitute
+                    for the old password
+                data[short]:
+                  type: string
+                  description: short name (combination of first and last names)
+                data[title]:
+                  type: string
+                  description: an optional user title
+
