@@ -9,8 +9,12 @@ module OpenapiSpecGenerator::ModuleFinder
   end
 
   def schemas(for_api = nil)
-    for_api = for_api.to_sym
-    controllers = find_controllers(for_api)
+    # Collect serializers from ALL APIs so manual specs can $ref
+    # serializers that belong to a different API partition
+    Zeitwerk::Loader.eager_load_all
+    controllers = Api::V1::JsonApiController.descendants.select do |klass|
+      klass.const_defined?('API') && klass.const_get('API').present?
+    end
     serializers = controllers.flat_map do |controller|
       [
         (controller.const_get('SERIALIZER') rescue nil),

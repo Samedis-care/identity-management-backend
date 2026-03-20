@@ -1,10 +1,13 @@
 class Api::V1::App::InfosController < Api::V1::JsonApiController
+  API = :internal
 
   MODEL_BASE = Actors::App
   SERIALIZER = AppInfoSerializer
 
   SWAGGER = {
     tag: 'App Info',
+    name: 'App Info',
+    header: 'Public app information and branding',
     show: 'Loads app info identified by name'
   }
 

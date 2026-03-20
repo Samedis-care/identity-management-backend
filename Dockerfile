@@ -58,7 +58,7 @@ COPY --from=preperation /root/GeoLite2-City.mmdb /home/app/webapp
 RUN touch config/application.yml
 
 # Generate Swagger Docs
-RUN SHRINE_STORAGE=local FILES_DIRECTORY=/tmp rails rswag:specs:swaggerize
+RUN SHRINE_STORAGE=local FILES_DIRECTORY=/tmp rails rails "openapi_spec:api[v1]"
 
 CMD puma -b 'tcp://0.0.0.0:80' -e "${RAILS_ENV-production}" -v -w "${WORKER_COUNT-$(nproc)}"
 

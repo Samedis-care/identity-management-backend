@@ -13,6 +13,8 @@ class Api::V1::Apps::Tenants::OrganizationsTreeController < Api::V1::JsonApiCont
   PERMIT_UPDATE = [:name, :short_name, :full_name, title_translations: I18n.available_locales]
   PERMIT_CREATE = [:name, :short_name, :full_name, :actor_type, :parent_id, title_translations: I18n.available_locales]
 
+  SWAGGER = { tag: 'Tenant Organizations Tree', name: 'Organization Tree', header: 'Hierarchical organization tree for a tenant' }
+
   # to render multiple (all children)
   # instead of the actual record for tree-like navigation
   def show

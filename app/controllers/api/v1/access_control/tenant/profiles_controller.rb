@@ -13,6 +13,8 @@ class Api::V1::AccessControl::Tenant::ProfilesController < Api::V1::JsonApiContr
 
   SWAGGER = {
     tag: 'Access Control',
+    name: 'Tenant Profile',
+    header: 'Access control profiles for a tenant',
     action_suffix: 'Custom profiles'
   }.freeze
 

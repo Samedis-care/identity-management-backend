@@ -14,6 +14,8 @@ class Api::V1::AccessControl::Tenant::GroupsController < Api::V1::JsonApiControl
 
   SWAGGER = {
     tag: 'Access Control',
+    name: 'Tenant Group',
+    header: 'Manage access control groups for a tenant',
     action_suffix: 'available groups of this tenant'
   }.freeze
 

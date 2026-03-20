@@ -1,4 +1,5 @@
 class Api::V1::User::AppsController < Api::V1::JsonApiController
+  API = :internal
 
   MODEL_BASE = Actors::App
   MODEL = ::Actors::App.available
@@ -7,7 +8,9 @@ class Api::V1::User::AppsController < Api::V1::JsonApiController
   OVERVIEW_SERIALIZER = AppSerializer
 
   SWAGGER = {
-    tag: 'Current User'
+    tag: 'Current User',
+    name: 'My App',
+    header: 'Apps the current user has access to'
   }
 
   undef_method :destroy

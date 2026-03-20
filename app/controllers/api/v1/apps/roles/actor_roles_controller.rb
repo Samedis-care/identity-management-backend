@@ -11,6 +11,8 @@ class Api::V1::Apps::Roles::ActorRolesController < Api::V1::JsonApiController
 
   PERMIT_CREATE = [:actor_id]
 
+  SWAGGER = { tag: 'Role Assignments', name: 'Actor Role', header: 'Assign actors to roles' }
+
   undef_method :update
 
   def create

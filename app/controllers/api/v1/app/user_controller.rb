@@ -1,6 +1,7 @@
 # This controller handles a single users own data
 # For the users of an App look at users_controller !
 class Api::V1::App::UserController < Api::V1::JsonApiController
+  API = :internal
 
   MODEL_BASE = User
   MODEL = User
@@ -8,7 +9,9 @@ class Api::V1::App::UserController < Api::V1::JsonApiController
   OVERVIEW_SERIALIZER = AppUserSerializer
 
   SWAGGER = {
-    tag: 'Current User'
+    tag: 'Current User',
+    name: 'Current User',
+    header: 'Profile of the currently authenticated user'
   }.freeze
 
   undef_method :create

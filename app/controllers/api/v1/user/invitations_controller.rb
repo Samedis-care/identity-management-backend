@@ -1,5 +1,6 @@
 # Accept Invites for the current user
 class Api::V1::User::InvitationsController < Api::V1::JsonApiController
+  API = :internal
 
   MODEL_BASE = Invite
   MODEL = Invite.valid
@@ -8,7 +9,9 @@ class Api::V1::User::InvitationsController < Api::V1::JsonApiController
   OVERVIEW_SERIALIZER = InvitationOverviewSerializer
 
   SWAGGER = {
-    tag: 'Current User'
+    tag: 'Current User',
+    name: 'My Invitation',
+    header: 'Pending invitations for the current user'
   }
 
   undef_method :index

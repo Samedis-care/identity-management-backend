@@ -10,6 +10,8 @@ class Api::V1::Apps::Tenants::Picker::MappableUsersController < Api::V1::JsonApi
   SERIALIZER = MappableUserOverviewSerializer
   OVERVIEW_SERIALIZER = SERIALIZER
 
+  SWAGGER = { tag: 'Tenant Picker: Mappable Users', name: 'Mappable User', header: 'Users available for mapping within a tenant' }
+
   undef_method :show
   undef_method :create
   undef_method :update

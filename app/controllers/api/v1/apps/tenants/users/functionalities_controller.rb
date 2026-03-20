@@ -10,6 +10,8 @@ class Api::V1::Apps::Tenants::Users::FunctionalitiesController < Api::V1::Apps::
 
   PERMIT_UPDATE = []
 
+  SWAGGER = { tag: 'Tenant User Functionalities', name: 'Functionality', header: 'Functionalities of a tenant user' }
+
   undef_method :create
   undef_method :update
   undef_method :destroy

@@ -1,4 +1,5 @@
 class Api::V1::User::QuitsController < Api::V1::JsonApiController
+  API = :internal
 
   MODEL_BASE = User
   MODEL = -> { 
@@ -7,7 +8,9 @@ class Api::V1::User::QuitsController < Api::V1::JsonApiController
   SERIALIZER = AppSerializer
 
   SWAGGER = {
-    tag: 'Current User'
+    tag: 'Current User',
+    name: 'Quit',
+    header: 'Delete the current user account'
   }
 
   undef_method :index

@@ -7,6 +7,8 @@ class Api::V1::Apps::Picker::Roles::FunctionalitiesController < Api::V1::JsonApi
   SERIALIZER = PickerRoleFunctionalitySerializer
   OVERVIEW_SERIALIZER = PickerRoleFunctionalitySerializer
 
+  SWAGGER = { tag: 'Picker: Role Functionalities', name: 'Functionality', header: 'Functionality picker for a role' }
+
   undef_method :create
   undef_method :update
   undef_method :destroy

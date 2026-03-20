@@ -11,6 +11,8 @@ class Api::V1::Apps::Roles::FunctionalitiesController < Api::V1::JsonApiControll
 
   PERMIT_CREATE = [:functionality_id]
 
+  SWAGGER = { tag: 'Role Functionalities', name: 'Functionality', header: 'Functionalities assigned to a role' }
+
   undef_method :update
 
   def create

@@ -1,4 +1,5 @@
 class Api::V1::User::TenantsController < Api::V1::JsonApiController
+  API = :internal
 
   MODEL_BASE = Actors::Tenant
   MODEL = ::Actors::Tenant.available
@@ -7,6 +8,9 @@ class Api::V1::User::TenantsController < Api::V1::JsonApiController
   OVERVIEW_SERIALIZER = ActorOverviewSerializer
 
   SWAGGER = {
+    tag: 'My Tenants',
+    name: 'My Tenant',
+    header: 'Tenants the current user is a member of',
     action_suffix: 'of the current user'
   }
 

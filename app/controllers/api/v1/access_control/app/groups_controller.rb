@@ -1,5 +1,7 @@
 class Api::V1::AccessControl::App::GroupsController < Api::V1::AccessControl::Apps::GroupsController
 
+  SWAGGER = { tag: 'Access Control', name: 'App Group', header: 'Manage access control groups for an app' }
+
   def index
     _app = ::Actors::App.named(params_json_api[:name]).first
     determine = self.class::MODEL.for_app(_app.id)

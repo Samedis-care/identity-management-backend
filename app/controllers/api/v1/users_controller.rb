@@ -6,6 +6,8 @@ class Api::V1::UsersController < Api::V1::JsonApiController
   SERIALIZER = UserSerializer
   OVERVIEW_SERIALIZER = UserOverviewSerializer
 
+  SWAGGER = { tag: 'Users', name: 'User', header: 'Manage all user accounts (admin)' }
+
   PERMIT_CREATE = PERMIT_UPDATE = [
     :image_b64,
     :image,

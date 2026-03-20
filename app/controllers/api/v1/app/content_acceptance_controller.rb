@@ -1,4 +1,5 @@
 class Api::V1::App::ContentAcceptanceController < Api::V1::JsonApiController
+  API = :internal
 
   MODEL_BASE = Content
   MODEL = Content
@@ -7,7 +8,9 @@ class Api::V1::App::ContentAcceptanceController < Api::V1::JsonApiController
   #OVERVIEW_SERIALIZER = ContentSerializer
 
   SWAGGER = {
-    tag: 'Current User'
+    tag: 'Current User',
+    name: 'Content Acceptance',
+    header: 'Track user acceptance of terms, policies and other content'
   }
 
   skip_before_action :authenticate_user!, only: :show

@@ -9,7 +9,7 @@ class Api::V1::JsonApiController < ApplicationController
   before_action :request_variant
 
   JSON_API = true
-  API = :ident
+  API = :internal
 
   MODEL_BASE = nil
   MODEL_BASE_ACTION = {}

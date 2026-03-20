@@ -8,6 +8,8 @@ class Api::V1::Apps::Picker::Roles::UserOrganizationController < Api::V1::JsonAp
   SERIALIZER = PickerRoleActorSerializer
   OVERVIEW_SERIALIZER = PickerRoleActorSerializer
 
+  SWAGGER = { tag: 'Picker: Role User Orgs', name: 'User Organization', header: 'Organization picker for a role context' }
+
   undef_method :create
   undef_method :update
   undef_method :destroy

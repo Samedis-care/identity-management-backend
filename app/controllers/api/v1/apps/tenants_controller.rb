@@ -11,6 +11,9 @@ class Api::V1::Apps::TenantsController < Api::V1::JsonApiController
   PERMIT_UPDATE = [:short_name, :full_name, :image, :image_b64, modules_selected: []]
 
   SWAGGER = {
+    tag: 'Tenants',
+    name: 'Tenant',
+    header: 'Manage tenants within an app',
     action_suffix: 'of an App'
   }
 

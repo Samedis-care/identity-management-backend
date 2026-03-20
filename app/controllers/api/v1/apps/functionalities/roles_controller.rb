@@ -9,6 +9,8 @@ class Api::V1::Apps::Functionalities::RolesController < Api::V1::JsonApiControll
   SERIALIZER = RoleSerializer
   OVERVIEW_SERIALIZER = SERIALIZER
 
+  SWAGGER = { tag: 'Functionality Roles', name: 'Role', header: 'Roles assigned to a functionality' }
+
   PERMIT_CREATE = [:role_id]
 
   undef_method :update

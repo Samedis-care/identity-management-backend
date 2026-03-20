@@ -30,6 +30,8 @@ class Api::V1::Apps::UsersController < Api::V1::JsonApiController
     :mobile
   ].freeze
 
+  SWAGGER = { tag: 'Users', name: 'User', header: 'Manage users within an app' }
+
   undef_method :create
 
   # this will not delete the user (the login) but all mappings under the current_app

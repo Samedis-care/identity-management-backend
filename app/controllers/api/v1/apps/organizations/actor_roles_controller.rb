@@ -11,6 +11,8 @@ class Api::V1::Apps::Organizations::ActorRolesController < Api::V1::JsonApiContr
 
   PERMIT_CREATE = [:role_id]
 
+  SWAGGER = { tag: 'Organization Roles', name: 'Organization Role', header: 'Manage roles within an organization' }
+
   undef_method :update
 
 

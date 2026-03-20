@@ -8,6 +8,8 @@ class Api::V1::Apps::OrganizationsController < Api::V1::JsonApiController
   SERIALIZER = ActorOrganizationSerializer
   OVERVIEW_SERIALIZER = ActorOrganizationSerializer
 
+  SWAGGER = { tag: 'Organizations', name: 'Organization', header: 'Manage organizations within an app' }
+
   PERMIT_UPDATE = [
     :short_name,
     :full_name,

@@ -8,6 +8,8 @@ class Api::V1::Picker::MappingsController < Api::V1::JsonApiController
   SERIALIZER = ActorMappingsSerializer
   OVERVIEW_SERIALIZER = ActorMappingsSerializer
 
+  SWAGGER = { tag: 'Picker: Mappings', name: 'Mapping', header: 'Mapping picker for selection dialogs' }
+
   undef_method :show
   undef_method :create
   undef_method :update

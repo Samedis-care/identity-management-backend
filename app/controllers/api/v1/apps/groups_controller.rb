@@ -8,6 +8,8 @@ class Api::V1::Apps::GroupsController < Api::V1::JsonApiController
   SERIALIZER = GroupActorSerializer
   OVERVIEW_SERIALIZER = GroupActorSerializer
 
+  SWAGGER = { tag: 'Groups', name: 'Group', header: 'Manage user groups within an app' }
+
   undef_method :create
   undef_method :update
   undef_method :destroy
