@@ -47,6 +47,7 @@ class AccountLoginSerializer
           string :app, description: 'app this token belongs to'
           boolean :otp_required, description: 'true if this token requires to be verified by an OTP'
           boolean :otp_provided, description: 'true if the user has provided an OTP'
+          string :created_at, format: 'date-time', description: 'created date'
         end
       }
     end

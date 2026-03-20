@@ -23,7 +23,6 @@ class RolePickerSerializer
 
         object :attributes, description: 'the main attributes of this record' do
           string :id, description: 'unique record id'
-          string :name, description: 'unique role name'
 
           string :title, default: 'title', description: 'a descriptive title (current locale)'
           object :title_translations do
@@ -35,6 +34,8 @@ class RolePickerSerializer
             string :en, description: 'the english locale description'
             string :de, description: 'the german locale description'
           end
+          string :created_at, format: 'date-time', description: 'created date'
+          string :updated_at, format: 'date-time', description: 'updated date'
         end
       end
     end

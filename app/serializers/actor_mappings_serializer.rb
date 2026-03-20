@@ -38,6 +38,7 @@ class ActorMappingsSerializer
           string :map_actor_id, description: ''
 
           string :name, default: 'short name', description: 'descriptive name (alphanumeric lowercase) to build a unique path'
+          string :actor_type, description: 'type of actor'
           string :short_name, default: 'short name of an organizational unit or group', description: 'short name of this actor'
           string :full_name, default: 'full name of an organizational unit or group', description: 'full name of this actor'
           string :path, description: 'the path of this actor within the global tree'

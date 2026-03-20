@@ -57,6 +57,8 @@ class PickerUserGroupSerializer
 
           boolean :active, default: true, description: 'indicating if this actor is available'
 
+          boolean :already_assigned_to_user, description: 'Boolean that signals if this group is already assigned to the user'
+
           string :created_at, format: 'date-time', description: 'created date'
           string :updated_at, format: 'date-time', description: 'updated date'
 

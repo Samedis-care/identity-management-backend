@@ -47,6 +47,7 @@ class PickerRoleActorSerializer
 
         object :attributes, description: 'the main attributes of this record' do
           string :id, description: 'unique record id'
+          string :parent_id, description: 'the parent record id'
           string :actor_type, default: 'ou', description: 'type of actor'
 
           number :children_count, description: 'number of children below this actor'
@@ -65,6 +66,13 @@ class PickerRoleActorSerializer
           boolean :already_in_role, description: 'Boolean that signals if this actor is already in the role of the nested resource set'
 
           boolean :active, default: true, description: 'indicating if this actor is available'
+          object :image, description: 'image in different sizes' do
+            string :large
+            string :medium
+            string :small
+          end
+          string :created_at, format: 'date-time', description: 'created date'
+          string :updated_at, format: 'date-time', description: 'updated date'
         end
       }
     end

@@ -51,13 +51,9 @@ class UserOverviewSerializer
           EOF
           string :first_name, description: 'first name'
           string :last_name, description: 'last name'
-          string :short, description: 'short name (combination of first and last names)'
           object :image, description: 'image in different sizes' do
-            string :large
-            string :medium
             string :small
           end
-          string :title, description: 'an optional user title'
           string :mobile, description: 'mobile number'
 
           boolean :active, description: 'if set false the login will be disabled'

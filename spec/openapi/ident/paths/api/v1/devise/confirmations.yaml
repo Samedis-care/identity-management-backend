@@ -6,7 +6,7 @@ paths:
       summary: "Confirmation: Resend [POST]"
       operationId: devise-confirmations-create
       tags:
-        - User Accounts
+        - User accounts
       x-controller: Api::V1::Devise::ConfirmationsController
       x-controller-action: create
       description: |
@@ -61,7 +61,7 @@ paths:
       summary: "Confirmation: Confirm Email [GET]"
       operationId: devise-confirmations-show
       tags:
-        - User Accounts
+        - User accounts
       x-controller: Api::V1::Devise::ConfirmationsController
       x-controller-action: show
       description: |
@@ -115,7 +115,7 @@ paths:
       summary: "Confirmation: Confirm Recovery Email [GET]"
       operationId: devise-confirmations-recovery
       tags:
-        - User Accounts
+        - User accounts
       x-controller: Api::V1::Devise::ConfirmationsController
       x-controller-action: recovery_confirmation
       description: |

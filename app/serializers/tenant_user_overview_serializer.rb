@@ -37,6 +37,7 @@ class TenantUserOverviewSerializer
         object :attributes, description: 'the main attributes of this record' do
           string :id, description: 'unique record id'
           string :actor_id, description: 'referenced actor id'
+          boolean :active, description: 'if set false the login will be disabled'
           string :email, description: 'e-mail address'
           number :gender, enum: [0, 1, 2], description: <<~EOF
             Gender identifier
@@ -47,6 +48,7 @@ class TenantUserOverviewSerializer
           string :first_name, description: 'first name'
           string :last_name, description: 'last name'
           string :short, description: 'short name (combination of first and last names)'
+          string :title, description: 'an optional user title'
           object :image, description: 'image in different sizes' do
             string :large
             string :medium

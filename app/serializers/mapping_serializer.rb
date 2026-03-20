@@ -32,8 +32,11 @@ class MappingSerializer
           string :id, description: 'unique record id'
           string :parent_id, description: 'id of the parent node'
           string :map_actor_id, description: 'id of the actor that is mapped into the parent node'
+          string :name, description: 'descriptive name'
           string :short_name, description: 'the friendly name of the mapped actor (e.g. Users name )'
           string :path, description: 'complete path within the hierarchical structure'
+          string :created_at, format: 'date-time', description: 'created date'
+          string :updated_at, format: 'date-time', description: 'updated date'
         end
       }
     end

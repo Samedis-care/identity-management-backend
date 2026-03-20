@@ -1,3 +1,4 @@
+# OpenAPI spec: spec/openapi/ident/paths/api/v1/devise/confirmations.yaml
 class Api::V1::Devise::ConfirmationsController < Devise::ConfirmationsController
   include ActionController::Helpers
   # include ActionController::Flash

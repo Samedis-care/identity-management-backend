@@ -79,6 +79,7 @@ class UserSerializer
           string :mobile, description: 'mobile number'
 
           boolean :active, description: 'if set false the login will be disabled'
+          boolean :deleted, description: 'flag to check whether user is deleted'
           boolean :invalidate, description: 'returns true if an invalid_at date is present'
           string :invalid_at, format: 'date-time', description: 'if set the login will be disabled after the date'
           string :locale, description: 'serves as languange preference for the user'

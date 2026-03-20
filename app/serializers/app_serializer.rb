@@ -35,6 +35,7 @@ class AppSerializer
         object :attributes, description: 'the main attributes of this record' do
           string :id, description: 'unique record id'
 
+          string :url, description: 'URL of the app'
           string :name, description: 'unique app name'
           string :short_name, description: 'short name'
           string :full_name, description: 'full name'

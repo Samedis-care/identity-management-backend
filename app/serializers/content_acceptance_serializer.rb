@@ -43,16 +43,17 @@ class ContentAcceptanceSerializer
 
         object :attributes, description: 'the main attributes of this record' do
           string :id, description: 'unique record id'
-          string :actors_app_id, description: 'id of the app this content belongs to'
+          string :app, description: 'the app this content belongs to'
           string :name, default: 'app-name', description: 'name of the content (like "tos", "app-info")'
           number :version, description: 'highest active-flagged version will be used'
           object :content_translations, description: 'Hash of locale-languages with translated content' do
             string :de, default: 'Deutsche Übersetzung', description: 'German content'
             string :en, default: 'English translation', description: 'English content'
           end
-          boolean :active, default: false, description: 'only active flagged will be used, leave inactive during draft'
           boolean :acceptance_required, default: false, description: 'when true the user is required to accept every new version of this content'
           boolean :acceptance_given, default: false, description: 'if required indicates if it was yet given by the current user'
+          string :created_at, format: 'date-time', description: 'created date'
+          string :updated_at, format: 'date-time', description: 'updated date'
         end
       }
     end

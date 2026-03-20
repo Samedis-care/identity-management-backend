@@ -6,7 +6,7 @@ paths:
       summary: "User Account: Register [POST]"
       operationId: devise-registrations-create
       tags:
-        - User Accounts
+        - User accounts
       x-controller: Api::V1::Devise::RegistrationsController
       x-controller-action: create
       description: |
@@ -89,7 +89,7 @@ paths:
       summary: "User Account: Register for App [POST]"
       operationId: devise-registrations-create-app
       tags:
-        - User Accounts
+        - User accounts
       x-controller: Api::V1::Devise::RegistrationsController
       x-controller-action: create
       description: |

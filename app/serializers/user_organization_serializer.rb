@@ -70,12 +70,7 @@ class UserOrganizationSerializer
           string :created_at, format: 'date-time', description: 'created date'
           string :updated_at, format: 'date-time', description: 'updated date'
 
-          string :image_b64, description: 'BASE64 encoded image (JPEG or PNG) to be used as the user`s avatar'
-          object :image, description: 'image with different styles' do
-            string :large
-            string :medium
-            string :small
-          end
+          string :image_b64, write_only: true, description: 'BASE64 encoded image (JPEG or PNG) to be used as the user`s avatar'
         end
       }
     end

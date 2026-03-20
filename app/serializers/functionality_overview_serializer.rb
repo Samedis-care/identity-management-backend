@@ -39,6 +39,8 @@ class FunctionalityOverviewSerializer
           string :app, default: 'app-name', description: 'name of app this functionality belongs to'
           string :module, default: 'module', description: 'the module of the app this functionality belongs to'
           string :ident, default: 'ident', description: 'the action within the module (e.g. reader, writer, deleter, consumer, ...)'
+          string :created_at, format: 'date-time', description: 'created date'
+          string :updated_at, format: 'date-time', description: 'updated date'
         end
       }
     end

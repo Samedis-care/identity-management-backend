@@ -50,6 +50,13 @@ class TenantSerializer
           string :path, description: 'the path of this actor within the global tree'
           string :short_name, default: 'short name of an organizational unit or group', description: 'short name of this actor'
           string :full_name, default: 'full name of an organizational unit or group', description: 'full name of this actor'
+          object :image, description: 'image in different sizes' do
+            string :large
+            string :medium
+            string :small
+          end
+          string :created_at, format: 'date-time', description: 'created date'
+          string :updated_at, format: 'date-time', description: 'updated date'
         end
       }
     end

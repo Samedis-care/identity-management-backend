@@ -43,6 +43,8 @@ class ActorRoleSerializer
           string :title, description: 'the role title'
           string :description, description: 'the role description'
           string :name, description: 'the role name'
+          string :created_at, format: 'date-time', description: 'created date'
+          string :updated_at, format: 'date-time', description: 'updated date'
         end
       }
     end
