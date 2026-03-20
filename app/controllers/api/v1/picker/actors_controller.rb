@@ -6,6 +6,8 @@ module Api::V1::Picker
     SERIALIZER = ActorSerializer
     OVERVIEW_SERIALIZER = ActorOverviewSerializer
 
+    SWAGGER = { tag: 'Picker: Actors', name: 'Actor', header: 'Actor picker for selection dialogs' }
+
     undef_method :create
     undef_method :update
     undef_method :destroy

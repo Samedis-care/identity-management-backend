@@ -10,6 +10,8 @@ class Api::V1::Apps::Tenants::Users::RolesController < Api::V1::Apps::Users::Use
 
   PERMIT_UPDATE = []
 
+  SWAGGER = { tag: 'Tenant User Roles', name: 'Role', header: 'Roles assigned to a tenant user' }
+
   undef_method :create
   undef_method :update
   undef_method :destroy

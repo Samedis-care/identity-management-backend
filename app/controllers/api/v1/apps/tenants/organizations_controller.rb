@@ -11,6 +11,8 @@ class Api::V1::Apps::Tenants::OrganizationsController < Api::V1::JsonApiControll
   PERMIT_UPDATE = [:name, :short_name, :full_name, title_translations: I18n.available_locales]
   PERMIT_CREATE = [:name, :short_name, :full_name, :actor_type, :parent_id, title_translations: I18n.available_locales]
 
+  SWAGGER = { tag: 'Tenant Organizations', name: 'Organization', header: 'Manage organizations within a tenant' }
+
   private
   def model_create
     case params_create[:actor_type]&.to_sym

@@ -109,13 +109,14 @@ class AppUserSerializer
         object :attributes, description: 'the main attributes of this record' do
           string :id, description: 'unique record id (of mapping)'
           string :actor_id, description: 'unique id of the users account'
-          string :email, description: 'the new e-mail address'
+          boolean :active, description: 'if set false the login will be disabled'
+          string :email, description: 'the e-mail address'
           string :unconfirmed_email, description: 'holds the new email address until it is confirmed'
           string :recovery_email, description: 'a secondary email that can be used to recover an account if access to the main email is lost'
           string :unconfirmed_recovery_email, description: 'holds the chosen recovery email address until it is confirmed'
           boolean :recovered_account, description: 'if true this account was recovered and the main email should be changed'
-          string :first_name, default: 'short name of an organizational unit or group', description: 'short name of this actor'
-          string :last_name, default: 'full name of an organizational unit or group', description: 'full name of this actor'
+          string :first_name, description: 'first name'
+          string :last_name, description: 'last name'
           string :short, description: 'User short sign'
           string :title, description: 'User title'
           number :gender, enum: [0, 1, 2], description: <<~EOF
@@ -126,19 +127,16 @@ class AppUserSerializer
           EOF
           string :mobile, description: 'mobile number'
           string :locale, description: 'language code'
-          string :current_password, description: 'the current password'
-          string :password, description: 'the new password'
-          string :password_confirmation, description: 'the new password (confirmation)'
-          string :image_b64, description: 'BASE64 encoded image (JPEG or PNG) to be used as the user`s avatar'
+          string :password, write_only: true, description: 'the new password'
+          string :password_confirmation, write_only: true, description: 'the new password (confirmation)'
+          string :image_b64, write_only: true, description: 'BASE64 encoded image (JPEG or PNG) to be used as the user`s avatar'
           object :image, description: 'image in different sizes' do
             string :large
             string :medium
             string :small
           end
-          array :role_ids do
-            items do
-              string :role_id, description: 'the role id assigned to the user'
-            end
+          array :candos, description: 'global candos the user has, filtered to the current app context' do
+            items type: :string
           end
           array :tenants do
             items type: :object do

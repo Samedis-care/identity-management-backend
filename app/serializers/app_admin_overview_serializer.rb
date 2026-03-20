@@ -45,6 +45,11 @@ class AppAdminOverviewSerializer
               string :locale, description: 'language code'
             end
           end
+          object :image, description: 'image in different sizes' do
+            string :large
+            string :medium
+            string :small
+          end
         end
       }
     end

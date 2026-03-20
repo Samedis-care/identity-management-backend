@@ -13,6 +13,8 @@ class Api::V1::Apps::OrganizationsTreeController < Api::V1::JsonApiController
   PERMIT_UPDATE = [:short_name, :full_name]
   PERMIT_CREATE = [:short_name, :full_name, :actor_type]
 
+  SWAGGER = { tag: 'Organizations Tree', name: 'Organization Tree', header: 'Hierarchical organization tree for an app' }
+
   def index(&block)
     if !Rails.env.production? and params[:format].eql? 'html'
       # open this with the URL /api/v1/apps/:app_id/organizations_tree.html?bearer_token=BEARER_TOKEN&include_mappings=false

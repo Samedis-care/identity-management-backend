@@ -12,6 +12,8 @@ class Api::V1::Apps::Tenants::Organizations::ActorRolesController < Api::V1::Jso
 
   PERMIT_CREATE = [:role_id]
 
+  SWAGGER = { tag: 'Tenant Org Roles', name: 'Organization Role', header: 'Manage roles within a tenant organization' }
+
   undef_method :update
 
   def create

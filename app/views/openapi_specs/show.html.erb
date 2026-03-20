@@ -1,0 +1,298 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script type="module" src="/api-docs/openapi-explorer.min.js"></script>
+</head>
+
+<body>
+  <style>
+    @font-face {
+      font-display: swap;
+      font-family: 'Open Sans';
+      font-style: normal;
+      font-weight: 400;
+      src: url('/api-docs/fonts/open-sans-v40-latin-regular.woff2') format('woff2');
+    }
+    @font-face {
+      font-display: swap;
+      font-family: 'Roboto Mono';
+      font-style: normal;
+      font-weight: 400;
+      src: url('/api-docs/fonts/roboto-mono-v23-latin-regular.woff2') format('woff2');
+    }
+
+    #api-selection {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      border-bottom: 1px solid rgba(255,255,255, .2);
+    }
+    select#apis {
+      background: rgba(0,0,33, .1);
+      border: none;
+      font-size: 14px;
+      color: #FFF;
+      font-weight: 700;
+      text-align: center;
+      padding: 5px 25px 5px 15px;
+      border-radius: 10px;
+      width: 100%;
+      appearance: none;
+    }
+    select#apis:hover {
+      background: rgba(0,0,33, .2);
+    }
+
+    #spec-download, #apis {
+      font-family: Open Sans;
+    }
+
+    a#spec-download {
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 14px;
+      color: #FFF;
+    }
+    a#spec-download > span {
+      border-left: 4px solid transparent;
+      box-sizing: border-box;
+      display: block;
+      padding: 15px 15px 15px 10px;
+      width: 100%;
+    }
+
+    a#spec-download > span:hover {
+      background: rgba(0,0,33, .2);
+    }
+
+    openapi-explorer {
+      --font-regular: Open Sans;
+      --font-size-regular: 14px;
+      --font-size-small: 12px;
+      --font-mono: Roboto Mono;
+      --font-size-mono: 14px;
+      --nav-hover-bg-color: rgba(0,0,33, .2);
+      --nav-bg-color: linear-gradient(90deg, #0065AD, #02AFC3);
+    }
+    openapi-explorer::part(section-navbar) {
+      background: linear-gradient(90deg, #0065AD, #02AFC3);
+    }
+    openapi-explorer::part(navbar-scroll) {
+      border-color: transparent;
+    }
+    openapi-explorer::part(navbar-section-header) {
+      background: linear-gradient(90deg, #0065AD, #02AFC3);
+      border-top: none;
+      border-bottom: 1px solid rgba(255,255,255, .2);
+      font-size: 11px;
+    }
+    openapi-explorer::part(section-main-content) {
+      padding: 1px 40px;
+    }
+    openapi-explorer::part(btn) {
+      border-radius: 15px;
+      box-shadow: none;
+      padding: 5px 10px;
+      line-height: unset;
+      border-width: 1px;
+      border-color: transparent;
+    }
+    openapi-explorer::part(btn-copy) {
+      border-radius: 15px;
+      box-shadow: none;
+      padding: 5px 10px;
+      line-height: unset;
+      border-width: 1px;
+      border-color: transparent;
+    }
+    openapi-explorer::part(btn--resp) {
+      border-radius: 15px;
+      box-shadow: none;
+      padding: 5px 10px;
+      line-height: unset;
+      border-color: transparent;
+      border-width: 1px;
+    }
+    openapi-explorer::part(btn-outline--resp) {
+      border-radius: 15px;
+      box-shadow: none;
+      padding: 5px 10px;
+      line-height: unset;
+      border-color: rgba(0,0,0, .15);
+    }
+    openapi-explorer::part(schema-key) {
+      min-width: 300px;
+    }
+  </style>
+
+  <openapi-explorer
+    collapse = "true"
+    show-header = "true"
+
+    theme = "light"
+    primary-color = "#0069B4"
+    secondary-color = "#FFFFFFCC"
+    bg-color = "#fafbfc"
+
+    allow-try = "true"
+    show-info = "true"
+    persist-auth = "true"
+    sort-tags = "true"
+    layout = "column"
+    render-style = "focused"
+    show-components = "true"
+    show-curl-before-try = "true"
+
+    @spec-loaded="onSpecLoaded"
+    @request="requestInterceptor"
+  >
+
+    <div slot="nav-header" style="height: 175px">
+
+      <!-- Setting custom Logo -->
+      <div style="background: #fafbfc; padding: 10px; text-align: center;">
+        <img src="/api-docs/logo.svg" style="height: 32px"/>
+      </div>
+
+      <!-- Custom Header -->
+      <div class="nav-bar-tag">
+        <div id="api-selection" data-action="navigate" data-content-id="apis" tabindex="0" part="section-navbar-item section-navbar-api-selection" class="nav-bar-info left-bar active" style="padding: 15px 5px 5px 5px">
+          Other APIs
+        </div>
+      </div>
+
+      <!-- Navigate between rswag apis -->
+      <div class="nav-bar-paths-under-tag" style="padding-bottom: 10px;">
+        <div style="padding: 10px">
+
+          <select name="" id="apis">
+            <% @specs.each_with_index do |spec, idx| %>
+             <option value="<%= spec[:url] %>"><%= spec[:title] %></option>
+            <% end %>
+          </select>
+
+        </div>
+
+        <div>
+          <a href="" download="" id="spec-download">Download Spec</a>
+        </div>
+
+      </div>
+
+    </div>
+
+  </openapi-explorer>
+
+  <script>
+    function requestInterceptor(data) {
+      // save path & query params from latest request for re-use
+      if (data.detail.request.path || data.detail.request.query) {
+        const params = { ...data.detail.request.query, ...data.detail.request.path };
+        for (const [key, value] of Object.entries(params)) {
+          if (key !== 'id' && /_id$/.test(key)) {
+            // globally save regular path params that usually end with _id
+            localStorage[key] = value;
+          }
+          // save per endpoint
+          const _key = `${data.detail.request.explorerLocation}|${key}`;
+          if (value==='null') {
+            localStorage.removeItem(_key);
+          } else {
+            localStorage[_key] = value;
+          }
+        }
+      }
+    }
+
+    function onSpecLoaded(data) {
+      const authToken = getCookie('token');
+      // prefill authToken from cookie when available
+      if (authToken) {
+        const oe = document.querySelector('openapi-explorer')
+        oe.setAuthenticationConfiguration('Bearer', { token: `${authToken}` });
+      }
+
+      // restore path & query params from localStorage
+      data.detail.tags.forEach(tag => {
+        tag.paths.filter(path => path.parameters).forEach(path => {
+          path.parameters.forEach(param => {
+            if (param.name !== 'id' && /_id$/.test(param.name)) {
+              // regular path params usually end with _id
+              param.schema.default = localStorage[param.name];
+            }
+            // id and query params should not be mixed and are restored per endpoint
+            const _key = `${path.elementId}|${param.name}`;
+            if (localStorage[_key]) {
+              if (!param.schema) param.schema = { type: 'string' };
+              param.schema.default = localStorage[_key];
+              param.schema.nullable = true;
+            }
+          });
+        });
+      });
+    }
+
+    function getCookie(name) {
+      var cookies = document.cookie.split('; ');
+
+      for (var i = 0; i < cookies.length; i++) {
+        var cookie = cookies[i];
+        var cookieParts = cookie.split('=');
+
+        var cookieName = cookieParts[0].trim();
+        var cookieValue = cookieParts[1];
+
+        if (cookieName === name) {
+          return decodeURIComponent(cookieValue);
+        }
+      }
+
+      return null;
+    }
+
+    function download() {
+      const selector = document.getElementById('apis');
+      const a = document.createElement('a');
+      a.href = selector.value;
+      a.download = a.href.split('/').pop();
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function specFromUrl() {
+      const url = new URL(window.location.href);
+      const spec = url.pathname.split('/').slice(0, 4).join('/');
+      return `${spec.split('.')[0]}.yaml`;
+    }
+
+    document.addEventListener('DOMContentLoaded', (event) => {
+      const docElement = document.querySelector('openapi-explorer');
+
+      docElement.addEventListener('request', requestInterceptor);
+
+      // Add event listener for the spec-loaded event
+      docElement.addEventListener('spec-loaded', onSpecLoaded);
+
+      // navigate between specs
+      var link = document.getElementById('spec-download');
+      const selector = document.getElementById('apis');
+      selector.value = specFromUrl();
+      selector.onchange = function(e) {
+        //docElement.loadSpec(e.target.value);
+        const url = `${e.target.value.split('.')[0]}/index.html`
+        document.location.href = url;
+      }
+      setTimeout(function() {
+        const specUrl = specFromUrl();
+        link.innerHTML = '<span>Download ' + specUrl.split('/').pop() + '</span>';
+        link.href = specUrl;
+        docElement.loadSpec(specUrl);
+      }, 10);
+    });
+
+  </script>
+
+</body>
+</html>

@@ -6,6 +6,8 @@ class Api::V1::App::Tenant::InvitationsController < Api::V1::JsonApiController
   SERIALIZER = InvitationSerializer
   OVERVIEW_SERIALIZER = InvitationSerializer
 
+  SWAGGER = { tag: 'Tenant Invitations', name: 'Invitation', header: 'Manage tenant invitations for an app' }
+
   undef_method :index
   undef_method :show
   undef_method :update

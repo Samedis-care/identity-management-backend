@@ -1,0 +1,2801 @@
+---
+info:
+  title: Identity Management API (Public)
+  description: |
+    ## Public API
+
+    Authentication, user registration, session management and
+    endpoints for the currently authenticated user.
+
+    ### Authentication
+    Use the **Access Tokens** endpoints to obtain a Bearer token via OAuth2.
+    Include the token in all subsequent requests as `Authorization: Bearer <token>`.
+  version: v1
+  contact:
+    name: Samedis-care GmbH
+components:
+  securitySchemes:
+    Bearer:
+      description: |
+        # Token based authentication Header
+        Authenticate and then copy the token into this field without the "Bearer " prefix.
+
+        ## To obtain a bearer token
+        Use the OAuth2 token endpoint.
+      type: http
+      scheme: bearer
+  schemas:
+    AccessControlSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        name:
+          type: string
+          description: the name of this access control
+        label:
+          type: string
+          description: the label of this access group
+        group:
+          type: string
+          description: a grouping name
+        group_name:
+          type: string
+          description: the group name
+        description:
+          type: string
+          description: describes the access this group grants (Markdown)
+        role_ids:
+          type: array
+          items:
+            type: string
+            description: Id of a roles assigned to this access group
+    AccountActivitySerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        location:
+          type: string
+          description: approximated geographic location by ip address that created
+            the token
+        device:
+          type: string
+          description: user agent that created the token
+        app:
+          type: string
+          description: app this token belongs to
+        created_at:
+          type: string
+          description: timestamp when this invite was created
+    AccountLoginSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        current:
+          type: boolean
+          description: true if this is the currently used token
+        location:
+          type: string
+          description: approximated geographic location by ip address that created
+            the token
+        device:
+          type: string
+          description: user agent that created the token
+        app:
+          type: string
+          description: app this token belongs to
+        otp_required:
+          type: boolean
+          description: true if this token requires to be verified by an OTP
+        otp_provided:
+          type: boolean
+          description: true if the user has provided an OTP
+        created_at:
+          type: string
+          format: date-time
+          description: created date
+    ActorMappingsSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        parent_id:
+          type: string
+          description: The id of the actor this new actor will become a children of
+        map_actor_id:
+          type: string
+          description: ''
+        name:
+          type: string
+          default: short name
+          description: descriptive name (alphanumeric lowercase) to build a unique
+            path
+        actor_type:
+          type: string
+          description: type of actor
+        short_name:
+          type: string
+          default: short name of an organizational unit or group
+          description: short name of this actor
+        full_name:
+          type: string
+          default: full name of an organizational unit or group
+          description: full name of this actor
+        path:
+          type: string
+          description: the path of this actor within the global tree
+        active:
+          type: boolean
+          default: true
+          description: indicating if this actor is available
+        mapped:
+          type: boolean
+          description: true if already mapped into the parent, when false this record
+            cannot be selected
+        created_at:
+          type: string
+          format: date-time
+          description: created date
+        updated_at:
+          type: string
+          format: date-time
+          description: updated date
+    ActorOrganizationSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        parent_id:
+          type: string
+          description: the parent record id
+        leaf:
+          type: boolean
+          default: false
+          description: when true this is the last element of a tree
+        actor_type:
+          type: string
+          default: ou
+          description: type of actor
+        insertable_child_types:
+          type: array
+          items:
+            type: string
+            description: the type of actor that is allowed as a child of this actor
+        children_count:
+          type: number
+          description: number of children below this actor
+        path:
+          type: string
+          description: the path of this actor within the global tree
+        name:
+          type: string
+          default: short name
+          description: descriptive name (alphanumeric lowercase) to build a unique
+            path
+        short_name:
+          type: string
+          default: short name of an organizational unit or group
+          description: short name of this actor
+        full_name:
+          type: string
+          default: full name of an organizational unit or group
+          description: full name of this actor
+        title:
+          type: string
+          default: localized title of an organizational unit or group
+          description: short name of this actor
+        title_translations:
+          type: object
+          properties:
+            en:
+              type: string
+              description: the english locale
+            de:
+              type: string
+              description: the german locale
+        active:
+          type: boolean
+          default: true
+          description: indicating if this actor is available
+        deleted:
+          type: boolean
+          default: false
+          description: indicating if this actor is marked as deleted
+        created_at:
+          type: string
+          format: date-time
+          description: created date
+        updated_at:
+          type: string
+          format: date-time
+          description: updated date
+    ActorOverviewSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        parent_id:
+          type: string
+          description: the parent record id
+        parent_ids:
+          type: array
+          description: ids of parent actors
+          items:
+            type: string
+        map_actor_id:
+          type: string
+          description: mapped actor id
+        leaf:
+          type: boolean
+          description: when true this is the last element of a tree
+        actor_type:
+          type: string
+          default: ou
+          description: type of actor
+        insertable_child_types:
+          type: array
+          items:
+            type: string
+            description: the type of actor that is allowed as a child of this actor
+        children_count:
+          type: number
+          description: number of children below this actor
+        path:
+          type: string
+          description: the path of this actor within the global tree
+        name:
+          type: string
+          default: short name
+          description: descriptive name (alphanumeric lowercase) to build a unique
+            path
+        short_name:
+          type: string
+          default: short name of an organizational unit or group
+          description: short name of this actor
+        full_name:
+          type: string
+          default: full name of an organizational unit or group
+          description: full name of this actor
+        active:
+          type: boolean
+          default: true
+          description: indicating if this actor is available
+        deleted:
+          type: boolean
+          default: false
+          description: indicating if this actor is marked as deleted
+        created_at:
+          type: string
+          format: date-time
+          description: created date
+        updated_at:
+          type: string
+          format: date-time
+          description: updated date
+    ActorSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        parent_id:
+          type: string
+          description: The id of the actor this new actor will become a children of
+        parent_ids:
+          type: array
+          description: ids of parent actors
+          items:
+            type: string
+        map_actor_id:
+          type: string
+          description: ''
+        leaf:
+          type: boolean
+          description: ''
+        actor_type:
+          type: string
+          enum:
+          - tenant
+          - group
+          - ou
+          default: ou
+          description: The type of this actor
+        insertable_child_types:
+          type: array
+          description: for frontend ruleset only
+          items:
+            type: string
+            description: the type of actor that is allowed as a child of this actor
+        children_count:
+          type: number
+          description: number of children below this actor
+        path:
+          type: string
+          description: the path of this actor within the global tree
+        name:
+          type: string
+          default: short name
+          description: descriptive name (alphanumeric lowercase) to build a unique
+            path
+        short_name:
+          type: string
+          default: short name of an organizational unit or group
+          description: short name of this actor
+        full_name:
+          type: string
+          default: full name of an organizational unit or group
+          description: full name of this actor
+        title:
+          type: string
+          default: localized title of an organizational unit or group
+          description: short name of this actor
+        title_translations:
+          type: object
+          properties:
+            en:
+              type: string
+              description: the english locale
+            de:
+              type: string
+              description: the german locale
+        active:
+          type: boolean
+          default: true
+          description: indicating if this actor is available
+        deleted:
+          type: boolean
+          description: flag to check whether actor is deleted
+        created_at:
+          type: string
+          format: date-time
+          description: created date
+        updated_at:
+          type: string
+          format: date-time
+          description: updated date
+        image_b64:
+          type: string
+          writeOnly: true
+          description: BASE64 encoded image (JPEG or PNG) to be used as the user`s
+            avatar
+        image:
+          type: object
+          description: image with different styles
+          properties:
+            large:
+              type: string
+            medium:
+              type: string
+            small:
+              type: string
+    AppAdminOverviewSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        name:
+          type: string
+          default: app-name
+          description: unique name of the app
+        short_name:
+          type: string
+          default: app-name
+          description: short name of the app
+        full_name:
+          type: string
+          default: app-name
+          description: full name of the app
+        languages:
+          type: array
+          default:
+          - de
+          - en
+          description: language codes of configured locales
+          items:
+            type: string
+            description: language code
+        available_languages:
+          type: array
+          default:
+          - en
+          - de
+          - fr
+          - ru
+          - nl
+          description: language codes of supported locales
+          items:
+            type: string
+            description: language code
+        image:
+          type: object
+          description: image in different sizes
+          properties:
+            large:
+              type: string
+            medium:
+              type: string
+            small:
+              type: string
+    AppAdminSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        name:
+          type: string
+          default: app-name
+          description: unique name of the app
+        short_name:
+          type: string
+          default: app-name
+          description: short name of the app
+        full_name:
+          type: string
+          default: app-name
+          description: full name of the app
+        languages:
+          type: array
+          default:
+          - de
+          - en
+          description: language codes of configured locales
+          items:
+            type: string
+            description: language code
+        available_languages:
+          type: array
+          default:
+          - en
+          - de
+          - fr
+          - ru
+          - nl
+          description: language codes of supported locales
+          items:
+            type: string
+            description: language code
+        import_candos:
+          type: string
+          description: yaml data with array of all candos the app has
+        import_roles:
+          type: string
+          description: yaml data with array of all roles the app has and assigned
+            candos
+        locale_import_candos:
+          type: object
+          description: language keys here are dynamic and can consist of any supported
+            language, minimum should be those languages of the configured app locales
+          properties:
+            en:
+              type: string
+              description: the english locales for this apps functionalities as yaml
+                string
+            de:
+              type: string
+              description: the german locales for this apps functionalities as yaml
+                string
+        locale_import_roles:
+          type: object
+          description: language keys here are dynamic and can consist of any supported
+            language, minimum should be those languages of the configured app locales
+          properties:
+            en:
+              type: string
+              description: the english locales for this apps roles as yaml string
+            de:
+              type: string
+              description: the german locales for this apps roles as yaml string
+        image:
+          type: object
+          description: image in different sizes
+          properties:
+            large:
+              type: string
+            medium:
+              type: string
+            small:
+              type: string
+        config:
+          type: object
+          description: Hash of app config
+          properties:
+            url:
+              type: string
+              default: https://domain.local
+              description: URL of the app
+            uses_bearer_token:
+              type: boolean
+              default: true
+              description: 'If the app bearer token will be included in redirect URL
+                as #anchor (true) or query param for server (false)'
+            locales:
+              type: array
+              default:
+              - de
+              - en
+              items:
+                type: string
+                description: locale string
+            default_locale:
+              type: string
+              default: en
+              description: Which of the locales is the default
+            mailer:
+              type: object
+              description: mail config
+              properties:
+                from:
+                  type: string
+                  description: The from address used in mails for user email confirmations
+                reply_to:
+                  type: string
+                  description: The reply address used in mails for user email confirmations
+                support_email:
+                  type: string
+                  description: The support address used in mails for user email confirmations
+                logo_b64:
+                  type: string
+                  description: A PNG logo as mail header in Base64 encoded format
+                footer_html:
+                  type: string
+                  description: The footer_html of the current client locale
+                footer_html_translations:
+                  type: object
+                  description: language keys here are dynamic and can consist of any
+                    supported language, minimum should be those languages of the configured
+                    app locales
+                  properties:
+                    en:
+                      type: string
+                      description: the english locale footer
+                    de:
+                      type: string
+                      description: the german locale footer
+                smtp_settings:
+                  type: object
+                  description: smtp settings
+                  properties:
+                    address:
+                      type: string
+                      description: Address of SMTP server
+                    port:
+                      type: number
+                      description: Port of SMTP server
+                    domain:
+                      type: string
+                      description: HELO domain
+                    user_name:
+                      type: string
+                      description: SMTP username
+                    password:
+                      type: string
+                      description: SMTP password
+                    authentication:
+                      type: string
+                      description: 'AuthenticationMode: plain, login or cram_md5'
+                    enable_starttls:
+                      type: boolean
+                      description: Use STARTTLS when connecting to your SMTP server
+                        and fail if unsupported
+                    enable_starttls_auto:
+                      type: boolean
+                      description: Detects if STARTTLS is enabled in your SMTP server
+                        and starts to use it
+                    openssl_verify_mode:
+                      type: string
+                      description: When using TLS, you can set how OpenSSL checks
+                        the certificate. This is really useful if you need to validate
+                        a self-signed and/or a wildcard certificate. You can use the
+                        name of an OpenSSL verify constant ('none' or 'peer')
+                    ssl:
+                      type: string
+                      description: 'Enables the SMTP connection to use SMTP/TLS (SMTPS:
+                        SMTP over direct TLS connection)'
+                    open_timeout:
+                      type: number
+                      description: Number of seconds to wait while attempting to open
+                        a connection.
+                    read_timeout:
+                      type: number
+                      description: Number of seconds to wait until timing-out a read(2)
+                        call.
+            theme:
+              type: object
+              description: optional theme settings
+              properties:
+                primary:
+                  type: object
+                  description: primary colors
+                  properties:
+                    main:
+                      type: string
+                      description: primary color
+                    light:
+                      type: string
+                      description: lighter variant of the primary color
+                    dark:
+                      type: string
+                      description: darker variant of the primary color
+                secondary:
+                  type: object
+                  description: secondary colors
+                  properties:
+                    main:
+                      type: string
+                      description: secondary color
+                    light:
+                      type: string
+                      description: lighter variant of the secondary color
+                    dark:
+                      type: string
+                      description: darker variant of the secondary color
+                background:
+                  type: object
+                  description: background
+                  properties:
+                    default:
+                      type: string
+                      description: background color
+                    advanced:
+                      type: string
+                      description: background CSS property
+                      nullable: true
+                components_care:
+                  type: object
+                  description: components care specific settings
+                  properties:
+                    ui_kit:
+                      type: object
+                      description: theme settings for ui_kit
+                      properties:
+                        action_button:
+                          type: object
+                          description: theme settings for ActionButton
+                          properties:
+                            background_color:
+                              type: string
+                              description: background color
+                mode:
+                  type: string
+                  default: light
+                  description: light or dark theme as base
+    AppInfoSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        name:
+          type: string
+          default: app-name
+          description: unique name of the app
+        short_name:
+          type: string
+          default: app-name
+          description: short name of the app
+        full_name:
+          type: string
+          default: app-name
+          description: full name of the app
+        image:
+          type: object
+          description: image in different sizes
+          properties:
+            large:
+              type: string
+            medium:
+              type: string
+            small:
+              type: string
+        auth_provider_hints:
+          type: array
+          description: MD5 checksums for domains with custom oauth provider
+          items:
+            type: string
+        config:
+          type: object
+          description: Hash of app config
+          properties:
+            url:
+              type: string
+              default: https://domain.local
+              description: URL of the app
+            uses_bearer_token:
+              type: boolean
+              default: true
+              description: 'If the app bearer token will be included in redirect URL
+                as #anchor (true) or query param for server (false)'
+            locales:
+              type: array
+              default:
+              - de
+              - en
+              items:
+                type: string
+                description: locale string
+            default_locale:
+              type: string
+              default: en
+              description: Which of the locales is the default
+            mailer:
+              type: object
+              description: mail config
+              properties:
+                from:
+                  type: string
+                  description: The from address used in mails for user email confirmations
+                reply_to:
+                  type: string
+                  description: The reply address used in mails for user email confirmations
+                support_email:
+                  type: string
+                  description: The support address used in mails for user email confirmations
+                logo_b64:
+                  type: string
+                  description: A PNG logo as mail header in Base64 encoded format
+                footer_html:
+                  type: string
+                  description: The footer_html of the current client locale
+                footer_html_translations:
+                  type: object
+                  description: language keys here are dynamic and can consist of any
+                    supported language, minimum should be those languages of the configured
+                    app locales
+                  properties:
+                    en:
+                      type: string
+                      description: the english locale footer
+                    de:
+                      type: string
+                      description: the german locale footer
+            theme:
+              type: object
+              description: optional theme settings
+              properties:
+                primary:
+                  type: object
+                  description: primary colors
+                  properties:
+                    main:
+                      type: string
+                      description: primary color
+                    light:
+                      type: string
+                      description: lighter variant of the primary color
+                    dark:
+                      type: string
+                      description: darker variant of the primary color
+                secondary:
+                  type: object
+                  description: secondary colors
+                  properties:
+                    main:
+                      type: string
+                      description: secondary color
+                    light:
+                      type: string
+                      description: lighter variant of the secondary color
+                    dark:
+                      type: string
+                      description: darker variant of the secondary color
+                background:
+                  type: object
+                  description: background
+                  properties:
+                    default:
+                      type: string
+                      description: background color
+                    advanced:
+                      type: string
+                      description: background CSS property
+                      nullable: true
+                components_care:
+                  type: object
+                  description: components care specific settings
+                  properties:
+                    ui_kit:
+                      type: object
+                      description: theme settings for ui_kit
+                      properties:
+                        action_button:
+                          type: object
+                          description: theme settings for ActionButton
+                          properties:
+                            background_color:
+                              type: string
+                              description: background color
+                mode:
+                  type: string
+                  default: light
+                  description: light or dark theme as base
+        contents:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: id of the content
+              name:
+                type: string
+                description: name of the content (e.g. tos)
+              url:
+                type: string
+                description: url to load the content
+              version:
+                type: string
+                description: the version (latest) of the content
+    AppSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        url:
+          type: string
+          description: URL of the app
+        name:
+          type: string
+          description: unique app name
+        short_name:
+          type: string
+          description: short name
+        full_name:
+          type: string
+          description: full name
+        required_documents:
+          type: object
+          properties:
+            name:
+              type: string
+              description: name/version of documents to show when logging into this
+                app
+        requires_acceptance:
+          type: object
+          properties:
+            name:
+              type: string
+              description: name/boolean of documents that require user acceptance
+                when logging into this app
+        image:
+          type: object
+          description: image with different styles
+          properties:
+            large:
+              type: string
+            medium:
+              type: string
+            small:
+              type: string
+    AppUserSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id (of mapping)
+        actor_id:
+          type: string
+          description: unique id of the users account
+        active:
+          type: boolean
+          description: if set false the login will be disabled
+        email:
+          type: string
+          description: the e-mail address
+        unconfirmed_email:
+          type: string
+          description: holds the new email address until it is confirmed
+        recovery_email:
+          type: string
+          description: a secondary email that can be used to recover an account if
+            access to the main email is lost
+        unconfirmed_recovery_email:
+          type: string
+          description: holds the chosen recovery email address until it is confirmed
+        recovered_account:
+          type: boolean
+          description: if true this account was recovered and the main email should
+            be changed
+        first_name:
+          type: string
+          description: first name
+        last_name:
+          type: string
+          description: last name
+        short:
+          type: string
+          description: User short sign
+        title:
+          type: string
+          description: User title
+        gender:
+          type: number
+          enum:
+          - 0
+          - 1
+          - 2
+          description: |
+            Gender identifier
+            * 0 - Unspecified
+            * 1 - Male
+            * 2 - Female
+        mobile:
+          type: string
+          description: mobile number
+        locale:
+          type: string
+          description: language code
+        password:
+          type: string
+          writeOnly: true
+          description: the new password
+        password_confirmation:
+          type: string
+          writeOnly: true
+          description: the new password (confirmation)
+        image_b64:
+          type: string
+          writeOnly: true
+          description: BASE64 encoded image (JPEG or PNG) to be used as the user`s
+            avatar
+        image:
+          type: object
+          description: image in different sizes
+          properties:
+            large:
+              type: string
+            medium:
+              type: string
+            small:
+              type: string
+        candos:
+          type: array
+          description: global candos the user has, filtered to the current app context
+          items:
+            type: string
+        tenants:
+          type: array
+          items:
+            type: object
+            properties:
+              candos:
+                type: array
+                items:
+                  type: string
+        recent_invite_tokens:
+          type: array
+          description: a list of recent invite tokens to pass to the authenticated
+            remote app so the app can process these
+          items:
+            type: string
+        otp_enabled:
+          type: boolean
+          description: if true the login needs to present an input for sending an
+            OTP with the login
+        otp_provided:
+          type: boolean
+          description: if otp_enabled this will be true if an OTP was provided to
+            signal the login is complete
+        otp_provisioning_qr_code:
+          type: string
+          description: only when enabling OTP/MFA this will show an SVG image with
+            a QR code to scan from an authenticator app
+        otp_secret_key:
+          type: string
+          description: only when enabling OTP/MFA this will show the secret key to
+            set up an authenticator app
+        otp_backup_codes:
+          type: array
+          description: only after enabling OTP/MFA this will once show backup codes
+          items:
+            type: string
+    ContentAcceptanceSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        app:
+          type: string
+          description: the app this content belongs to
+        name:
+          type: string
+          default: app-name
+          description: name of the content (like "tos", "app-info")
+        version:
+          type: number
+          description: highest active-flagged version will be used
+        content_translations:
+          type: object
+          description: Hash of locale-languages with translated content
+          properties:
+            de:
+              type: string
+              default: Deutsche Übersetzung
+              description: German content
+            en:
+              type: string
+              default: English translation
+              description: English content
+        acceptance_required:
+          type: boolean
+          default: false
+          description: when true the user is required to accept every new version
+            of this content
+        acceptance_given:
+          type: boolean
+          default: false
+          description: if required indicates if it was yet given by the current user
+        created_at:
+          type: string
+          format: date-time
+          description: created date
+        updated_at:
+          type: string
+          format: date-time
+          description: updated date
+    ContentSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        app:
+          type: string
+          description: the app this content belongs to
+        name:
+          type: string
+          default: app-info
+          enum:
+          - tos
+          - privacy
+          - tos-privacy
+          - app-info
+          description: name of the content (like "tos", "app-info")
+        version:
+          type: number
+          description: highest active-flagged version will be used
+        content_translations:
+          type: object
+          description: Hash of locale-languages with translated content
+          properties:
+            de:
+              type: string
+              default: Deutsche Übersetzung
+              description: German content
+            en:
+              type: string
+              default: English translation
+              description: English content
+        active:
+          type: boolean
+          default: false
+          description: only active flagged will be used, leave inactive during draft
+        acceptance_required:
+          type: boolean
+          default: false
+          description: when true the user is required to accept every new version
+            of this content
+        created_at:
+          type: string
+          format: date-time
+          description: created date
+        updated_at:
+          type: string
+          format: date-time
+          description: updated date
+    EmailBlacklistSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        domain:
+          type: string
+          description: blacklisted domain name
+        active:
+          type: string
+          description: controls if the domain name is actively being blacklisted
+    FunctionalityOverviewSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        role_ids:
+          type: array
+          items:
+            type: string
+            description: id of a role
+        title:
+          type: string
+          default: title
+          description: a descriptive title
+        description:
+          type: string
+          default: description
+          description: a description about what this functionality allows to do
+        app:
+          type: string
+          default: app-name
+          description: name of app this functionality belongs to
+        module:
+          type: string
+          default: module
+          description: the module of the app this functionality belongs to
+        ident:
+          type: string
+          default: ident
+          description: the action within the module (e.g. reader, writer, deleter,
+            consumer, ...)
+        created_at:
+          type: string
+          format: date-time
+          description: created date
+        updated_at:
+          type: string
+          format: date-time
+          description: updated date
+    FunctionalitySerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        title:
+          type: string
+          default: title
+          description: a descriptive title (current locale)
+        title_translations:
+          type: object
+          properties:
+            en:
+              type: string
+              description: the english locale title
+            de:
+              type: string
+              description: the german locale title
+        description:
+          type: string
+          description: a description about what this functionality allows to do (current
+            locale)
+        description_translations:
+          type: object
+          description: language keys here are dynamic and can consist of any supported
+            language, minimum should be those languages of the configured app locales
+          properties:
+            en:
+              type: string
+              description: the english locale description
+            de:
+              type: string
+              description: the german locale description
+        app:
+          type: string
+          default: app-name
+          description: name of app this functionality belongs to
+        module:
+          type: string
+          default: module
+          description: the module of the app this functionality belongs to
+        ident:
+          type: string
+          default: ident
+          description: the action within the module (e.g. reader, writer, deleter,
+            consumer, ...)
+        role_ids:
+          type: array
+          items:
+            type: string
+            description: id of a role
+    GroupActorSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        parent_id:
+          type: string
+          description: the id of the parent actor
+        parent_ids:
+          type: array
+          description: ids of all ancestor actors
+          items:
+            type: string
+        role_ids:
+          type: array
+          description: ids of roles assigned to this group
+          items:
+            type: string
+        map_actor_ids:
+          type: array
+          description: ids of actors mapped into this group
+          items:
+            type: string
+        actor_type:
+          type: string
+          enum:
+          - tenant
+          - group
+          - ou
+          default: group
+          description: The type of this actor
+        path:
+          type: string
+          description: the path of this actor within the global tree
+        name:
+          type: string
+          default: short name
+          description: descriptive name (alphanumeric lowercase) to build a unique
+            path
+        short_name:
+          type: string
+          default: short name of an organizational unit or group
+          description: short name of this actor
+        full_name:
+          type: string
+          default: full name of an organizational unit or group
+          description: full name of this actor
+        title:
+          type: string
+          default: localized title of an organizational unit or group
+          description: short name of this actor
+        title_translations:
+          type: object
+          properties:
+            en:
+              type: string
+              description: the english locale
+            de:
+              type: string
+              description: the german locale
+        active:
+          type: boolean
+          default: true
+          description: indicating if this actor is available
+        created_at:
+          type: string
+          format: date-time
+          description: created date
+        updated_at:
+          type: string
+          format: date-time
+          description: updated date
+    InvitationSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        email:
+          type: string
+          writeOnly: true
+          description: e-mail of the user to invite
+        user_id:
+          type: string
+          writeOnly: true
+          description: Optionally the user id instead of email user to invite
+        invitable_type:
+          type: string
+          default: tenant
+          description: the object class this invitation refers to
+        invitable_id:
+          type: string
+          description: the id of the object this invitation refers to
+        actions:
+          type: object
+          description: JSON Hash with key value pairs of one or more actions (key)
+            to run on accept with arguments (value)
+          properties:
+            access_group_ids:
+              type: array
+              description: ids to the groups below a tenant organization to authorize
+                the user acception invites (removes all previous)
+            access_groups:
+              type: array
+              description: name identifiers in the form of `ou-name/group-name` to
+                the groups below a tenant organization to authorize the user acception
+                invites (removes all previous)
+            add_access_group_ids:
+              type: array
+              description: ids to the groups below a tenant organization to authorize
+                the user acception invites (adds to those the user already has)
+            add_access_groups:
+              type: array
+              description: name identifiers in the form of `ou-name/group-name` to
+                the groups below a tenant organization to authorize the user acception
+                invites (adds to those the user already has)
+        app:
+          type: string
+          description: the app context
+        token:
+          type: string
+          description: a unique token id that the server generates
+        tenant_id:
+          type: string
+          description: the used as tenant context
+        auto_accept:
+          type: boolean
+          default: true
+          description: automatically performs the invitation as soon as the user is
+            logging in
+        url:
+          type: string
+          description: the URL to be used to log in to accept the invitation
+        redirect_url:
+          type: string
+          description: after the invitation was accepted the user will be redirect
+            to this url
+        accepted_at:
+          type: string
+          format: date-time
+          description: timestamp if/when the invitation was accepted
+        done:
+          type: boolean
+          default: false
+          description: indicating if this invitation is outstanding
+        has_account:
+          type: boolean
+          description: true if the invited user already has an account
+        created_at:
+          type: string
+          format: date-time
+          description: timestamp when the invitation was created
+        updated_at:
+          type: string
+          format: date-time
+          description: timestamp when the invitation was updated
+    MappableUserOverviewSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        parent_id:
+          type: string
+          description: the parent record id
+        parent_ids:
+          type: array
+          description: ids of parent actors
+          items:
+            type: string
+        actor_type:
+          type: string
+          default: ou
+          description: type of actor
+        path:
+          type: string
+          description: the path of this actor within the global tree
+        short_name:
+          type: string
+          default: short name of an organizational unit or group
+          description: short name of this actor
+        full_name:
+          type: string
+          default: full name of an organizational unit or group
+          description: full name of this actor
+        email:
+          type: string
+          description: email address of the associated user
+        already_in_orga:
+          type: boolean
+          description: Boolean that signals if this actor is already in the orga of
+            the nested resource set
+        created_at:
+          type: string
+          format: date-time
+          description: created date
+        updated_at:
+          type: string
+          format: date-time
+          description: updated date
+    MappingSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        parent_id:
+          type: string
+          description: id of the parent node
+        map_actor_id:
+          type: string
+          description: id of the actor that is mapped into the parent node
+        name:
+          type: string
+          description: descriptive name
+        short_name:
+          type: string
+          description: the friendly name of the mapped actor (e.g. Users name )
+        path:
+          type: string
+          description: complete path within the hierarchical structure
+        created_at:
+          type: string
+          format: date-time
+          description: created date
+        updated_at:
+          type: string
+          format: date-time
+          description: updated date
+    PickerFunctionalityRoleSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        name:
+          type: string
+          description: unique role name
+        title:
+          type: string
+          default: title
+          description: a descriptive title (current locale)
+        title_translations:
+          type: object
+          properties:
+            en:
+              type: string
+              description: the english locale title
+            de:
+              type: string
+              description: the german locale title
+        description:
+          type: string
+          description: a description about what this role allows to do (current locale)
+        description_translations:
+          type: object
+          description: language keys here are dynamic and can consist of any supported
+            language, minimum should be those languages of the configured app locales
+          properties:
+            en:
+              type: string
+              description: the english locale description
+            de:
+              type: string
+              description: the german locale description
+        app:
+          type: string
+          default: app-name
+          description: name of app this role belongs to
+        functionality_ids:
+          type: array
+          items:
+            type: string
+            description: id of a functionality assigned to this role
+        already_in_functionality:
+          type: boolean
+          description: Boolean that signals if this role is already in the functionality
+        created_at:
+          type: string
+          format: date-time
+          description: created date
+        updated_at:
+          type: string
+          format: date-time
+          description: updated date
+    PickerRoleActorSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        parent_id:
+          type: string
+          description: the parent record id
+        actor_type:
+          type: string
+          default: ou
+          description: type of actor
+        children_count:
+          type: number
+          description: number of children below this actor
+        path:
+          type: string
+          description: the path of this actor within the global tree
+        short_name:
+          type: string
+          default: short name of an organizational unit or group
+          description: short name of this actor
+        full_name:
+          type: string
+          default: full name of an organizational unit or group
+          description: full name of this actor
+        title:
+          type: string
+          default: localized title of an organizational unit or group
+          description: short name of this actor
+        title_translations:
+          type: object
+          properties:
+            en:
+              type: string
+              description: the english locale
+            de:
+              type: string
+              description: the german locale
+        already_in_role:
+          type: boolean
+          description: Boolean that signals if this actor is already in the role of
+            the nested resource set
+        active:
+          type: boolean
+          default: true
+          description: indicating if this actor is available
+        image:
+          type: object
+          description: image in different sizes
+          properties:
+            large:
+              type: string
+            medium:
+              type: string
+            small:
+              type: string
+        created_at:
+          type: string
+          format: date-time
+          description: created date
+        updated_at:
+          type: string
+          format: date-time
+          description: updated date
+    PickerRoleFunctionalitySerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        title:
+          type: string
+          default: title
+          description: a descriptive title (current locale)
+        title_translations:
+          type: object
+          properties:
+            en:
+              type: string
+              description: the english locale title
+            de:
+              type: string
+              description: the german locale title
+        description:
+          type: string
+          description: a description about what this functionality allows to do (current
+            locale)
+        description_translations:
+          type: object
+          description: language keys here are dynamic and can consist of any supported
+            language, minimum should be those languages of the configured app locales
+          properties:
+            en:
+              type: string
+              description: the english locale description
+            de:
+              type: string
+              description: the german locale description
+        app:
+          type: string
+          default: app-name
+          description: name of app this functionality belongs to
+        module:
+          type: string
+          default: module
+          description: the module of the app this functionality belongs to
+        ident:
+          type: string
+          default: ident
+          description: the action within the module (e.g. reader, writer, deleter,
+            consumer, ...)
+        role_ids:
+          type: array
+          items:
+            type: string
+            description: id of a role
+        already_in_role:
+          type: boolean
+          description: Boolean that signals if this functionality is already in the
+            role
+        created_at:
+          type: string
+          format: date-time
+          description: created date
+        updated_at:
+          type: string
+          format: date-time
+          description: updated date
+    PickerUserGroupSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        parent_id:
+          type: string
+          description: the id of the parent actor
+        parent_ids:
+          type: array
+          description: ids of all ancestor actors
+          items:
+            type: string
+        actor_type:
+          type: string
+          enum:
+          - tenant
+          - group
+          - ou
+          default: group
+          description: The type of this actor
+        path:
+          type: string
+          description: the path of this actor within the global tree
+        name:
+          type: string
+          default: short name
+          description: descriptive name (alphanumeric lowercase) to build a unique
+            path
+        short_name:
+          type: string
+          default: short name of an organizational unit or group
+          description: short name of this actor
+        full_name:
+          type: string
+          default: full name of an organizational unit or group
+          description: full name of this actor
+        title:
+          type: string
+          default: localized title of an organizational unit or group
+          description: short name of this actor
+        title_translations:
+          type: object
+          properties:
+            en:
+              type: string
+              description: the english locale
+            de:
+              type: string
+              description: the german locale
+        active:
+          type: boolean
+          default: true
+          description: indicating if this actor is available
+        already_assigned_to_user:
+          type: boolean
+          description: Boolean that signals if this group is already assigned to the
+            user
+        created_at:
+          type: string
+          format: date-time
+          description: created date
+        updated_at:
+          type: string
+          format: date-time
+          description: updated date
+    RoleOverviewSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        name:
+          type: string
+          description: unique role name
+        title:
+          type: string
+          default: title
+          description: a descriptive title
+        description:
+          type: string
+          default: description
+          description: a description about what this role allows to do
+        app:
+          type: string
+          default: app-name
+          description: name of app this role belongs to
+        created_at:
+          type: string
+          format: date-time
+          description: created date
+        updated_at:
+          type: string
+          format: date-time
+          description: updated date
+    RolePickerSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        title:
+          type: string
+          default: title
+          description: a descriptive title (current locale)
+        title_translations:
+          type: object
+          properties:
+            en:
+              type: string
+              description: the english locale title
+            de:
+              type: string
+              description: the german locale title
+        description:
+          type: string
+          description: a description about what this role allows to do (current locale)
+        description_translations:
+          type: object
+          description: language keys here are dynamic and can consist of any supported
+            language, minimum should be those languages of the configured app locales
+          properties:
+            en:
+              type: string
+              description: the english locale description
+            de:
+              type: string
+              description: the german locale description
+        created_at:
+          type: string
+          format: date-time
+          description: created date
+        updated_at:
+          type: string
+          format: date-time
+          description: updated date
+    RoleSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        name:
+          type: string
+          description: unique role name
+        title:
+          type: string
+          default: title
+          description: a descriptive title (current locale)
+        title_translations:
+          type: object
+          properties:
+            en:
+              type: string
+              description: the english locale title
+            de:
+              type: string
+              description: the german locale title
+        description:
+          type: string
+          description: a description about what this role allows to do (current locale)
+        description_translations:
+          type: object
+          description: language keys here are dynamic and can consist of any supported
+            language, minimum should be those languages of the configured app locales
+          properties:
+            en:
+              type: string
+              description: the english locale description
+            de:
+              type: string
+              description: the german locale description
+        app:
+          type: string
+          default: app-name
+          description: name of app this role belongs to
+        functionality_ids:
+          type: array
+          items:
+            type: string
+            description: id of a functionality assigned to this role
+    TenantSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        actor_type:
+          type: string
+          default: ou
+          description: type of actor
+        modules_available:
+          type: array
+          description: available optional organization modules
+          items:
+            type: string
+            description: available module name
+        modules_selected:
+          type: array
+          default: []
+          description: selected optional organization modules
+          items:
+            type: string
+            description: selected module name
+        path:
+          type: string
+          description: the path of this actor within the global tree
+        short_name:
+          type: string
+          default: short name of an organizational unit or group
+          description: short name of this actor
+        full_name:
+          type: string
+          default: full name of an organizational unit or group
+          description: full name of this actor
+        image:
+          type: object
+          description: image in different sizes
+          properties:
+            large:
+              type: string
+            medium:
+              type: string
+            small:
+              type: string
+        created_at:
+          type: string
+          format: date-time
+          description: created date
+        updated_at:
+          type: string
+          format: date-time
+          description: updated date
+    TenantUserAccessOverviewSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        access_group_ids:
+          type: array
+          description: id of an access group
+          items:
+            type: string
+        actor_id:
+          type: string
+          description: unique id of the users account
+        email:
+          type: string
+          description: registered email address
+        first_name:
+          type: string
+          description: the users first name
+        last_name:
+          type: string
+          description: the users last name
+        title:
+          anyOf:
+          - type: string
+            description: the users title
+          - type: 'null'
+        gender:
+          anyOf:
+          - type: number
+            description: the users gender (1=male, 2=female, 3=other)
+          - type: 'null'
+        created_at:
+          type: string
+          description: account creation timestamp
+    TenantUserOverviewSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        actor_id:
+          type: string
+          description: referenced actor id
+        active:
+          type: boolean
+          description: if set false the login will be disabled
+        email:
+          type: string
+          description: e-mail address
+        gender:
+          type: number
+          enum:
+          - 0
+          - 1
+          - 2
+          description: |
+            Gender identifier
+            * 0 - Unspecified
+            * 1 - Male
+            * 2 - Female
+        first_name:
+          type: string
+          description: first name
+        last_name:
+          type: string
+          description: last name
+        short:
+          type: string
+          description: short name (combination of first and last names)
+        title:
+          type: string
+          description: an optional user title
+        image:
+          type: object
+          description: image in different sizes
+          properties:
+            large:
+              type: string
+            medium:
+              type: string
+            small:
+              type: string
+        created_at:
+          type: string
+          format: date-time
+          description: created date
+        updated_at:
+          type: string
+          format: date-time
+          description: updated date
+    TenantUserSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        actor_id:
+          type: string
+          description: referenced actor id
+        tenant_groups:
+          type: array
+          description: names of groups the user is member of within the current tenant
+          items:
+            type: string
+        tenant_group_ids:
+          type: array
+          description: reference ids of groups the user is member of within the current
+            tenant
+          items:
+            type: string
+        email:
+          type: string
+          description: e-mail address
+        gender:
+          type: number
+          description: numeric gender 1=male / 2=female / 3+anything
+        first_name:
+          type: string
+          description: first name
+        last_name:
+          type: string
+          description: last name
+        short:
+          type: string
+          description: short name (combination of first and last names)
+        image:
+          type: object
+          description: image in different sizes
+          properties:
+            large:
+              type: string
+            medium:
+              type: string
+            small:
+              type: string
+        created_at:
+          type: string
+          format: date-time
+          description: created date
+        updated_at:
+          type: string
+          format: date-time
+          description: updated date
+    UserOrganizationSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id (of mapping)
+        actor_id:
+          type: string
+          description: unique record id of actor pointed to by this mapping
+        actor_type:
+          type: string
+          enum:
+          - tenant
+          - group
+          - ou
+          default: ou
+          description: The type of this actor
+        parent_id:
+          type: string
+          description: The id of the actor this new actor will become a children of
+        parent_ids:
+          type: array
+          description: ids of parent actors
+          items:
+            type: string
+        map_actor_id:
+          type: string
+          description: ''
+        insertable_child_types:
+          type: array
+          items:
+            type: string
+            description: the type of actor that is allowed as a child of this actor
+        children_count:
+          type: number
+          description: number of children below this actor
+        path:
+          type: string
+          description: the path of this actor within the global tree
+        short_name:
+          type: string
+          default: short name of an organizational unit or group
+          description: short name of this actor
+        full_name:
+          type: string
+          default: full name of an organizational unit or group
+          description: full name of this actor
+        active:
+          type: boolean
+          default: true
+          description: indicating if this actor is available
+        deleted:
+          type: boolean
+          description: flag to check whether actor is deleted
+        created_at:
+          type: string
+          format: date-time
+          description: created date
+        updated_at:
+          type: string
+          format: date-time
+          description: updated date
+        image_b64:
+          type: string
+          writeOnly: true
+          description: BASE64 encoded image (JPEG or PNG) to be used as the user`s
+            avatar
+    UserOverviewSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        actor_id:
+          type: string
+          description: referenced actor id
+        email:
+          type: string
+          description: e-mail address
+        gender:
+          type: number
+          enum:
+          - 0
+          - 1
+          - 2
+          description: |
+            Gender identifier
+            * 0 - Unspecified
+            * 1 - Male
+            * 2 - Female
+        first_name:
+          type: string
+          description: first name
+        last_name:
+          type: string
+          description: last name
+        image:
+          type: object
+          description: image in different sizes
+          properties:
+            small:
+              type: string
+        mobile:
+          type: string
+          description: mobile number
+        active:
+          type: boolean
+          description: if set false the login will be disabled
+        invalid_at:
+          type: string
+          format: date-time
+          description: if set the login will be disabled after the date
+        locale:
+          type: string
+          description: serves as languange preference for the user
+        pwd_reset_uid:
+          type: string
+          description: in case of a password reset this serves as a substitute for
+            the old password
+        first_login_at:
+          type: string
+          format: date-time
+          description: first login date
+        last_login_at:
+          type: string
+          format: date-time
+          description: last login date
+        created_at:
+          type: string
+          format: date-time
+          description: created date
+        updated_at:
+          type: string
+          format: date-time
+          description: updated date
+    UserSerializer:
+      type: object
+      description: the main attributes of this record
+      properties:
+        id:
+          type: string
+          description: unique record id
+        actor_id:
+          type: string
+          description: referenced actor id
+        email:
+          type: string
+          description: e-mail address
+        gender:
+          type: number
+          enum:
+          - 0
+          - 1
+          - 2
+          description: |
+            Gender identifier
+            * 0 - Unspecified
+            * 1 - Male
+            * 2 - Female
+        first_name:
+          type: string
+          description: first name
+        last_name:
+          type: string
+          description: last name
+        short:
+          type: string
+          description: short name (combination of first and last names)
+        image:
+          type: object
+          description: image in different sizes
+          properties:
+            large:
+              type: string
+            medium:
+              type: string
+            small:
+              type: string
+        title:
+          type: string
+          description: an optional user title
+        mobile:
+          type: string
+          description: mobile number
+        active:
+          type: boolean
+          description: if set false the login will be disabled
+        deleted:
+          type: boolean
+          description: flag to check whether user is deleted
+        invalidate:
+          type: boolean
+          description: returns true if an invalid_at date is present
+        invalid_at:
+          type: string
+          format: date-time
+          description: if set the login will be disabled after the date
+        locale:
+          type: string
+          description: serves as languange preference for the user
+        pwd_reset_uid:
+          type: string
+          description: in case of a password reset this serves as a substitute for
+            the old password
+        first_login_at:
+          type: string
+          format: date-time
+          description: first login date
+        last_login_at:
+          type: string
+          format: date-time
+          description: last login date
+        candos:
+          type: array
+          description: global candos the user has consolidated over all tenants
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+          description: created date
+        updated_at:
+          type: string
+          format: date-time
+          description: updated date
+    locales:
+      type: string
+      enum:
+      - en
+      - de
+      - fr
+      - ru
+      - nl
+    meta:
+      type: object
+      properties:
+        locale:
+          type: string
+          default: en
+          description: the currently selected locale
+        msg:
+          type: object
+          description: info about the request
+          properties:
+            success:
+              type: boolean
+              default: true
+              description: indicates successful requests
+            message:
+              anyOf:
+              - type: string
+                description: user friendly localized info
+              - type: 'null'
+            error:
+              anyOf:
+              - type: string
+                description: if unsuccessful contains an error message
+              - type: 'null'
+            error_details:
+              anyOf:
+              - type: string
+                description: more detailed error message
+              - type: 'null'
+servers:
+- url: "{protocol}://{defaultHost}"
+  variables:
+    protocol:
+      default: https
+    defaultHost:
+      default: localhost:3000
+openapi: 3.1.1
+paths:
+  "/api/v1/{app}/oauth/token/info":
+    get:
+      summary: 'Access Token: Info [GET]'
+      operationId: doorkeeper-token-info-show
+      tags:
+      - Access Tokens
+      x-controller: Api::V1::App::Doorkeeper::TokenInfoController
+      x-controller-action: show
+      security:
+      - Bearer: []
+      description: 'Returns information about the currently authenticated user and
+        token.
+
+        '
+      parameters:
+      - name: app
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The app identifier
+      responses:
+        '200':
+          description: Token info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    required:
+                    - id
+                    - type
+                    - attributes
+                    properties:
+                      id:
+                        type: string
+                      type:
+                        type: string
+                        default: user
+                      attributes:
+                        "$ref": "#/components/schemas/AppUserSerializer"
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '401':
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+  "/api/v1/{app}/oauth/token":
+    post:
+      summary: 'Access Token: Login [POST]'
+      operationId: doorkeeper-tokens-create
+      tags:
+      - Access Tokens
+      x-controller: Api::V1::App::Doorkeeper::TokensController
+      x-controller-action: create
+      description: |
+        Authenticate a user and obtain an access token.
+
+        Supports multiple grant types:
+        - `password` - Login with email and password
+        - `refresh_token` - Refresh an expired access token
+        - `google_uid` - Login with Google UID
+        - `recovery_email` - Login with recovery email
+
+        On successful login, the user is automatically added to the app's container.
+
+        The response follows the JSON:API format and additionally includes
+        OAuth2 token fields at the top level.
+      parameters:
+      - name: app
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The app identifier to login for
+        example: identity-management
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+              - grant_type
+              properties:
+                grant_type:
+                  type: string
+                  enum:
+                  - password
+                  - refresh_token
+                  - google_uid
+                  - recovery_email
+                  description: The OAuth2 grant type
+                username:
+                  type: string
+                  description: The email that the user registered with
+                  example: user@example.com
+                email:
+                  type: string
+                  description: Alias for username
+                password:
+                  type: string
+                  description: User password
+                  format: password
+                refresh_token:
+                  type: string
+                  description: Refresh token (for grant_type "refresh_token")
+                invite_token:
+                  type: string
+                  description: Optional token for invites. Will be processed at login
+                    and passed through to frontend.
+                otp:
+                  type: string
+                  description: One-Time Password for MFA-enabled accounts
+                redirect_host:
+                  type: string
+                  description: Redirect host after login (must be whitelisted)
+                redirect_path:
+                  type: string
+                  description: Redirect path after login
+                remember_me:
+                  type: string
+                  enum:
+                  - 'true'
+                  - 'false'
+                  description: Whether to remember the session
+      responses:
+        '200':
+          description: User logged in successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                description: |
+                  JSON:API response with user data, meta information
+                  including token details, and top-level OAuth2 fields.
+                properties:
+                  data:
+                    type: object
+                    required:
+                    - id
+                    - type
+                    - attributes
+                    properties:
+                      id:
+                        type: string
+                        description: User ID
+                      type:
+                        type: string
+                        default: user
+                      attributes:
+                        "$ref": "#/components/schemas/AppUserSerializer"
+                  meta:
+                    type: object
+                    properties:
+                      msg:
+                        type: object
+                        properties:
+                          success:
+                            type: boolean
+                      token:
+                        type: string
+                        description: The Bearer access token
+                      refresh_token:
+                        type: string
+                        description: Token to refresh the access token
+                      expires_in:
+                        type: number
+                        description: Seconds until the token expires
+                      redirect_url:
+                        type: string
+                        description: URL to redirect to after login
+                      app:
+                        type: string
+                        description: The app context
+                      invite_token:
+                        type: string
+                        description: Passed through invite token
+                      check_acceptances:
+                        type: object
+                        description: Pending content acceptances for the user
+                  token_type:
+                    type: string
+                    default: Bearer
+                    description: OAuth2 token type
+                  access_token:
+                    type: string
+                    description: OAuth2 access token (same as meta.token)
+                  refresh_token:
+                    type: string
+                    description: OAuth2 refresh token (same as meta.refresh_token)
+                  expires_in:
+                    type: number
+                    description: OAuth2 token expiry in seconds (same as meta.expires_in)
+        '400':
+          description: Invalid request (e.g. unsupported grant_type, invalid app)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '401':
+          description: Invalid credentials or account locked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '403':
+          description: User not confirmed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+  "/api/v1/oauth/revoke":
+    post:
+      summary: 'Access Token: Revoke / Logout [POST]'
+      operationId: doorkeeper-tokens-revoke
+      tags:
+      - Access Tokens
+      x-controller: Api::V1::Doorkeeper::TokensController
+      x-controller-action: revoke
+      security:
+      - Bearer: []
+      description: |
+        Revokes / invalidates an access token or refresh token (logout).
+
+        If no token is provided in the body, the current Bearer token
+        from the Authorization header will be revoked.
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: Token to be revoked (optional - falls back to current
+                    Bearer token)
+      responses:
+        '200':
+          description: Token revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+  "/api/v1/user/account_logins/{id}":
+    delete:
+      summary: 'Account Login: Delete [DELETE]'
+      tags:
+      - Account Logins
+      operationId: user-accountlogins-destroy
+      x-controller: Api::V1::User::AccountLoginsController
+      x-controller-action: destroy
+      x-route-name: v1_user_account_logins
+      x-candos:
+      - public
+      x-model-type: Doorkeeper::AccessToken
+      x-record-type: account_login
+      description: |-
+        Login history and active sessions
+
+        ---
+
+        To use this endpoint the current user needs to be authorized for the
+        tenant to do any of these
+
+         - public
+      security:
+      - Bearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Account Login id
+        schema:
+          type: string
+      - name: locale
+        in: query
+        description: to control the language returned
+        schema:
+          "$ref": "#/components/schemas/locales"
+      responses:
+        '200':
+          description: Doorkeeper::AccessToken deleted
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/meta"
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                description: |-
+                  Some server side rule prevented finishing this request.
+                  For example a multi delete might not have worked on all
+                  requested records due to some rule not allowing the delete.
+                  Please refer to the details in the response like
+                  - `meta.msg.error` error identifier
+                  - `meta.msg.message` message being displayed
+                  - `meta.msg.error_details` showing the attribute causing the problem
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '400':
+          description: Some values that were sent couldn't be processed
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Check the returned info in meta/msg for details
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '429':
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Wait for so many seconds as returned in the Retry-After
+                  header before accessing this endpoint again
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '401':
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Requires a valid login
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '403':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                type: object
+                description: User is missing the access rights to do this
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+  "/api/v1/user/account_logins":
+    get:
+      summary: 'Account Login: List [GET]'
+      tags:
+      - Account Logins
+      operationId: user-accountlogins-index
+      x-controller: Api::V1::User::AccountLoginsController
+      x-controller-action: index
+      x-route-name: v1_user_account_logins
+      x-candos:
+      - public
+      x-model-type: Doorkeeper::AccessToken
+      x-record-type: account_login
+      description: |-
+        Login history and active sessions
+
+        ---
+
+        To use this endpoint the current user needs to be authorized for the
+        tenant to do any of these
+
+         - public
+      security:
+      - Bearer: []
+      parameters:
+      - name: locale
+        in: query
+        description: to control the language returned
+        schema:
+          "$ref": "#/components/schemas/locales"
+      - name: quickfilter
+        in: query
+        schema:
+          type: string
+        description: performs a search in keywords
+      - name: page[number]
+        in: query
+        schema:
+          type: string
+        x-example: '1'
+        description: |
+          the page number (starts at 1, if not given or lower than 1 then
+          page 1 will automatically be assumed)'
+      - name: page[limit]
+        in: query
+        schema:
+          type: string
+        x-example: '10'
+        description: the number of records per page (might be limited on the server
+          side, use 0 to fetch no data to get only the total count)
+      - name: padding
+        in: query
+        schema:
+          type: string
+        x-example: '0'
+        description: 'manually adjust db offset: (page*per_page)+padding not required
+          for normal paging, in doubt omit'
+      - name: sort
+        in: query
+        schema:
+          type: string
+        description: |
+          JSON Array of Objects to sort the results by one
+          or more fields in the requested order.
+          Example:
+          `[{ property: "field1", direction: "ASC" }, { property: "field2", direction: "DESC" }]`
+      responses:
+        '200':
+          description: Doorkeeper::AccessTokens list
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                description: List endpoints will return an array below data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                      - id
+                      - type
+                      - attributes
+                      properties:
+                        id:
+                          type: string
+                        type:
+                          type: string
+                          default: account_login
+                        attributes:
+                          "$ref": "#/components/schemas/AccountLoginSerializer"
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '400':
+          description: Some values that were sent couldn't be processed
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Check the returned info in meta/msg for details
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '429':
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Wait for so many seconds as returned in the Retry-After
+                  header before accessing this endpoint again
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '401':
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Requires a valid login
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '403':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                type: object
+                description: User is missing the access rights to do this
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"

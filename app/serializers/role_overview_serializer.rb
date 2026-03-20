@@ -25,9 +25,12 @@ class RoleOverviewSerializer
 
         object :attributes, description: 'the main attributes of this record' do
           string :id, description: 'unique record id'
+          string :name, description: 'unique role name'
           string :title, default: 'title', description: 'a descriptive title'
           string :description, default: 'description', description: 'a description about what this role allows to do'
           string :app, default: 'app-name', description: 'name of app this role belongs to'
+          string :created_at, format: 'date-time', description: 'created date'
+          string :updated_at, format: 'date-time', description: 'updated date'
         end
       }
     end

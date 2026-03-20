@@ -1,10 +1,13 @@
 class Api::V1::App::InfosController < Api::V1::JsonApiController
+  API = :internal
 
   MODEL_BASE = Actors::App
   SERIALIZER = AppInfoSerializer
 
   SWAGGER = {
     tag: 'App Info',
+    name: 'App Info',
+    header: 'Public app information and branding',
     show: 'Loads app info identified by name'
   }
 
@@ -18,6 +21,14 @@ class Api::V1::App::InfosController < Api::V1::JsonApiController
 
   def record_show
     ::Actors::App.only(:system, :name, :short_name, :full_name, :url, :image_data, :config).find_by(name: params_json_api[:name].to_s.to_slug)
+  end
+
+  private
+
+  def cando
+    CANDO.merge({
+                  show: %w(public)
+                })
   end
 
 end

@@ -1,4 +1,5 @@
 class Api::V1::User::AuthenticateOtpController < Api::V1::JsonApiController
+  API = :internal
 
   rescue_from IdentityManagementExtension::OtpTooManyTries, with: :otp_too_many_tries
 
@@ -11,7 +12,9 @@ class Api::V1::User::AuthenticateOtpController < Api::V1::JsonApiController
   SERIALIZER = AccountLoginSerializer
 
   SWAGGER = {
-    tag: 'Current User'
+    tag: 'Current User',
+    name: 'OTP',
+    header: 'One-Time Password authentication for MFA'
   }
 
   undef_method :index

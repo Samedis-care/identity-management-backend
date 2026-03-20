@@ -37,8 +37,8 @@ class InvitationSerializer
         string :type, default: 'invitation', description: 'defines the class of the data'
         object :attributes, description: 'the main attributes of this record' do
           string :id, description: 'unique record id'
-          string :email, description: 'e-mail of the user to invite'
-          string :user_id, description: 'Optionally the user id instead of email user to invite'
+          string :email, write_only: true, description: 'e-mail of the user to invite'
+          string :user_id, write_only: true, description: 'Optionally the user id instead of email user to invite'
           string :invitable_type, default: 'tenant', description: 'the object class this invitation refers to'
           string :invitable_id, description: 'the id of the object this invitation refers to'
           object :actions, description: 'JSON Hash with key value pairs of one or more actions (key) to run on accept with arguments (value)' do
@@ -55,6 +55,7 @@ class InvitationSerializer
           string :redirect_url, description: 'after the invitation was accepted the user will be redirect to this url'
           string :accepted_at, format:'date-time', description: 'timestamp if/when the invitation was accepted'
           boolean :done, default: false, description: 'indicating if this invitation is outstanding'
+          boolean :has_account, description: 'true if the invited user already has an account'
           string :created_at, format:'date-time', description: 'timestamp when the invitation was created'
           string :updated_at, format:'date-time', description: 'timestamp when the invitation was updated'
         end

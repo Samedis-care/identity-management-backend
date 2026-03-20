@@ -11,6 +11,9 @@ class Api::V1::Apps::Users::TenantsController < Api::V1::Apps::Users::UserContro
   PERMIT_UPDATE = []
 
   SWAGGER = {
+    tag: 'User Tenants',
+    name: 'Tenant',
+    header: 'Tenants an app user belongs to',
     action_suffix: 'a User has in an App'
   }
 

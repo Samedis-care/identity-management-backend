@@ -1,0 +1,9 @@
+# install sepctral and run via
+# spectral lint public/api-docs/v1/ident.yaml
+extends:
+  - spectral:oas
+
+# disable while still using rswag - cannot be fixed with it
+rules:
+  oas3-unused-component: false
+  operation-tag-defined: false

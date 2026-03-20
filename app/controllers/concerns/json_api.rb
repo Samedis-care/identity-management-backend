@@ -187,6 +187,169 @@ module JsonApi
         }
       }.deep_stringify_keys
     end
+
+    # ---------------------------------------------------------------
+    # OpenAPI 3.1.1 spec generator methods
+    # ---------------------------------------------------------------
+
+    def serializer
+      self.class.module_parents.first
+    end
+
+    # Sanitized schema name for components/schemas
+    def openapi_component_name
+      serializer.name.gsub(/::/, '.')
+    end
+
+    def openapi_component_ref
+      { '$ref': "#/components/schemas/#{openapi_component_name}" }
+    end
+
+    def openapi_component_meta_ref
+      { '$ref': '#/components/schemas/meta' }
+    end
+
+    # Extracts the attributes portion from schema_record for use in components/schemas
+    def openapi_component_produces_schema
+      @openapi_component_produces_schema ||= begin
+        _schema = schema_record.call.schema.to_h.with_indifferent_access
+        # identity-management schemas wrap fields in id/type/attributes structure
+        _attributes = _schema.dig(:properties, :attributes) || _schema
+        _attributes
+      end
+    end
+
+    # Request body schema for JSON (create/update)
+    def openapi_consumes_schema(only: nil)
+      return empty_consumes_schema if only == []
+
+      only = only&.collect(&:to_s)
+      _attributes = openapi_component_produces_schema.deep_dup
+
+      # drop read_only fields
+      _attributes[:properties]&.each do |key, prop|
+        _attributes[:properties].delete(key) if prop[:readOnly] || prop['readOnly']
+      end
+
+      # apply only filter
+      if only.try(:any?)
+        _attributes[:properties] = _attributes[:properties].slice(*only)
+      end
+
+      {
+        type: :object,
+        properties: {
+          data: _attributes
+        }
+      }.deep_symbolize_keys
+    end
+
+    # Request body schema for form-data (multipart)
+    def openapi_consumes_form_data_schema(only: nil)
+      return empty_consumes_schema if only == []
+
+      _schema = openapi_consumes_schema(only:)
+      _flattened = flatten_openapi_form_data(_schema[:properties][:data], prefix: 'data')
+
+      {
+        type: :object,
+        required: _flattened[:required].presence,
+        properties: _flattened[:fields].sort.to_h
+      }.compact
+    end
+
+    # Response schema for index (list) endpoints
+    def openapi_produces_schema_index
+      {
+        type: :object,
+        required: %i(data),
+        description: 'List endpoints will return an array below data',
+        properties: {
+          data: {
+            type: :array,
+            items: {
+              type: :object,
+              required: %i(id type attributes),
+              properties: {
+                id: { type: :string },
+                type: { type: :string, default: record_type },
+                attributes: openapi_component_ref
+              }
+            }
+          },
+          meta: openapi_component_meta_ref
+        }
+      }.deep_stringify_keys
+    end
+
+    # Response schema for show/create/update endpoints
+    def openapi_produces_schema
+      {
+        type: :object,
+        required: %i(data),
+        description: 'Single endpoints will return an object as data',
+        properties: {
+          data: {
+            type: :object,
+            required: %i(id type attributes),
+            properties: {
+              id: { type: :string },
+              type: { type: :string, default: record_type },
+              attributes: openapi_component_ref
+            }
+          },
+          meta: openapi_component_meta_ref
+        }
+      }.deep_stringify_keys
+    end
+
+    # Meta-only response schema (for delete)
+    def openapi_meta_schema
+      meta_schema = swagger_schema_delete
+      meta_schema
+    end
+
+    # Default schemas shared across all specs
+    def openapi_default_schemas
+      {
+        locales: { type: :string, enum: I18n.available_locales },
+        meta: swagger_schema_delete.dig('properties', 'meta') || swagger_delete.schema.to_h.dig('properties', 'meta')
+      }
+    end
+
+    def openapi_component_locales_ref
+      { '$ref': '#/components/schemas/locales' }
+    end
+
+    private
+
+    def empty_consumes_schema
+      {
+        type: :object,
+        description: 'This endpoint does not support sending any attributes',
+        nullable: true
+      }
+    end
+
+    def flatten_openapi_form_data(obj, prefix: 'data')
+      _schema_required = (obj[:required] || []).collect(&:to_sym)
+      _required = []
+      _fields = []
+
+      (obj[:properties] || {}).each do |k, v|
+        if v[:type].to_s.to_sym.eql?(:object)
+          _prefix = "#{prefix}[#{k}]"
+          _append = flatten_openapi_form_data(v, prefix: _prefix)
+          _fields |= _append[:fields]
+          _required |= _append[:required]
+        else
+          _name = "#{prefix}[#{k}]"
+          _required << _name if _schema_required.include?(k.to_sym)
+          _fields << [_name, v]
+        end
+      end
+      { fields: _fields, required: _required }
+    end
   end
 
   # standardized schema for simple uploads

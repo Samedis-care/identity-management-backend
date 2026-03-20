@@ -11,6 +11,8 @@ class Api::V1::AccessControl::Apps::GroupsController < Api::V1::JsonApiControlle
 
   SWAGGER = {
     tag: 'Access Control',
+    name: 'App Group',
+    header: 'Manage access control groups across apps',
     action_suffix: 'available groups for this app'
   }
 

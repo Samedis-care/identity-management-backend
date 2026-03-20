@@ -7,6 +7,8 @@ class Api::V1::AppAdminController < Api::V1::JsonApiController
   SERIALIZER = AppAdminSerializer
   OVERVIEW_SERIALIZER = AppAdminOverviewSerializer
 
+  SWAGGER = { tag: 'App Admin', name: 'App Admin', header: 'Administrate app settings and configuration' }
+
   PERMIT_CREATE = PERMIT_UPDATE = [
     :short_name,
     :full_name,

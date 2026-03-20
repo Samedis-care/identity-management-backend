@@ -1,4 +1,5 @@
 class Api::V1::User::AccountActivityController < Api::V1::JsonApiController
+  API = :internal
   MODEL_BASE = AccountActivity
   MODEL = AccountActivity
   MODEL_OVERVIEW = AccountActivity
@@ -6,7 +7,9 @@ class Api::V1::User::AccountActivityController < Api::V1::JsonApiController
   OVERVIEW_SERIALIZER = AccountActivitySerializer
 
   SWAGGER = {
-    tag: 'Current User'
+    tag: 'Current User',
+    name: 'Account Activity',
+    header: 'Activity log of the current user account'
   }
 
   undef_method :destroy

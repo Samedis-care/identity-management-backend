@@ -8,6 +8,8 @@ class Api::V1::Picker::TenantUsersController < Api::V1::JsonApiController
 
   PARAM_UPDATE = [tenant_groups: []]
 
+  SWAGGER = { tag: 'Picker: Tenant Users', name: 'Tenant User', header: 'Tenant user picker for selection dialogs' }
+
   undef_method :create
   undef_method :destroy
 

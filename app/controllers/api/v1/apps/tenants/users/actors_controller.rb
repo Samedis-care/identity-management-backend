@@ -10,6 +10,8 @@ class Api::V1::Apps::Tenants::Users::ActorsController < Api::V1::Apps::Users::Us
 
   PERMIT_UPDATE = []
 
+  SWAGGER = { tag: 'Tenant User Actors', name: 'Actor', header: 'Actor mappings for a tenant user' }
+
   undef_method :update
 
   def create

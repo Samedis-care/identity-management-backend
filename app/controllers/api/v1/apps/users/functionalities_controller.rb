@@ -10,6 +10,8 @@ class Api::V1::Apps::Users::FunctionalitiesController < Api::V1::Apps::Users::Us
 
   PERMIT_UPDATE = []
 
+  SWAGGER = { tag: 'User Functionalities', name: 'Functionality', header: 'Functionalities available to an app user' }
+
   undef_method :create
   undef_method :update
   undef_method :destroy

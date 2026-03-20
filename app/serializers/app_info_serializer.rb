@@ -78,6 +78,12 @@ class AppInfoSerializer
           string :short_name, default: 'app-name', description: 'short name of the app'
           string :full_name, default: 'app-name', description: 'full name of the app'
 
+          object :image, description: 'image in different sizes' do
+            string :large
+            string :medium
+            string :small
+          end
+
           array :auth_provider_hints, description: 'MD5 checksums for domains with custom oauth provider' do
             items do
               string :checksum
@@ -98,6 +104,12 @@ class AppInfoSerializer
               string :from, description: 'The from address used in mails for user email confirmations'
               string :reply_to, description: 'The reply address used in mails for user email confirmations'
               string :support_email, description: 'The support address used in mails for user email confirmations'
+              string :logo_b64, description: 'A PNG logo as mail header in Base64 encoded format'
+              string :footer_html, description: 'The footer_html of the current client locale'
+              object :footer_html_translations, description: 'language keys here are dynamic and can consist of any supported language, minimum should be those languages of the configured app locales' do
+                string :en, description: 'the english locale footer'
+                string :de, description: 'the german locale footer'
+              end
             end
 
             object :theme, description: 'optional theme settings' do
@@ -122,7 +134,7 @@ class AppInfoSerializer
                   end
                 end
               end
-              string :type, default: 'light', description: 'light or dark theme as base'
+              string :mode, default: 'light', description: 'light or dark theme as base'
             end
 
 

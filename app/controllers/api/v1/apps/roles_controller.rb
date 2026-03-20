@@ -21,6 +21,8 @@ class Api::V1::Apps::RolesController < Api::V1::JsonApiController
   ].freeze
   PERMIT_UPDATE = PERMIT_CREATE
 
+  SWAGGER = { tag: 'Roles', name: 'Role', header: 'Manage roles within an app' }
+
   private
 
   def cando

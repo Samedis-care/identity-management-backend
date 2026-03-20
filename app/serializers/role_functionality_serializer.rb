@@ -46,6 +46,8 @@ class RoleFunctionalitySerializer
           string :description, description: 'the functionality description'
           string :module, description: 'the functionality module'
           string :ident, description: 'the functionality ident'
+          string :created_at, format: 'date-time', description: 'created date'
+          string :updated_at, format: 'date-time', description: 'updated date'
         end
       }
     end

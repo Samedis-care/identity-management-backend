@@ -13,6 +13,8 @@ class Api::V1::Apps::Tenants::Organizations::MappingsController < Api::V1::JsonA
 
   PERMIT_CREATE = [:map_actor_id, :user_id]
 
+  SWAGGER = { tag: 'Tenant Org Mappings', name: 'Mapping', header: 'User-to-organization mappings within a tenant' }
+
   undef_method :update
 
   private

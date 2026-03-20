@@ -1,9 +1,12 @@
 class Api::V1::User::LeaveTenantController < Api::V1::JsonApiController
+  API = :internal
   MODEL_BASE = Actors::Mapping
   MODEL = -> { Actors::Tenant.find(params[:id]).descendants.mappings }
   MODEL_OVERVIEW = MODEL
-  SERIALIZER = nil
-  OVERVIEW_SERIALIZER = nil
+  SERIALIZER = ActorSerializer
+  OVERVIEW_SERIALIZER = ActorSerializer
+
+  SWAGGER = { tag: 'Current User', name: 'Leave Tenant', header: 'Remove current user from a tenant' }
 
   undef_method :index
   undef_method :show

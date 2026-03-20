@@ -14,6 +14,8 @@ class Api::V1::AccessControl::Tenant::UsersController < Api::V1::JsonApiControll
 
   SWAGGER = {
     tag: 'Access Control',
+    name: 'Tenant User',
+    header: 'Manage user access control for a tenant',
     action_suffix: 'authorized groups'
   }
 

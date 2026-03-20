@@ -11,6 +11,8 @@ class Api::V1::AccessControl::Tenant::RolesController < Api::V1::JsonApiControll
   PERMIT_CREATE = [].freeze
   PERMIT_UPDATE = PERMIT_CREATE
 
+  SWAGGER = { tag: 'Access Control', name: 'Tenant Role', header: 'Manage roles within tenant access control' }
+
   undef_method :create
   undef_method :update
   undef_method :destroy

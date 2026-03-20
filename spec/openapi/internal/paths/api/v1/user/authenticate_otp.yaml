@@ -1,0 +1,122 @@
+# Version: 1.0
+# auto generated path descriptions, update via: (append `-f` to force update if needed)
+#     rails g openapi_spec v1_user_authenticate_otp_index
+---
+paths:
+  "/api/v1/user/authenticate_otp":
+    post:
+      summary: 'OTP: Create [POST]'
+      tags:
+      - Current User
+      operationId: user-authenticateotp-create
+      x-controller: Api::V1::User::AuthenticateOtpController
+      x-controller-action: create
+      x-route-name: v1_user_authenticate_otp_index
+      x-candos:
+      - public
+      x-model-type: Doorkeeper::AccessToken
+      x-record-type: account_login
+      description: |-
+        One-Time Password authentication for MFA
+
+        ---
+
+        To use this endpoint the current user needs to be authorized for the
+        tenant to do any of these
+
+         - public
+      security:
+      - Bearer: []
+      parameters:
+      - name: locale
+        in: query
+        description: to control the language returned
+        schema:
+          "$ref": "#/components/schemas/locales"
+      responses:
+        '200':
+          description: Doorkeeper::AccessToken created
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                description: Single endpoints will return an object as data
+                properties:
+                  data:
+                    type: object
+                    required:
+                    - id
+                    - type
+                    - attributes
+                    properties:
+                      id:
+                        type: string
+                      type:
+                        type: string
+                        default: account_login
+                      attributes:
+                        "$ref": "#/components/schemas/AccountLoginSerializer"
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '400':
+          description: Some values that were sent couldn't be processed
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Check the returned info in meta/msg for details
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '429':
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Wait for so many seconds as returned in the Retry-After
+                  header before accessing this endpoint again
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '401':
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Requires a valid login
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '403':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                type: object
+                description: User is missing the access rights to do this
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: This endpoint does not support sending any attributes
+              nullable: true
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              description: This endpoint does not support sending any attributes
+              nullable: true
+          multipart/form-data:
+            schema:
+              type: object
+              description: This endpoint does not support sending any attributes
+              nullable: true
+

@@ -1,4 +1,5 @@
 class Api::V1::User::AccountLoginsController < Api::V1::JsonApiController
+  API = :public
 
   MODEL_BASE = Doorkeeper::AccessToken
   MODEL = -> {
@@ -10,6 +11,8 @@ class Api::V1::User::AccountLoginsController < Api::V1::JsonApiController
 
   SWAGGER = {
     tag: 'Account Logins',
+    name: 'Account Login',
+    header: 'Login history and active sessions',
     destroy: 'Delete Access Token (logout)'
   }
 

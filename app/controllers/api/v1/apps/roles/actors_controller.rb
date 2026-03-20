@@ -8,6 +8,8 @@ class Api::V1::Apps::Roles::ActorsController < Api::V1::JsonApiController
   SERIALIZER = ActorSerializer
   OVERVIEW_SERIALIZER = ActorOverviewSerializer
 
+  SWAGGER = { tag: 'Role Actors', name: 'Actor', header: 'Actors assigned to a role' }
+
   #PERMIT_CREATE = []
 
   undef_method :create

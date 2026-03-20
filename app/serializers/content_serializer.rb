@@ -24,7 +24,7 @@ class ContentSerializer
 
         object :attributes, description: 'the main attributes of this record' do
           string :id, description: 'unique record id'
-          string :actors_app_id, description: 'id of the app this content belongs to'
+          string :app, description: 'the app this content belongs to'
           string :name, default: 'app-info', enum: Content.enumerized_attributes[:name].values, description: 'name of the content (like "tos", "app-info")'
           number :version, description: 'highest active-flagged version will be used'
           object :content_translations, description: 'Hash of locale-languages with translated content' do
@@ -33,6 +33,8 @@ class ContentSerializer
           end
           boolean :active, default: false, description: 'only active flagged will be used, leave inactive during draft'
           boolean :acceptance_required, default: false, description: 'when true the user is required to accept every new version of this content'
+          string :created_at, format: 'date-time', description: 'created date'
+          string :updated_at, format: 'date-time', description: 'updated date'
         end
       }
     end

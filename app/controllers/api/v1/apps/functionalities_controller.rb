@@ -20,6 +20,8 @@ class Api::V1::Apps::FunctionalitiesController < Api::V1::JsonApiController
   ]
   PERMIT_CREATE = PERMIT_UPDATE
 
+  SWAGGER = { tag: 'Functionalities', name: 'Functionality', header: 'Manage app functionalities (permission groups)' }
+
   private
   def cando
     CANDO.merge({

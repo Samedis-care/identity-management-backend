@@ -67,6 +67,8 @@ class ActorOrganizationSerializer
           boolean :active, default: true, description: 'indicating if this actor is available'
           boolean :deleted, default: false, description: 'indicating if this actor is marked as deleted'
 
+          string :created_at, format: 'date-time', description: 'created date'
+          string :updated_at, format: 'date-time', description: 'updated date'
         end
       }
     end

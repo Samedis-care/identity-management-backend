@@ -22,7 +22,6 @@ class EmailBlacklistSerializer
 
           string :domain, description: 'blacklisted domain name'
           string :active, description: 'controls if the domain name is actively being blacklisted'
-          string :full_name, description: 'full name'
         end
       }
     end

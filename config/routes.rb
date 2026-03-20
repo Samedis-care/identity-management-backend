@@ -1,7 +1,8 @@
 Rails.application.routes.draw do
 
-  mount Rswag::Ui::Engine => '/api-docs'
-  mount Rswag::Api::Engine => '/api-docs'
+  get '/api-docs', to: redirect('/api-docs/v1/public/index.html')
+  get '/api-docs/:version/:spec' => 'openapi_specs#show'
+  get '/api-docs/:version/:spec/index.html' => 'openapi_specs#show'
 
   devise_for :users, only: [], controllers: {
     unlocks: 'api/v1/app/unlocks',

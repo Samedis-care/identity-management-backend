@@ -1,3 +1,4 @@
+# OpenAPI spec: spec/openapi/ident/paths/api/v1/doorkeeper/tokens.yaml
 class Api::V1::Doorkeeper::TokensController < Doorkeeper::TokensController
   include AbstractController::Callbacks
   include JsonApi

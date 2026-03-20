@@ -8,6 +8,8 @@ class Api::V1::Apps::Picker::Users::GroupsController < Api::V1::JsonApiControlle
   SERIALIZER = PickerUserGroupSerializer
   OVERVIEW_SERIALIZER = PickerUserGroupSerializer
 
+  SWAGGER = { tag: 'Picker: User Groups', name: 'User Group', header: 'Group picker for an app user' }
+
   undef_method :create
   undef_method :update
   undef_method :destroy

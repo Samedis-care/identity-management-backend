@@ -44,6 +44,12 @@ class ActorOverviewSerializer
 
         object :attributes, description: 'the main attributes of this record' do
           string :id, description: 'unique record id'
+          string :parent_id, description: 'the parent record id'
+          array :parent_ids, description: 'ids of parent actors' do
+            items type: :string
+          end
+          string :map_actor_id, description: 'mapped actor id'
+          boolean :leaf, description: 'when true this is the last element of a tree'
           string :actor_type, default: 'ou', description: 'type of actor'
 
           array :insertable_child_types do
@@ -60,6 +66,9 @@ class ActorOverviewSerializer
           string :full_name, default: 'full name of an organizational unit or group', description: 'full name of this actor'
 
           boolean :active, default: true, description: 'indicating if this actor is available'
+          boolean :deleted, default: false, description: 'indicating if this actor is marked as deleted'
+          string :created_at, format: 'date-time', description: 'created date'
+          string :updated_at, format: 'date-time', description: 'updated date'
         end
       }
     end

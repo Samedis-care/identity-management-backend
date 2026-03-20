@@ -114,6 +114,12 @@ class AppAdminSerializer
             string :de, description: 'the german locales for this apps roles as yaml string'
           end
 
+          object :image, description: 'image in different sizes' do
+            string :large
+            string :medium
+            string :small
+          end
+
           object :config, description: 'Hash of app config' do
             string :url, default: 'https://domain.local', description: 'URL of the app'
             boolean :uses_bearer_token, default: true, description: 'If the app bearer token will be included in redirect URL as #anchor (true) or query param for server (false)'
@@ -174,7 +180,7 @@ class AppAdminSerializer
                   end
                 end
               end
-              string :type, default: 'light', description: 'light or dark theme as base'
+              string :mode, default: 'light', description: 'light or dark theme as base'
             end
 
           end

@@ -10,6 +10,8 @@ class Api::V1::Apps::Users::ActorsController < Api::V1::Apps::Users::UserControl
 
   PERMIT_UPDATE = []
 
+  SWAGGER = { tag: 'User Actors', name: 'Actor', header: 'Actor mappings for an app user' }
+
   undef_method :update
 
   def create

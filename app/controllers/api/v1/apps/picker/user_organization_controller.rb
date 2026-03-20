@@ -8,6 +8,8 @@ class Api::V1::Apps::Picker::UserOrganizationController < Api::V1::JsonApiContro
   SERIALIZER = ActorSerializer
   OVERVIEW_SERIALIZER = ActorOverviewSerializer
 
+  SWAGGER = { tag: 'Picker: User Organizations', name: 'User Organization', header: 'Organization picker for an app user' }
+
   undef_method :create
   undef_method :update
   undef_method :destroy

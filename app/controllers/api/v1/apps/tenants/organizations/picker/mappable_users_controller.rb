@@ -10,6 +10,8 @@ class Api::V1::Apps::Tenants::Organizations::Picker::MappableUsersController < A
   SERIALIZER = MappableUserOverviewSerializer
   OVERVIEW_SERIALIZER = SERIALIZER
 
+  SWAGGER = { tag: 'Tenant Org Picker: Mappable Users', name: 'Mappable User', header: 'Users available for mapping to an organization' }
+
   undef_method :show
   undef_method :create
   undef_method :update

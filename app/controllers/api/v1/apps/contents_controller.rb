@@ -8,6 +8,8 @@ class Api::V1::Apps::ContentsController < Api::V1::JsonApiController
   SERIALIZER = ContentSerializer
   OVERVIEW_SERIALIZER = ContentSerializer
 
+  SWAGGER = { tag: 'Contents', name: 'Content', header: 'Manage app content like terms and policies' }
+
   skip_before_action :authenticate_user!, only: :show
   skip_before_action :authorize, only: :show
 

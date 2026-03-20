@@ -18,8 +18,10 @@ class AccessControlSerializer
         string :type, description: 'record type', default: record_type
         object :attributes, description: 'the main attributes of this record' do
           string :id, description: 'unique record id'
+          string :name, description: 'the name of this access control'
           string :label, description: 'the label of this access group'
           string :group, description: 'a grouping name'
+          string :group_name, description: 'the group name'
           string :description, description: 'describes the access this group grants (Markdown)'
 
           array :role_ids do

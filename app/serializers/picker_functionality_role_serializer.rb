@@ -53,6 +53,9 @@ class PickerFunctionalityRoleSerializer
             end
           end
 
+          boolean :already_in_functionality, description: 'Boolean that signals if this role is already in the functionality'
+          string :created_at, format: 'date-time', description: 'created date'
+          string :updated_at, format: 'date-time', description: 'updated date'
         end
       }
     end

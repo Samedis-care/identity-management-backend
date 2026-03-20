@@ -6,6 +6,8 @@ class Api::V1::EmailBlacklistController < Api::V1::JsonApiController
   SERIALIZER = EmailBlacklistSerializer
   OVERVIEW_SERIALIZER = EmailBlacklistSerializer
 
+  SWAGGER = { tag: 'Email Blacklist', name: 'Email Blacklist', header: 'Manage blocked email domains' }
+
   private
   def cando
     CANDO.merge({

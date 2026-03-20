@@ -39,6 +39,10 @@ class MappableUserOverviewSerializer
 
         object :attributes, description: 'the main attributes of this record' do
           string :id, description: 'unique record id'
+          string :parent_id, description: 'the parent record id'
+          array :parent_ids, description: 'ids of parent actors' do
+            items type: :string
+          end
           string :actor_type, default: 'ou', description: 'type of actor'
 
           string :path, description: 'the path of this actor within the global tree'
@@ -48,6 +52,8 @@ class MappableUserOverviewSerializer
           string :email, description: 'email address of the associated user'
 
           boolean :already_in_orga, description: 'Boolean that signals if this actor is already in the orga of the nested resource set'
+          string :created_at, format: 'date-time', description: 'created date'
+          string :updated_at, format: 'date-time', description: 'updated date'
         end
       }
     end

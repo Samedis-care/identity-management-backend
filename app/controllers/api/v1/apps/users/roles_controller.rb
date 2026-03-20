@@ -10,6 +10,8 @@ class Api::V1::Apps::Users::RolesController < Api::V1::Apps::Users::UserControll
 
   PERMIT_UPDATE = []
 
+  SWAGGER = { tag: 'User Roles', name: 'Role', header: 'Roles assigned to an app user' }
+
   undef_method :create
   undef_method :update
   undef_method :destroy

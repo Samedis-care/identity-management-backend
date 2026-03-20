@@ -27,6 +27,8 @@ class Api::V1::Apps::Tenants::UsersController < Api::V1::JsonApiController
     :invalid_at
   ]
 
+  SWAGGER = { tag: 'Tenant Users', name: 'User', header: 'Manage users within a tenant of an app' }
+
   undef_method :create
   undef_method :destroy
 

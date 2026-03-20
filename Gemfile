@@ -29,7 +29,6 @@ gem 'kaminari-mongoid'
 gem 'json-schema_builder'
 gem 'rspec'
 gem 'rspec-rails'
-gem 'rswag'
 
 # Replacement for ActiveStorage to use S3 stored file uploads with mongodb
 gem 'aws-sdk-s3'

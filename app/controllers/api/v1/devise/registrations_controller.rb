@@ -1,3 +1,4 @@
+# OpenAPI spec: spec/openapi/ident/paths/api/v1/devise/registrations.yaml
 class Api::V1::Devise::RegistrationsController < Devise::RegistrationsController
   include ActionController::Helpers
   # include ActionController::Flash
