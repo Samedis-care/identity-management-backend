@@ -1,6 +1,6 @@
 Rails.application.routes.draw do
 
-  get '/api-docs', to: redirect('/api-docs/v1/public/index.html')
+  get '/api-docs' => 'openapi_specs#show', defaults: { version: 'v1', spec: 'public' }
   get '/api-docs/:version/:spec' => 'openapi_specs#show'
   get '/api-docs/:version/:spec/index.html' => 'openapi_specs#show'
 
