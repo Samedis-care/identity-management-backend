@@ -88,5 +88,16 @@ after_stopped do
   end
 end
 
+# Periodic full GC via out_of_band (runs after a request completes, outside request cycle)
+last_oob_gc = Time.now.utc
+
+out_of_band do
+  now = Time.now.utc
+  if now - last_oob_gc >= 3600
+    last_oob_gc = now
+    GC.start(full_mark: true, immediate_sweep: true)
+  end
+end
+
 # Allow puma to be restarted by `rails restart` command.
 plugin :tmp_restart
