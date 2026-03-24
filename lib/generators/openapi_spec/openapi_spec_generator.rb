@@ -54,19 +54,7 @@ class OpenapiSpecGenerator < Rails::Generators::NamedBase
   end
 
   def self.servers
-    [
-      {
-        url: '{protocol}://{defaultHost}',
-        variables: {
-          protocol: {
-            default: :https
-          },
-          defaultHost: {
-            default: ENV.fetch('HOST', 'localhost:3000')
-          }
-        }
-      }
-    ]
+    []
   end
 
   def self.security_schemes
