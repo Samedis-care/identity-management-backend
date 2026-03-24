@@ -261,11 +261,7 @@
       document.body.removeChild(a);
     }
 
-    function specFromUrl() {
-      const url = new URL(window.location.href);
-      const spec = url.pathname.split('/').slice(0, 4).join('/');
-      return `${spec.split('.')[0]}.yaml`;
-    }
+    const currentSpecUrl = '<%= @current_spec_url %>';
 
     document.addEventListener('DOMContentLoaded', (event) => {
       const docElement = document.querySelector('openapi-explorer');
@@ -278,17 +274,15 @@
       // navigate between specs
       var link = document.getElementById('spec-download');
       const selector = document.getElementById('apis');
-      selector.value = specFromUrl();
+      selector.value = currentSpecUrl;
       selector.onchange = function(e) {
-        //docElement.loadSpec(e.target.value);
         const url = `${e.target.value.split('.')[0]}/index.html`
         document.location.href = url;
       }
       setTimeout(function() {
-        const specUrl = specFromUrl();
-        link.innerHTML = '<span>Download ' + specUrl.split('/').pop() + '</span>';
-        link.href = specUrl;
-        docElement.loadSpec(specUrl);
+        link.innerHTML = '<span>Download ' + currentSpecUrl.split('/').pop() + '</span>';
+        link.href = currentSpecUrl;
+        docElement.loadSpec(currentSpecUrl);
       }, 10);
     });
 
