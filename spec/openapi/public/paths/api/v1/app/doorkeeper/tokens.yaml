@@ -16,8 +16,10 @@ paths:
         Supports multiple grant types:
         - `password` - Login with email and password
         - `refresh_token` - Refresh an expired access token
-        - `google_uid` - Login with Google UID
         - `recovery_email` - Login with recovery email
+
+        Social login (Google, Microsoft, Apple) uses the OmniAuth redirect flow,
+        not this endpoint.
 
         On successful login, the user is automatically added to the app's container.
 
@@ -45,7 +47,6 @@ paths:
                   enum:
                     - password
                     - refresh_token
-                    - google_uid
                     - recovery_email
                   description: The OAuth2 grant type
                 username:

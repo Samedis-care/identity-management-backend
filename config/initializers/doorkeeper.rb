@@ -18,10 +18,11 @@ Doorkeeper.configure do
   end
 
   resource_owner_from_credentials do |_|
+    # Social login (Google, Microsoft, Apple) must go through the OmniAuth callback flow,
+    # not this endpoint. See Api::V1::Devise::OmniauthCallbacksController.
     conditions = {
       email: params[:username] || params[:email],
-      recovery_email: params[:recovery_email],
-      google_uid: params[:google_uid]
+      recovery_email: params[:recovery_email]
     }.reject { |_, v| v.nil? || v.empty? }
 
     u = User.login_allowed.find_for_database_authentication(conditions)
@@ -29,12 +30,6 @@ Doorkeeper.configure do
     next unless u.is_a?(User)
 
     u.app_context = params[:app]
-
-    if conditions[:google_uid]
-      # Decide policy: should lockable apply to this path?
-      # If yes, wrap it too. If no, leave as-is.
-      next u
-    end
 
     if conditions[:recovery_email]
       ok = u.valid_for_authentication? do
