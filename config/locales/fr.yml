@@ -55,6 +55,7 @@ fr:
         Un courriel contenant des instructions sur la manière de déverrouiller votre
         compte vous a été envoyé.\nVous pouvez également utiliser la fonction de réinitialisation
         du mot de passe pour lever le verrou."
+      social_missing_params: 'Paramètres manquants : le fournisseur et id_token sont requis.'
   devise:
     mailer:
       account_confirm: Merci pour votre confirmation. Votre accès a été activé.
@@ -337,6 +338,3 @@ fr:
     footer_html: |-
       Ce mail a été envoyé par identity-management (https://github.com/Samedis-care/identity-management) <br />
       Veuillez configurer le pied de page dans les paramètres de votre application.
-  auth:
-    error:
-      social_missing_params: 'Paramètres manquants : le fournisseur et id_token sont requis.'
