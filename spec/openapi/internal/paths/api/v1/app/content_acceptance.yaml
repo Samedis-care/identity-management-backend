@@ -1,0 +1,243 @@
+# Version: 1.0
+# auto generated path descriptions, update via: (append `-f` to force update if needed)
+#     rails g openapi_spec v1_content_acceptance
+---
+paths:
+  "/api/v1/{app}/content_acceptance/{name}":
+    get:
+      summary: 'Content Acceptance: Show [GET]'
+      tags:
+      - Current User
+      operationId: app-contentacceptance-show
+      x-controller: Api::V1::App::ContentAcceptanceController
+      x-controller-action: show
+      x-route-name: v1_content_acceptance
+      x-candos:
+      - public
+      x-model-type: Content
+      x-record-type: content_acceptance
+      description: |-
+        Track user acceptance of terms, policies and other content
+
+        ---
+
+        To use this endpoint the current user needs to be authorized for the
+        tenant to do any of these
+
+         - public
+      security:
+      - Bearer: []
+      parameters:
+      - name: app
+        in: path
+        required: true
+        description: Content Acceptance app
+        schema:
+          type: string
+      - name: name
+        in: path
+        required: true
+        description: Content Acceptance name
+        schema:
+          type: string
+      - name: locale
+        in: query
+        description: to control the language returned
+        schema:
+          "$ref": "#/components/schemas/locales"
+      responses:
+        '200':
+          description: Content view
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                description: Single endpoints will return an object as data
+                properties:
+                  data:
+                    type: object
+                    required:
+                    - id
+                    - type
+                    - attributes
+                    properties:
+                      id:
+                        type: string
+                      type:
+                        type: string
+                        default: content_acceptance
+                      attributes:
+                        "$ref": "#/components/schemas/ContentAcceptanceSerializer"
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '400':
+          description: Some values that were sent couldn't be processed
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Check the returned info in meta/msg for details
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '429':
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Wait for so many seconds as returned in the Retry-After
+                  header before accessing this endpoint again
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '401':
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Requires a valid login
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '403':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                type: object
+                description: User is missing the access rights to do this
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+    put:
+      summary: 'Content Acceptance: Update [PUT]'
+      tags:
+      - Current User
+      operationId: app-contentacceptance-update
+      x-controller: Api::V1::App::ContentAcceptanceController
+      x-controller-action: update
+      x-route-name: v1_content_acceptance
+      x-candos:
+      - public
+      x-model-type: Content
+      x-record-type: content_acceptance
+      description: |-
+        Track user acceptance of terms, policies and other content
+
+        ---
+
+        To use this endpoint the current user needs to be authorized for the
+        tenant to do any of these
+
+         - public
+      security:
+      - Bearer: []
+      parameters:
+      - name: app
+        in: path
+        required: true
+        description: Content Acceptance app
+        schema:
+          type: string
+      - name: name
+        in: path
+        required: true
+        description: Content Acceptance name
+        schema:
+          type: string
+      - name: locale
+        in: query
+        description: to control the language returned
+        schema:
+          "$ref": "#/components/schemas/locales"
+      responses:
+        '200':
+          description: Content updated
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                description: Single endpoints will return an object as data
+                properties:
+                  data:
+                    type: object
+                    required:
+                    - id
+                    - type
+                    - attributes
+                    properties:
+                      id:
+                        type: string
+                      type:
+                        type: string
+                        default: content_acceptance
+                      attributes:
+                        "$ref": "#/components/schemas/ContentAcceptanceSerializer"
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '400':
+          description: Some values that were sent couldn't be processed
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Check the returned info in meta/msg for details
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '429':
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Wait for so many seconds as returned in the Retry-After
+                  header before accessing this endpoint again
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '401':
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Requires a valid login
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '403':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                type: object
+                description: User is missing the access rights to do this
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: This endpoint does not support sending any attributes
+              nullable: true
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              description: This endpoint does not support sending any attributes
+              nullable: true
+          multipart/form-data:
+            schema:
+              type: object
+              description: This endpoint does not support sending any attributes
+              nullable: true
+

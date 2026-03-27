@@ -1,0 +1,154 @@
+# Manual spec for Devise email confirmations
+---
+paths:
+  "/api/v1/{app}/users/confirmation":
+    post:
+      summary: "Confirmation: Resend [POST]"
+      operationId: devise-confirmations-create
+      tags:
+        - User Accounts
+      x-controller: Api::V1::Devise::ConfirmationsController
+      x-controller-action: create
+      description: |
+        Resend the confirmation email for an unconfirmed account.
+      parameters:
+        - name: app
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The app identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - email
+                  properties:
+                    email:
+                      type: string
+                      format: email
+                      description: E-mail address to resend confirmation for
+      responses:
+        "200":
+          description: Confirmation instructions sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        "400":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+
+  "/api/v1/{app}/users/confirmation/{confirmation_token}":
+    get:
+      summary: "Confirmation: Confirm Email [GET]"
+      operationId: devise-confirmations-show
+      tags:
+        - User Accounts
+      x-controller: Api::V1::Devise::ConfirmationsController
+      x-controller-action: show
+      description: |
+        Confirm a user's email address using the token received via email.
+
+        Returns the confirmed user on success.
+      parameters:
+        - name: app
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The app identifier
+        - name: confirmation_token
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Confirmation token from the email
+      responses:
+        "200":
+          description: Email confirmed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      type:
+                        type: string
+                      attributes:
+                        "$ref": "#/components/schemas/AppUserSerializer"
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        "400":
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+
+  "/api/v1/{app}/users/recovery_confirmation/{recovery_confirmation_token}":
+    get:
+      summary: "Confirmation: Confirm Recovery Email [GET]"
+      operationId: devise-confirmations-recovery
+      tags:
+        - User Accounts
+      x-controller: Api::V1::Devise::ConfirmationsController
+      x-controller-action: recovery_confirmation
+      description: |
+        Confirm a user's recovery email address using the token received via email.
+      parameters:
+        - name: app
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The app identifier
+        - name: recovery_confirmation_token
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Recovery confirmation token from the email
+      responses:
+        "200":
+          description: Recovery email confirmed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        "400":
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
