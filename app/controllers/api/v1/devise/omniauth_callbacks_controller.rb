@@ -74,16 +74,29 @@ class Api::V1::Devise::OmniauthCallbacksController < ::Devise::OmniauthCallbacks
     if !state && params[:app]
       state = { app: current_app_actor.name, redirect_host: current_app_actor.config.url }.to_json
     end
-    # pass on requested locale
-    state = JSON.parse(state).merge(locale: I18n.locale).to_json
+    # Embed a random nonce in the state for CSRF protection — verified in the callback.
+    nonce = SecureRandom.hex(16)
+    session[:oauth_state_nonce] = nonce
+    state = JSON.parse(state).merge(locale: I18n.locale, nonce:).to_json
 
     code_verifier = provider.create_code_verifier!
-    cookies[:code_verifier] = { value: code_verifier, expires: 3.minutes }
+    cookies[:code_verifier] = {
+      value: code_verifier,
+      expires: 3.minutes,
+      httponly: true,
+      secure: Rails.env.production?,
+      same_site: :lax
+    }
 
     redirect_to provider.passthru_uri(code_verifier:, state:, login_hint: params[:login_hint]), allow_other_host: true
   end
 
   def dynamic_provider_callback
+    expected_nonce = session.delete(:oauth_state_nonce)
+    unless expected_nonce.present? && state[:nonce] == expected_nonce
+      raise CustomAuthProvider::FailedAuthError, 'Invalid OAuth state — possible CSRF attempt'
+    end
+
     code = params[:code]
     provider = CustomAuthProvider.find_by(domain: params[:provider])
     user_info = provider.access_token(code, code_verifier: cookies[:code_verifier])
