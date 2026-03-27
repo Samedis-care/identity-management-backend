@@ -1,0 +1,19 @@
+info:
+  title: Identity Management API (Internal)
+  description: |
+    ## Internal API
+
+    Administrative endpoints for managing users, tenants,
+    roles, organizations and access control.
+
+    All endpoints follow the JSON:API specification.
+
+    ### Authentication
+    Most endpoints require a valid Bearer token obtained via OAuth2.
+
+    ### Authorization
+    Endpoints require specific `candos` (permissions) assigned to the user
+    within the context of a tenant. The required candos are documented per endpoint.
+  version: v1
+  contact:
+    name: Samedis-care GmbH
