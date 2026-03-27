@@ -56,6 +56,7 @@ de:
         Der Bestätigungscode war ungültig.
         Dein Konto konnte daher nicht aktiviert werden.
         Bitte überprüfe das der vollständige Bestätigungslink verwendet wurde.
+      social_missing_params: 'Fehlende Parameter: Provider und id_token sind erforderlich.'
   devise:
     mailer:
       account_confirm: Vielen Dank für Deine Bestätigung. Dein Zugang wurde 
@@ -327,6 +328,3 @@ de:
     footer_html: |-
       Diese Mail wurde von Identity-Management (https://github.com/Samedis-care/identity-management) gesendet<br />
       Bitte konfiguriere die Fußzeile in Ihren App-Einstellungen.
-  auth:
-    error:
-      social_missing_params: 'Fehlende Parameter: Provider und id_token sind erforderlich.'

@@ -52,6 +52,7 @@ nl:
         hebt een e-mail ontvangen met instructies om je account te ontgrendelen.\n\
         Je kunt ook de functie voor het resetten van je wachtwoord gebruiken om de
         vergrendeling op te heffen."
+      social_missing_params: 'Ontbrekende parameters: provider en id_token zijn vereist.'
   devise:
     mailer:
       account_confirm: Dank u voor uw bevestiging. Uw toegang is geactiveerd.
@@ -309,6 +310,3 @@ nl:
     footer_html: |-
       Deze mail is verstuurd door identity-management (https://github.com/Samedis-care/identity-management)
       Configureer de voettekst in jouw app-instellingen.
-  auth:
-    error:
-      social_missing_params: 'Ontbrekende parameters: provider en id_token zijn vereist.'
