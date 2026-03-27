@@ -187,10 +187,12 @@ class CustomAuthProvider < ApplicationDocument
       raise e
     end
 
-    JSON.parse(response.body)
-  rescue JSON::ParserError => e
-    Sentry.capture_exception(e)
-    raise FailedAuthError, I18n.t('json_api.oauth_failed', host:)
+    begin
+      JSON.parse(response.body)
+    rescue JSON::ParserError => e
+      Sentry.capture_exception(e)
+      raise FailedAuthError, I18n.t('json_api.oauth_failed', host:)
+    end
   end
 
   def is_microsoft?
@@ -217,9 +219,12 @@ class CustomAuthProvider < ApplicationDocument
       raise FailedAuthError, "user_info request failed (#{response.status})"
     end
 
-    JSON.parse(response.body)
-  rescue JSON::ParserError
-    raise FailedAuthError, "user_info parse failed (#{response.status})"
+    begin
+      JSON.parse(response.body)
+    rescue JSON::ParserError => e
+      Sentry.capture_exception(e)
+      raise FailedAuthError, "user_info parse failed (#{response.status})"
+    end
   end
 
   # For Omniauth Aut Hash Schema 1.0 compatibility
