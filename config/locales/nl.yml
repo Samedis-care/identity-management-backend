@@ -309,3 +309,6 @@ nl:
     footer_html: |-
       Deze mail is verstuurd door identity-management (https://github.com/Samedis-care/identity-management)
       Configureer de voettekst in jouw app-instellingen.
+  auth:
+    error:
+      social_missing_params: 'Ontbrekende parameters: provider en id_token zijn vereist.'

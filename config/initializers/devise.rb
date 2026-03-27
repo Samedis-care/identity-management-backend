@@ -106,7 +106,7 @@ Rails.application.reloader.to_prepare do
     # note that it will be overwritten if you use your own mailer class
     # with default "from" parameter.
     config.mailer_sender = 'Ident Services <info@ident.services>'
-    config.secret_key = '5ac7d59317a393cbe3683ccc68f75c9541474ed0fb1fda088a031c9f7ab14a81e48976497f4470a2f31587596091477aa431f78504d5c755c978ca82bbeb933a'
+    config.secret_key = ENV['DEVISE_SECRET_KEY']
 
     # Configure the class responsible to send e-mails.
     # config.mailer = 'Devise::Mailer'

@@ -337,3 +337,6 @@ fr:
     footer_html: |-
       Ce mail a été envoyé par identity-management (https://github.com/Samedis-care/identity-management) <br />
       Veuillez configurer le pied de page dans les paramètres de votre application.
+  auth:
+    error:
+      social_missing_params: 'Paramètres manquants : le fournisseur et id_token sont requis.'

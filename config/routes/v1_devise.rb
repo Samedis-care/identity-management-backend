@@ -72,6 +72,7 @@ namespace :v1 do
 
   scope path: '*app', module: :app do
     resource :recovery, only: [:create]
+    post 'auth/social', to: 'social_auth#create', as: :social_auth, noswagger: true
     scope :oauth do
       scope module: :doorkeeper do
         resource :token, only: [:create]
