@@ -46,8 +46,8 @@ COPY --from=preperation /root/GeoLite2-City.mmdb /home/app/webapp
 # ensure application.yml exists (required for git build checks)
 RUN touch config/application.yml
 
-# Generate Swagger Docs
-RUN SHRINE_STORAGE=local FILES_DIRECTORY=/tmp rails "openapi_spec:api[v1]"
+# Generate OpenAPI Docs (dummy secrets for asset-only build step)
+RUN SHRINE_STORAGE=local FILES_DIRECTORY=/tmp DEVISE_SECRET_KEY=build-placeholder rails "openapi_spec:api[v1]"
 
 CMD puma -b 'tcp://0.0.0.0:80' -e "${RAILS_ENV-production}" -v -w "${WORKER_COUNT-$(nproc)}"
 
