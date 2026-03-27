@@ -1,4 +1,5 @@
 development: &defaults
+  DEVISE_SECRET_KEY: secret-key-for-devise
   SHOW_ERRORS: 'false'
   WEB_APP_HOST: 'http://dev.ident.services'
   API_HOST: 'http://dev.ident.services'
