@@ -40,6 +40,7 @@ en:
       otp_required: Login incomplete. One time password not yet provided.
       otp_invalid: One time password invalid or expired.
       otp_too_many_tries: Too many invalid one time password tries.
+      social_missing_params: 'Missing required parameters: provider and id_token are required.'
       unauthorized: Insufficient rights to access this resource.
       unauthorized_tenant: Permission denied. No access to this tenant allowed.
       confirmation_token_invalid: >-

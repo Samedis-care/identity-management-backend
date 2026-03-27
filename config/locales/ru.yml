@@ -325,3 +325,6 @@ ru:
     footer_html: |-
       Это письмо было отправлено управлением идентификацией (https://github.com/Samedis-care/identity-management) <br />
       Пожалуйста, настройте нижний колонтитул в настройках вашего приложения.
+  auth:
+    error:
+      social_missing_params: 'Отсутствуют обязательные параметры: требуются provider и id_token.'

@@ -29,14 +29,16 @@ development: &defaults
   SMTP_PASSWORD: secret-password
   GOOGLE_OAUTH_CLIENT_ID: clientid.....apps.googleusercontent.com
   GOOGLE_OAUTH_SECRET: GoogleOauthSecret
+  GOOGLE_IOS_CLIENT_ID: ios-clientid.....apps.googleusercontent.com
+  GOOGLE_ANDROID_CLIENT_ID: android-clientid.....apps.googleusercontent.com
   AZURE_APPLICATION_CLIENT_ID: AZURE-APPLICATION-CLIENT-ID
   AZURE_APPLICATION_CLIENT_SECRET: AzureApplicationCLientSecret
+  AZURE_IOS_CLIENT_ID: AZURE-IOS-CLIENT-ID
+  AZURE_ANDROID_CLIENT_ID: AZURE-ANDROID-CLIENT-ID
   AZURE_SKIP_DOMAIN_VERIFICATION: true
-  FACEBOOK_KEY: "FACEBOOK-KEY"
-  FACEBOOK_SECRET: FacebookSecret
-  TWITTER_OAUTH_KEY: TwitterKey
-  TWITTER_OAUTH_SECRET: TwitterOauthSecret
   APPLE_CLIENT_ID: AppleClientId
+  APPLE_IOS_BUNDLE_ID: care.samedis.app
+  APPLE_ANDROID_CLIENT_ID: AppleAndroidClientId
   APPLE_TEAM_ID: AppleTeamId
   APPLE_KEY_ID: AppleKeyId
   RECAPTCHA_PUBLIC_KEY: RecaptchaPublicKey

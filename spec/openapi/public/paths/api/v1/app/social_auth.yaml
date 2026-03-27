@@ -1,0 +1,133 @@
+# Manual spec for native mobile social login endpoint
+# This controller doesn't inherit from JsonApiController
+---
+paths:
+  "/api/v1/{app}/auth/social":
+    post:
+      summary: 'Social Login: Native Mobile [POST]'
+      operationId: social-auth-create
+      tags:
+      - Social Authentication
+      x-controller: Api::V1::App::SocialAuthController
+      x-controller-action: create
+      description: |
+        Authenticate a user via a native mobile social login provider.
+
+        The mobile app uses the provider's native SDK (Google Sign-In, Apple Sign In,
+        Microsoft MSAL) to authenticate the user and obtain a signed `id_token` (JWT).
+        This endpoint verifies the JWT against the provider's JWKS keys, then issues
+        a Doorkeeper access token.
+
+        Supported providers: `google`, `apple`, `microsoft`.
+
+        This endpoint does NOT affect the browser-redirect OmniAuth flow.
+      parameters:
+      - name: app
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The app identifier
+        example: identity-management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - provider
+              - id_token
+              properties:
+                provider:
+                  type: string
+                  enum:
+                  - google
+                  - apple
+                  - microsoft
+                  description: The social login provider
+                id_token:
+                  type: string
+                  description: Signed JWT id_token from the provider's native SDK
+                name:
+                  type: object
+                  description: |
+                    User name (Apple only, first sign-in only).
+                  properties:
+                    first:
+                      type: string
+                    last:
+                      type: string
+                invite_token:
+                  type: string
+                  description: Optional invite token
+      responses:
+        '200':
+          description: User authenticated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      type:
+                        type: string
+                        default: user
+                      attributes:
+                        "$ref": "#/components/schemas/AppUserSerializer"
+                  meta:
+                    type: object
+                    properties:
+                      msg:
+                        type: object
+                        properties:
+                          success:
+                            type: boolean
+                      token:
+                        type: string
+                      refresh_token:
+                        type: string
+                      expires_in:
+                        type: number
+                      app:
+                        type: string
+                  token_type:
+                    type: string
+                    default: Bearer
+                  access_token:
+                    type: string
+                  refresh_token:
+                    type: string
+                  expires_in:
+                    type: number
+        '400':
+          description: Missing provider or id_token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '401':
+          description: Token verification failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"
+        '403':
+          description: User not confirmed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    "$ref": "#/components/schemas/meta"

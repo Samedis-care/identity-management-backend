@@ -327,3 +327,6 @@ de:
     footer_html: |-
       Diese Mail wurde von Identity-Management (https://github.com/Samedis-care/identity-management) gesendet<br />
       Bitte konfiguriere die Fußzeile in Ihren App-Einstellungen.
+  auth:
+    error:
+      social_missing_params: 'Fehlende Parameter: Provider und id_token sind erforderlich.'
