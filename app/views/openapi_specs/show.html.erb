@@ -66,6 +66,20 @@
       background: rgba(0,0,33, .2);
     }
 
+    @property --ocean-angle {
+      syntax: '<angle>';
+      initial-value: 85deg;
+      inherits: false;
+    }
+
+    @keyframes ocean-flow {
+      0%   { background-position: 0% 50%;   --ocean-angle: 88deg; }
+      25%  { background-position: 50% 50%;  --ocean-angle: 93deg; }
+      50%  { background-position: 100% 50%; --ocean-angle: 91deg; }
+      75%  { background-position: 50% 50%;  --ocean-angle: 87deg; }
+      100% { background-position: 0% 50%;   --ocean-angle: 88deg; }
+    }
+
     openapi-explorer {
       --font-regular: Open Sans;
       --font-size-regular: 14px;
@@ -73,16 +87,28 @@
       --font-mono: Roboto Mono;
       --font-size-mono: 14px;
       --nav-hover-bg-color: rgba(0,0,33, .2);
-      --nav-bg-color: linear-gradient(90deg, #0065AD, #02AFC3);
+      --nav-bg-color: linear-gradient(90deg, #0065AD, #0290B8);
     }
     openapi-explorer::part(section-navbar) {
-      background: linear-gradient(90deg, #0065AD, #02AFC3);
+      background: linear-gradient(var(--ocean-angle),
+        #0065AD, #0065AD, #0065AD, #0065AD, #0065AD,
+        #046EB0, #0575B2, #067CB4, #0782B6, #0289B7,
+        #0290B8, #0290B8, #0290B8, #0290B8, #0290B8, #0290B8, #0290B8,
+        #0289B7, #0782B6, #067CB4, #0575B2, #046EB0,
+        #0065AD, #0065AD, #0065AD, #0065AD, #0065AD, #0065AD, #0065AD,
+        #046EB0, #0575B2, #067CB4, #0782B6, #0289B7,
+        #0290B8, #0290B8, #0290B8, #0290B8, #0290B8, #0290B8, #0290B8,
+        #0289B7, #0782B6, #067CB4, #0575B2, #046EB0,
+        #0065AD, #0065AD, #0065AD, #0065AD, #0065AD
+      );
+      background-size: 800% 100%;
+      animation: ocean-flow 120s ease-in-out infinite;
     }
     openapi-explorer::part(navbar-scroll) {
       border-color: transparent;
     }
     openapi-explorer::part(navbar-section-header) {
-      background: linear-gradient(90deg, #0065AD, #02AFC3);
+      background: transparent;
       border-top: none;
       border-bottom: 1px solid rgba(255,255,255, .2);
       font-size: 11px;
@@ -139,6 +165,7 @@
     show-info = "true"
     persist-auth = "true"
     sort-tags = "true"
+    server-url = ""
     layout = "column"
     render-style = "focused"
     show-components = "true"
