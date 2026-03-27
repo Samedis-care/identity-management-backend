@@ -1,5 +1,31 @@
 require 'digest'
 
+# Enterprise SSO via OAuth2/OIDC for customer-managed Identity Providers.
+#
+# Supports OIDC Auto-Discovery: set `issuer_url` and all endpoint URLs
+# (authorize, token, userinfo, jwks) are populated automatically on save.
+# Manual overrides are preserved — only blank fields get auto-filled.
+#
+# Tested with: Azure AD, Keycloak, Okta, Auth0, WSO2 Identity Server.
+#
+# Minimal setup with discovery:
+#
+#   CustomAuthProvider.create!(
+#     domain: 'uniklinik.example.de',
+#     issuer_url: 'https://auth.uniklinik.example.de/oauth2/token',  # WSO2 IS
+#     client_id: 'from-customer',
+#     client_secret: 'from-customer'
+#   )
+#
+# Minimal setup with Azure AD:
+#
+#   CustomAuthProvider.create!(
+#     domain: 'kunde.de',
+#     issuer_url: 'https://login.microsoftonline.com/{tenant-id}/v2.0',
+#     client_id: 'from-azure-portal',
+#     client_secret: 'from-azure-portal'
+#   )
+#
 class CustomAuthProvider < ApplicationDocument
   class UntrustedEmailError < StandardError; end
   class FailedAuthError < StandardError; end
@@ -7,15 +33,19 @@ class CustomAuthProvider < ApplicationDocument
   include Mongoid::Document
   include Mongoid::Timestamps
 
+  DISCOVERY_CACHE_TTL = 1.hour
+
   field :domain, type: String
   field :client_id, type: String
   field :client_secret, type: String
   field :host, type: String
+  field :issuer_url, type: String
   field :trusted_email_domains, type: Array
   field :scope, type: String
   field :authorize_url, type: String
   field :token_url, type: String
   field :userinfo_url, type: String
+  field :jwks_uri, type: String
   field :userinfo_schema, type: Hash
   field :userinfo_mapping, type: Hash
   field :claims
@@ -23,9 +53,87 @@ class CustomAuthProvider < ApplicationDocument
   validates :domain, uniqueness: true
   validate :unique_trusted_email_domains
 
+  before_save :auto_discover!, if: -> { issuer_url_changed? || (issuer_url.blank? && host_changed?) }
+
   attr_accessor :code_verifier
 
   index({ domain: 1 }, { unique: true })
+
+  # Auto-discover: if issuer_url is set, use it directly. Otherwise probe
+  # common OIDC discovery paths based on host.
+  def auto_discover!
+    if issuer_url.present?
+      discover!
+    elsif host.present?
+      probe_and_discover!
+    end
+  end
+
+  # Fetch OIDC discovery document and populate endpoint URLs automatically.
+  # Only fields that are blank get overwritten — manual overrides are preserved.
+  def discover!
+    return unless issuer_url.present?
+
+    config = discovery_config
+    return if config.nil?
+
+    self.host           = URI.parse(config['authorization_endpoint']).host if host.blank? && config['authorization_endpoint']
+    self.authorize_url  = URI.parse(config['authorization_endpoint']).path if read_attribute(:authorize_url).blank? && config['authorization_endpoint']
+    self.token_url      = URI.parse(config['token_endpoint']).path if read_attribute(:token_url).blank? && config['token_endpoint']
+    self.userinfo_url   = config['userinfo_endpoint'] if read_attribute(:userinfo_url).blank? && config['userinfo_endpoint']
+    self.jwks_uri       = config['jwks_uri'] if jwks_uri.blank? && config['jwks_uri']
+    self.scope          = config['scopes_supported']&.intersection(%w[openid profile email])&.join(' ') if read_attribute(:scope).blank? && config['scopes_supported']
+  end
+
+  # Probe common OIDC discovery paths when only host is known.
+  # Sets issuer_url on first successful hit, then runs discover!.
+  DISCOVERY_PROBES = [
+    '/.well-known/openid-configuration',                           # Standard OIDC
+    '/oauth2/token/.well-known/openid-configuration',              # WSO2 Identity Server
+    '/oauth2/oidcdiscovery/.well-known/openid-configuration',      # WSO2 alternative
+    '/realms/master/.well-known/openid-configuration',             # Keycloak (master realm)
+    '/auth/realms/master/.well-known/openid-configuration',        # Keycloak (legacy path)
+    '/.well-known/openid-configuration/',                          # trailing slash variant
+  ].freeze
+
+  def probe_and_discover!
+    conn = Faraday.new { |f| f.response :follow_redirects, limit: 3 }
+
+    DISCOVERY_PROBES.each do |path|
+      url = "https://#{host}#{path}"
+      response = conn.get(url)
+      next unless response.status == 200 && response.body.length > 10
+
+      config = JSON.parse(response.body)
+      next unless config['issuer'].present?
+
+      self.issuer_url = config['issuer']
+      Rails.logger.info("OIDC discovery auto-detected issuer: #{issuer_url} via #{path}")
+      discover!
+      return
+    rescue JSON::ParserError, Faraday::Error
+      next
+    end
+
+    Rails.logger.info("OIDC discovery: no discovery endpoint found for host #{host}")
+  end
+
+  # Fetch and cache the OIDC discovery document
+  def discovery_config
+    cache_key = "oidc_discovery:#{issuer_url}"
+    Rails.cache.fetch(cache_key, expires_in: DISCOVERY_CACHE_TTL) do
+      discovery_url = "#{issuer_url.chomp('/')}/.well-known/openid-configuration"
+      response = Faraday.get(discovery_url)
+      unless response.status == 200
+        Rails.logger.warn("OIDC discovery failed for #{issuer_url}: HTTP #{response.status}")
+        next nil
+      end
+      JSON.parse(response.body)
+    rescue Faraday::Error, JSON::ParserError => e
+      Rails.logger.warn("OIDC discovery failed for #{issuer_url}: #{e.message}")
+      nil
+    end
+  end
 
   def unique_trusted_email_domains
     return unless self.class.where(:_id.ne => id, :trusted_email_domains.in => trusted_email_domains).exists?
