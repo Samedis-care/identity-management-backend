@@ -27,6 +27,9 @@ class SocialTokenVerifier
     'microsoft' => {
       jwks_uri: 'https://login.microsoftonline.com/common/discovery/v2.0/keys',
       issuers: :microsoft_issuers,
+      # Multi-tenant apps receive tenant-specific issuers (e.g. /{tenant-uuid}/v2.0)
+      # even when the app is configured with tenantId "common"
+      issuer_pattern: %r{\Ahttps://login\.microsoftonline\.com/[0-9a-f\-]{36}/v2\.0\z},
       audiences: -> { microsoft_client_ids }
     }
   }.freeze
@@ -81,10 +84,14 @@ class SocialTokenVerifier
   end
 
   def validate_issuer!(claims)
+    iss = claims['iss']
     issuers = resolve_issuers
-    return if issuers.include?(claims['iss'])
+    return if issuers.include?(iss)
 
-    raise VerificationError, "Invalid issuer: #{claims['iss']}"
+    issuer_pattern = @config[:issuer_pattern]
+    return if issuer_pattern&.match?(iss)
+
+    raise VerificationError, "Invalid issuer: #{iss}"
   end
 
   def validate_audience!(claims)
