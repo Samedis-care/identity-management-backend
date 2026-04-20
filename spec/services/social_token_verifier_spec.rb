@@ -189,5 +189,20 @@ RSpec.describe SocialTokenVerifier do
       verifier = described_class.new(provider:, id_token: token)
       expect { verifier.verify! }.not_to raise_error
     end
+
+    it 'accepts tenant-uuid issuer for multi-tenant apps (common endpoint returns tenant-specific iss)' do
+      # When the iOS app uses tenantId "common", Microsoft still returns tokens
+      # with the real tenant UUID in the issuer, e.g. /d84b06ae-.../v2.0
+      tenant_issuer = 'https://login.microsoftonline.com/d84b06ae-25e4-49ea-9898-6d015cb59f68/v2.0'
+      token = build_token(valid_claims.merge('iss' => tenant_issuer))
+      verifier = described_class.new(provider:, id_token: token)
+      expect { verifier.verify! }.not_to raise_error
+    end
+
+    it 'rejects an issuer that looks like a tenant UUID but has an invalid format' do
+      token = build_token(valid_claims.merge('iss' => 'https://login.microsoftonline.com/not-a-uuid/v2.0'))
+      verifier = described_class.new(provider:, id_token: token)
+      expect { verifier.verify! }.to raise_error(described_class::VerificationError, /Invalid issuer/)
+    end
   end
 end
