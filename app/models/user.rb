@@ -301,6 +301,7 @@ class User < ApplicationDocument
         _keywords:,
         deleted:,
         active:,
+        name: email,
         friendlyname: friendlyname,
         short_name: get_short_name,
         full_name: get_full_name
