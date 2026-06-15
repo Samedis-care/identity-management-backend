@@ -1,0 +1,29 @@
+# Static security analysis with Brakeman.
+#
+# Pre-existing findings are baselined in config/brakeman.ignore, so this check
+# is green on the current tree and fails only on NEW warnings a PR introduces.
+# To accept/triage a new finding, run `bundle exec brakeman -I` and commit the
+# updated config/brakeman.ignore.
+
+name: SecurityQA
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  brakeman:
+    name: Brakeman
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      # --no-pager keeps output CI-friendly; non-zero exit on any un-ignored warning
+      - name: Run Brakeman
+        run: bundle exec brakeman --no-pager --exit-on-warn --exit-on-error
