@@ -4,7 +4,32 @@ module Actors
 
     field :modules_selected, type: Array, default: []
 
+    # APAC region split (issue #2336): nil/'eu' = EU (Frankfurt),
+    # 'apac' = Singapore cluster. SCB is the source of truth for the id list;
+    # IMB only mirrors it via `rails apac:mark_region`. nil is treated as EU,
+    # no backfill required.
+    field :region, type: String
+
+    index({ region: 1 }, { sparse: true, name: 'tenant_region' })
+
     before_destroy :cache_expire!
+
+    def self.apac
+      where(region: 'apac')
+    end
+
+    def self.eu
+      where(:region.in => [nil, 'eu'])
+    end
+
+    # nil is explicitly EU
+    def region_effective
+      region.presence || 'eu'
+    end
+
+    def apac?
+      region == 'apac'
+    end
 
     def cache_expire!
       ::User.where(:_id.in => self.descendants.mappings.distinct(:user_id)).cache_expire!
