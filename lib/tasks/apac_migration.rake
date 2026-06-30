@@ -283,20 +283,26 @@ namespace :apac do
 
     puts "apac:verify (#{Rails.env})"
     puts apac_hr
-    ok = true
+    # Completeness check: every SOURCE doc must exist on the target. Extra docs
+    # on the target are native APAC records (e.g. live signups) — expected on a
+    # live cluster, so they are reported but not a failure.
+    complete = true
     checks.each do |label, (model, selector)|
-      src = model.collection.find(selector).count
-      tgt = target[model.collection.name.to_s].count_documents(selector)
-      match = src == tgt
-      ok &&= match
-      puts "  #{label.ljust(20)} source=#{src}  target=#{tgt}  #{match ? 'OK' : 'MISMATCH'}"
+      src_ids = model.collection.distinct('_id', selector)
+      tgt_ids = target[model.collection.name.to_s].distinct('_id', selector)
+      missing = src_ids - tgt_ids
+      extra   = tgt_ids - src_ids
+      complete &&= missing.empty?
+      note = extra.any? ? "  (+#{extra.size} native on target)" : ''
+      status = missing.empty? ? 'OK' : "MISSING #{missing.size}"
+      puts "  #{label.ljust(18)} source=#{src_ids.size} target=#{tgt_ids.size} #{status}#{note}"
     end
 
     puts '-' * 80
     ApacMigration::LeakGuard.new(resolver).assert!(target)
     puts 'Leak guard passed.'
-    abort 'Count mismatch — see above.' unless ok
-    puts 'Verify OK.'
+    abort 'Incomplete — some source docs are missing on the target (re-run apac:copy).' unless complete
+    puts 'Verify OK (all source docs present on target).'
   end
 
   desc 'Report cross-region dangling refs (does not copy them)'

@@ -18,6 +18,14 @@ module ApacMigration
       @apac_tenant_ids ||= ((@explicit_ids || Actors::Tenant.apac.pluck(:_id)) + system_tenant_ids).uniq
     end
 
+    # All EU (non-APAC) tenants that exist in the SOURCE. The leak guard uses
+    # this as a blacklist: a target record tied to one of these is a genuine EU
+    # leak — whereas a record created natively on the live APAC cluster (not
+    # present in the source at all) is legitimate and must NOT be flagged.
+    def eu_tenant_ids
+      @eu_tenant_ids ||= Actors::Tenant.unscoped.distinct(:_id) - apac_tenant_ids
+    end
+
     # System tenants required on every cluster regardless of region.
     def system_tenant_ids
       @system_tenant_ids ||= [MDM_TENANT_ID].select do |id|

@@ -8,45 +8,64 @@ module ApacMigration
     end
 
     def assert!(target_client)
-      apac = @resolver.apac_tenant_ids
-      # Invite#tenant_id is `type: Object` and stored as a mix of String and
-      # BSON::ObjectId, so match both representations (Mapping#tenant_id is a
-      # clean ObjectId and only needs `apac`).
-      apac_mixed = apac + apac.map(&:to_s)
+      # Blacklist of EU tenants that exist in the SOURCE. Anything on the target
+      # tied to one of these is a genuine leak; records created natively on the
+      # (live) APAC cluster are not in this set and are correctly ignored.
+      eu = @resolver.eu_tenant_ids
+      # Invite#tenant_id is `type: Object`, stored as a mix of String and
+      # BSON::ObjectId — match both. Mapping#tenant_id is a clean ObjectId.
+      eu_mixed = eu + eu.map(&:to_s)
       errors = []
 
-      # 1. Every Mapping on the target must point at an APAC tenant.
+      # 1. No Mapping on the target may point at an EU source tenant.
       bad_map = target_client['actors'].find(
         '_type' => 'Actors::Mapping',
-        'tenant_id' => { '$nin' => apac }
+        'tenant_id' => { '$in' => eu }
       ).first
-      errors << "actors: Mapping #{bad_map['_id']} has non-APAC tenant_id #{bad_map['tenant_id']}" if bad_map
+      errors << "actors: Mapping #{bad_map['_id']} points at EU tenant #{bad_map['tenant_id']}" if bad_map
 
-      # 1b. Every Tenant actor on the target must be in the APAC set (guards the
-      #     structural-ancestor copy from ever pulling in a sibling tenant).
+      # 2. No EU source Tenant may exist on the target.
       bad_tenant = target_client['actors'].find(
         '_type' => 'Actors::Tenant',
-        '_id' => { '$nin' => apac }
+        '_id' => { '$in' => eu }
       ).first
-      errors << "actors: Tenant #{bad_tenant['_id']} is not in the APAC set" if bad_tenant
+      errors << "actors: EU Tenant #{bad_tenant['_id']} present on target" if bad_tenant
 
-      # 2. Every Invite on the target must belong to an APAC tenant.
-      bad_inv = target_client['invites'].find('tenant_id' => { '$nin' => apac_mixed }).first
-      errors << "invites: #{bad_inv['_id']} has non-APAC tenant_id #{bad_inv['tenant_id']}" if bad_inv
+      # 3. No Invite on the target may belong to an EU source tenant.
+      bad_inv = target_client['invites'].find('tenant_id' => { '$in' => eu_mixed }).first
+      errors << "invites: #{bad_inv['_id']} belongs to EU tenant #{bad_inv['tenant_id']}" if bad_inv
 
-      # 3. No migrated user may retain EU cache fields (tenant ids/candos).
-      bad_user = target_client['users'].find(
-        '$or' => [
-          { 'tenants_cached' => { '$nin' => [nil, []] } },
-          { 'tenant_candos_cached' => { '$ne' => nil } },
-          { 'tenant_access_group_ids' => { '$nin' => [nil, {}] } }
-        ]
-      ).first
-      errors << "users: #{bad_user['_id']} still has EU cache fields populated" if bad_user
+      # 4. No user on the target may reference an EU tenant in any cached field:
+      #    as an element of the tenants_cached array, OR as a KEY of the
+      #    tenant-keyed hashes tenant_access_group_ids / tenant_candos_cached
+      #    ({ tenant_id => … }). Hash keys can't be matched with $in, so those
+      #    two are scanned in Ruby — only over the few users that actually have
+      #    a populated cache hash.
+      bad_user = target_client['users'].find('tenants_cached' => { '$in' => eu_mixed }).first
+      bad_user ||= user_caching_eu_hash_key(target_client, eu.map(&:to_s).to_set)
+      errors << "users: #{bad_user['_id']} references an EU tenant in its cache" if bad_user
 
       return true if errors.empty?
 
       raise "APAC LEAK GUARD FAILED:\n - #{errors.join("\n - ")}"
+    end
+
+    private
+
+    # Finds a target user whose tenant-keyed cache hashes contain an EU tenant
+    # id as a key. Only users with a non-empty hash are fetched/scanned.
+    def user_caching_eu_hash_key(target_client, eu_keys)
+      query = { '$or' => [
+        { 'tenant_access_group_ids' => { '$nin' => [nil, {}] } },
+        { 'tenant_candos_cached' => { '$nin' => [nil, {}] } }
+      ] }
+      projection = { 'tenant_access_group_ids' => 1, 'tenant_candos_cached' => 1 }
+      target_client['users'].find(query, projection: projection).find do |doc|
+        keys = []
+        keys.concat(doc['tenant_access_group_ids'].keys) if doc['tenant_access_group_ids'].is_a?(Hash)
+        keys.concat(doc['tenant_candos_cached'].keys) if doc['tenant_candos_cached'].is_a?(Hash)
+        keys.any? { |key| eu_keys.include?(key.to_s) }
+      end
     end
   end
 end

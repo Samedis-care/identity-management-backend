@@ -92,7 +92,7 @@ RAILS_ENV=live TARGET_MONGODB_URI=... bundle exec rake apac:copy DRY_RUN=true   
 RAILS_ENV=live TARGET_MONGODB_URI=... bundle exec rake apac:copy                # Mongo: full copy
 RAILS_ENV=live TARGET_S3_BUCKET=... ... bundle exec rake apac:copy_s3           # S3: images/avatars
 RAILS_ENV=live bundle exec rake apac:report_dangling                            # cross-region refs → clarify
-RAILS_ENV=live TARGET_MONGODB_URI=... bundle exec rake apac:verify              # counts + leak guard
+RAILS_ENV=live TARGET_MONGODB_URI=... bundle exec rake apac:verify              # completeness + leak guard
 ```
 
 > `apac:copy_s3` is idempotent (skips keys already on the target) and only ever
@@ -151,8 +151,12 @@ on copy and regenerate on first APAC login.
 `ApacMigration::CollectionRegistry.assert_complete!` runs before every copy and
 **raises** if any `tenant_id`-bearing model is neither classified as copied nor
 excluded — so a future tenant-scoped collection cannot silently leak or be
-forgotten. After each real copy, `ApacMigration::LeakGuard` asserts on the target:
-no Mapping/Invite with a non-APAC `tenant_id`, no user with leftover EU caches.
+forgotten. After each real copy, `ApacMigration::LeakGuard` asserts on the target
+that nothing references an **EU source tenant** (the set of source tenants not in
+the APAC set): no Mapping/Invite/Tenant tied to an EU tenant, and no user caching
+an EU tenant in `tenants_cached` or as a key of `tenant_access_group_ids` /
+`tenant_candos_cached`. Records created natively on the live APAC cluster (absent
+from the source) are correctly ignored — see `apac:verify` below.
 
 ---
 
@@ -184,6 +188,8 @@ Configure per the existing schema:
 - `bundle exec rspec spec/models/actors/tenant_spec.rb spec/lib/apac_migration`
 - `apac:mark_region ... DRY_RUN=true` shows the right selection, writes nothing.
 - `apac:copy DRY_RUN=true` selection contains **zero** EU-only tenants/identities.
-- After a test copy against a throwaway cluster: `apac:verify` counts match and the
-  leak guard passes; copied users have **empty** EU cache fields.
+- After a test copy against a throwaway cluster: `apac:verify` reports every set
+  as `OK` (all source docs present; extra native target docs shown as `(+N
+  native on target)`) and the leak guard passes; copied users have **empty** EU
+  cache fields.
 - In SCB: after `mark_region`, `region` is visible in `view_samedis_care_actors`.
