@@ -6,17 +6,19 @@ RSpec.describe ApacMigration::LeakGuard do
   let(:eu_id) { BSON::ObjectId.new }
   let(:resolver) { instance_double(ApacMigration::TenantSetResolver, eu_tenant_ids: [eu_id]) }
 
-  # Fake Mongo client that actually evaluates simple `{field => {'$in' => [...]}}`
-  # (+ optional scalar equality, e.g. _type) filters against in-memory docs, so
-  # the EU-blacklist behaviour (native APAC records ignored) is really exercised.
+  # Fake Mongo client that evaluates the small query subset the leak guard uses
+  # ($in / $nin / $or / scalar equality) against in-memory docs, so the
+  # EU-blacklist behaviour (native APAC records ignored, EU refs flagged) is
+  # really exercised. #find returns the matched docs (responds to #first and
+  # #find{} like a Mongo::Collection::View).
   def fake_client(actors: [], invites: [], users: [])
     data = { 'actors' => Array.wrap(actors), 'invites' => Array.wrap(invites), 'users' => Array.wrap(users) }
     client = double('target_client')
     allow(client).to receive(:[]) do |name|
       docs = data.fetch(name)
       collection = double("#{name}_collection")
-      allow(collection).to receive(:find) do |query|
-        double(first: docs.find { |doc| matches?(doc, query) })
+      allow(collection).to receive(:find) do |query, _opts = nil|
+        docs.select { |doc| matches?(doc, query) }
       end
       collection
     end
@@ -25,9 +27,13 @@ RSpec.describe ApacMigration::LeakGuard do
 
   def matches?(doc, query)
     query.all? do |field, condition|
-      if condition.is_a?(Hash) && condition.key?('$in')
+      if field == '$or'
+        condition.any? { |sub| matches?(doc, sub) }
+      elsif condition.is_a?(Hash) && condition.key?('$in')
         values = doc[field].is_a?(Array) ? doc[field] : [doc[field]]
         values.any? { |v| condition['$in'].include?(v) }
+      elsif condition.is_a?(Hash) && condition.key?('$nin')
+        !condition['$nin'].include?(doc[field])
       else
         doc[field] == condition
       end
@@ -36,7 +42,11 @@ RSpec.describe ApacMigration::LeakGuard do
 
   it 'passes when only native APAC records are present (no EU tenant refs)' do
     native_map  = { '_id' => BSON::ObjectId.new, '_type' => 'Actors::Mapping', 'tenant_id' => BSON::ObjectId.new }
-    native_user = { '_id' => BSON::ObjectId.new, 'tenants_cached' => [BSON::ObjectId.new] }
+    native_user = {
+      '_id' => BSON::ObjectId.new,
+      'tenants_cached' => [BSON::ObjectId.new],
+      'tenant_access_group_ids' => { BSON::ObjectId.new.to_s => ['g1'] } # native tenant key, not EU
+    }
     expect { described_class.new(resolver).assert!(fake_client(actors: native_map, users: native_user)) }
       .not_to raise_error
   end
@@ -59,8 +69,14 @@ RSpec.describe ApacMigration::LeakGuard do
       .to raise_error(/LEAK GUARD FAILED/i)
   end
 
-  it 'fails on a user caching an EU source tenant' do
+  it 'fails on a user caching an EU source tenant in tenants_cached' do
     leaking = { '_id' => BSON::ObjectId.new, 'tenants_cached' => [eu_id] }
+    expect { described_class.new(resolver).assert!(fake_client(users: leaking)) }
+      .to raise_error(/LEAK GUARD FAILED/i)
+  end
+
+  it 'fails on a user with an EU tenant id as a cache hash KEY' do
+    leaking = { '_id' => BSON::ObjectId.new, 'tenant_access_group_ids' => { eu_id.to_s => ['g1'] } }
     expect { described_class.new(resolver).assert!(fake_client(users: leaking)) }
       .to raise_error(/LEAK GUARD FAILED/i)
   end
