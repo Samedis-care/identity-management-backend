@@ -234,13 +234,19 @@ namespace :apac do
     keys = []
     with_images = ->(criteria) { criteria.where(:image_data.exists => true).where(:image_data.ne => nil) }
 
+    # Every actor the mongo copy writes can carry an image (tenant subtree,
+    # structural ancestors, ALL App nodes incl. their logos, and user nodes).
+    copied_actor_ids = (resolver.structural_ancestor_ids +
+                        resolver.app_actor_ids +
+                        resolver.actor_user_ids).uniq
+
     with_images.call(resolver.subtree_actor_criteria).each do |actor|
       keys.concat(ApacMigration::S3Copier.keys_from(actor.image_data))
     end
-    with_images.call(Actor.where(:_id.in => resolver.actor_user_ids)).each do |actor|
+    with_images.call(Actor.unscoped.where(:_id.in => copied_actor_ids)).each do |actor|
       keys.concat(ApacMigration::S3Copier.keys_from(actor.image_data))
     end
-    with_images.call(::User.where(:_id.in => resolver.user_ids)).each do |user|
+    with_images.call(::User.unscoped.where(:_id.in => resolver.user_ids)).each do |user|
       keys.concat(ApacMigration::S3Copier.keys_from(user.image_data))
     end
     keys.uniq!
