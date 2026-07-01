@@ -18,6 +18,25 @@ module ApacMigration
       @apac_tenant_ids ||= ((@explicit_ids || Actors::Tenant.apac.pluck(:_id)) + system_tenant_ids).uniq
     end
 
+    # App-level skeleton actors below each App: its direct children (containers,
+    # the app "users" Group used by ensure_app_membership!, app-admins /
+    # tenant-admins groups, the app Organization) plus everything under the app
+    # Organization. Excludes Tenants (copied separately) and Mappings (per-user;
+    # would reference non-migrated EU users). These are app structure only — no
+    # tenant identity data — needed for app-level flows (login → app membership)
+    # to work on the target.
+    def app_skeleton_ids
+      @app_skeleton_ids ||= begin
+        apps = app_actor_ids
+        org_ids = Actor.unscoped.where(:parent_id.in => apps, _type: 'Actors::Organization').distinct(:_id)
+        ids  = Actor.unscoped.where(:parent_id.in => apps)
+                    .where(:_type.nin => %w[Actors::Tenant Actors::Mapping]).distinct(:_id)
+        ids += Actor.unscoped.where(:parent_ids.in => org_ids)
+                    .where(:_type.nin => %w[Actors::Mapping]).distinct(:_id)
+        ids.uniq
+      end
+    end
+
     # All EU (non-APAC) tenants that exist in the SOURCE. The leak guard uses
     # this as a blacklist: a target record tied to one of these is a genuine EU
     # leak — whereas a record created natively on the live APAC cluster (not

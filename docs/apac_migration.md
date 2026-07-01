@@ -129,11 +129,13 @@ authoritative. (SCB unlocks its tenants.)
 | Tenant subtree (`actors`) | `_id ∈ apac_ids` ∪ `parent_ids ∈ apac_ids` | tenants + Organization/Ou/Group/**Mapping**; every Mapping here is APAC by definition |
 | Structural ancestors (`actors`) | `parent_ids` of the subtree + user nodes | App + ContainerApps/ContainerTenants/ContainerUsers, **id-preserving** — needed so the tree, paths and roles' `actors_app_id` resolve. App skeleton/config only, no tenant identity, no sibling tenants. |
 | App definitions (`actors`) | `_type == Actors::App` (wholesale) | all App nodes incl. the identity-management base app; skeleton/config only |
+| App skeleton (`actors`) | direct children of each App + app Organization subtree, minus Tenants/Mappings | app "users"/app-admins/tenant-admins groups, containers, app OUs — needed for app flows like `ensure_app_membership!` on login. No tenant identity data. |
 | System records | MDM tenant (`samedis-care`, region nil) + `global_admin` (User **and** Actors::User) | always copied regardless of region — required on every cluster. The MDM subtree brings the master-data structure and global_admin's MDM-scoped mappings. |
 | User identities (`users`) | users with ≥1 APAC mapping | identity (email/name/pw) travels; **EU cache fields cleared** on copy |
 | Actors::User nodes (`actors`) | `actor_id` of migrated users | personal nodes live in the global `user_container` |
 | Invites (`invites`) | `tenant_id ∈ apac_ids` | |
 | Global reference data | `roles`, `functionalities`, `contents` | no identity data; copied whole so group `role_ids` resolve on target |
+| Migration tracking | `data_migrations` (mongoid_rails_migrations) | copied whole so the target treats historical migrations as already run and does **not** replay them on first boot (which would re-run e.g. index/role migrations against copied data and can crash) |
 | S3 objects (`apac:copy_s3`) | image_data keys of migrated actors + users | tenant logos / actor images + user avatars (Shrine, `uploads/<class>/<id>/...`) |
 
 **Deliberately NOT copied:** `account_activities` (audit/login-IP log, regenerates),
