@@ -135,6 +135,7 @@ authoritative. (SCB unlocks its tenants.)
 | Actors::User nodes (`actors`) | `actor_id` of migrated users | personal nodes live in the global `user_container` |
 | Invites (`invites`) | `tenant_id ∈ apac_ids` | |
 | Global reference data | `roles`, `functionalities`, `contents` | no identity data; copied whole so group `role_ids` resolve on target |
+| Migration tracking | `data_migrations` (mongoid_rails_migrations) | copied whole so the target treats historical migrations as already run and does **not** replay them on first boot (which would re-run e.g. index/role migrations against copied data and can crash) |
 | S3 objects (`apac:copy_s3`) | image_data keys of migrated actors + users | tenant logos / actor images + user avatars (Shrine, `uploads/<class>/<id>/...`) |
 
 **Deliberately NOT copied:** `account_activities` (audit/login-IP log, regenerates),

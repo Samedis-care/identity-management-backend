@@ -14,7 +14,8 @@ module ApacMigration
       'invites'         => 'tenant_id ∈ apac',
       'roles'           => 'global app reference data (no identity data); copied so role_ids match',
       'functionalities' => 'global app reference data (no identity data)',
-      'contents'        => 'global app reference data (no identity data)'
+      'contents'        => 'global app reference data (no identity data)',
+      'data_migrations' => 'mongoid_rails_migrations tracking; copied so the target does not replay migrations'
     }.freeze
 
     # Tenant-scoped or identity-adjacent collections deliberately NOT copied.

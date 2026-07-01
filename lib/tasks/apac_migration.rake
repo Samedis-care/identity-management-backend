@@ -189,6 +189,9 @@ namespace :apac do
     copier.copy(model: Role,          selector: {}, label: 'roles',           deltaable: false)
     copier.copy(model: Functionality, selector: {}, label: 'functionalities', deltaable: false)
     copier.copy(model: Content,       selector: {}, label: 'contents',        deltaable: false)
+    # 6. Migration tracking (mongoid_rails_migrations) — so the target treats all
+    #    historical migrations as already run and does not replay them on boot.
+    copier.copy(model: DataMigration, selector: {}, label: 'data_migrations', deltaable: false)
 
     puts '-' * 80
     if dry
