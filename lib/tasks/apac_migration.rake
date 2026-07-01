@@ -174,6 +174,10 @@ namespace :apac do
     # 1c. All App definition nodes (incl. the identity-management base app).
     copier.copy(model: Actor, selector: { '_type' => 'Actors::App' },
                 label: 'actors (apps)', deltaable: false)
+    # 1d. App-level skeleton (app "users"/app-admins groups, organization, OUs,
+    #     containers) so app flows like ensure_app_membership! work on target.
+    copier.copy(model: Actor, selector: { '_id' => { '$in' => resolver.app_skeleton_ids } },
+                label: 'actors (app skeleton)', deltaable: false)
     # 2. Personal Actors::User nodes of migrated users (live in user_container)
     copier.copy(model: Actor, selector: { '_id' => { '$in' => resolver.actor_user_ids } }, label: 'actors (user nodes)')
     # 3. User identities — EU cache fields stripped on copy
