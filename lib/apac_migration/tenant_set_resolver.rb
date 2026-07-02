@@ -45,10 +45,31 @@ module ApacMigration
       @eu_tenant_ids ||= Actors::Tenant.unscoped.distinct(:_id) - apac_tenant_ids
     end
 
-    # System tenants required on every cluster regardless of region.
+    # System tenants required on every cluster regardless of region: the MDM
+    # tenant, plus each App's own internal "system" tenant (created by
+    # `Actors::App#ensure_im_app!`-style bootstraps as a direct child of the
+    # app's ContainerTenants — e.g. identity-management's admin-org holder).
+    # These carry app-internal config, not customer/EU identity data.
     def system_tenant_ids
-      @system_tenant_ids ||= [MDM_TENANT_ID].select do |id|
-        Actor.unscoped.where(_id: id, _type: 'Actors::Tenant').exists?
+      @system_tenant_ids ||= begin
+        ids = [MDM_TENANT_ID].select { |id| Actor.unscoped.where(_id: id, _type: 'Actors::Tenant').exists? }
+        ids + Actor.unscoped.where(_type: 'Actors::App').filter_map do |app|
+          Actors::Tenant.unscoped.where(name: 'system', parent: app.container_tenants).first&.id
+        end
+      end.uniq
+    end
+
+    # Mappings that grant app-level admin rights (Actors::App#admins /
+    # #tenant_admins groups), restricted to tenant_id: nil so only genuine
+    # app-wide staff admin grants are included — NOT the app's generic "users"
+    # membership group (app_container_users), which holds one mapping per
+    # registered app user and would leak EU user actor ids if copied wholesale.
+    def system_admin_mapping_ids
+      @system_admin_mapping_ids ||= begin
+        group_ids = Actor.unscoped.where(_type: 'Actors::App').flat_map do |app|
+          [app.admins, app.tenant_admins].compact.map(&:id)
+        end
+        Actors::Mapping.unscoped.where(:parent_id.in => group_ids, tenant_id: nil).distinct(:_id)
       end
     end
 
@@ -80,12 +101,15 @@ module ApacMigration
                                     .distinct(:user_id).compact + system_user_ids).uniq
     end
 
-    # global_admin must exist on every cluster.
+    # System users required on every cluster: global_admin (if present — some
+    # environments use a synthetic global_admin actor instead of named staff)
+    # plus whoever holds app-admin/tenant-admin rights via system_admin_mapping_ids.
     def system_user_ids
       @system_user_ids ||= begin
         node = Actors::User.unscoped.where(name: :global_admin).first
-        node ? ::User.unscoped.where(actor_id: node.id).distinct(:_id) : []
-      end
+        ids = node ? ::User.unscoped.where(actor_id: node.id).distinct(:_id) : []
+        ids + Actors::Mapping.unscoped.where(:_id.in => system_admin_mapping_ids).distinct(:user_id).compact
+      end.uniq
     end
 
     # Personal Actors::User nodes for the migrated users. These live in the

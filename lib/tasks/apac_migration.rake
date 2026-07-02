@@ -81,6 +81,25 @@ namespace :apac do
     puts apac_hr
   end
 
+  # Prints every write failure collected during the run (e.g. a unique-index
+  # collision against a doc created natively on the target with a different
+  # _id) and aborts — AFTER every copy step has already run, so a handful of
+  # collisions never blocks the rest of the migration, but the run still ends
+  # non-zero so it's never mistaken for a clean success.
+  def apac_report_write_errors!(copier)
+    return if copier.errors.empty?
+
+    puts '-' * 80
+    puts "WRITE ERRORS: #{copier.errors.size} doc(s) failed to write (target already has a" \
+         ' different-_id doc at the same natural key — needs manual reconciliation):'
+    copier.errors.each do |e|
+      where = [e[:name], e[:path]].compact.join(' @ ')
+      puts "  [#{e[:collection]}] _id=#{e[:id]} #{where}".rstrip
+      puts "    #{e[:message]}"
+    end
+    abort "#{copier.errors.size} write error(s) — see above. Other collections were still copied."
+  end
+
   # Clears EU tenant cache fields on user docs before they are written to APAC.
   def apac_user_cache_clear
     lambda do |doc|
@@ -91,6 +110,38 @@ namespace :apac do
         'tenants_cached_at'       => nil,
         'tenant_access_group_ids' => nil
       )
+    end
+  end
+
+  # App name -> target (APAC) absolute frontend URL. Fixed defaults for the two
+  # known APAC frontends, so a plain `apac:copy` run (no extra ENV needed) always
+  # points post-login/OAuth redirects at the right host — no step to forget.
+  # TARGET_APP_URLS="name=url,..." overrides/extends these if ever needed
+  # (e.g. a staging APAC frontend with a different host).
+  def apac_default_target_app_urls
+    { 'identity-management' => 'https://apac.ident.services', 'samedis-care' => 'https://apac.samedis.care' }
+  end
+
+  def apac_target_app_urls
+    @apac_target_app_urls ||= apac_default_target_app_urls.merge(
+      ENV['TARGET_APP_URLS'].to_s.split(',').filter_map do |pair|
+        name, url = pair.split('=', 2)
+        [name.to_s.strip, url.to_s.strip] if name.present? && url.present?
+      end.to_h
+    )
+  end
+
+  # Actors::App::Config#url is a literal DB value, not derived from ENV at
+  # runtime (see User.host / User#redirect_url_authenticated) — copied verbatim
+  # from EU it points post-login/OAuth redirects back at the EU frontend even
+  # once the App document lives on the APAC cluster. Rewrite it per TARGET_APP_URLS;
+  # apps with no mapping entry are left untouched (and reported, see apac:copy).
+  def apac_app_url_rewrite
+    lambda do |doc|
+      target_url = apac_target_app_urls[doc['name']]
+      next doc if target_url.blank?
+
+      doc.merge('config' => (doc['config'] || {}).merge('url' => target_url))
     end
   end
 
@@ -163,6 +214,12 @@ namespace :apac do
     puts "apac:copy (#{Rails.env})#{' [DRY_RUN]' if dry} — #{resolver.apac_tenant_ids.size} tenant(s)"
     puts "  updated_since=#{updated_since || '(full)'} limit=#{limit || '(none)'}"
     puts "  threads=#{copier.threads} batch=#{copier.batch_size}"
+    puts "  App URLs (target): #{apac_target_app_urls.map { |k, v| "#{k}->#{v}" }.join(', ')}"
+    mapped_count = Actor.unscoped.where(:_id.in => resolver.app_actor_ids, :name.in => apac_target_app_urls.keys).count
+    unmapped = resolver.app_actor_ids.count - mapped_count
+    if unmapped.positive?
+      puts "  WARN: #{unmapped} app(s) have no TARGET_APP_URLS entry — their config.url stays EU-valued."
+    end
     puts apac_hr
 
     # 1. APAC tenant subtree (tenants + Organization/Ou/Group/Mapping)
@@ -173,11 +230,16 @@ namespace :apac do
                 label: 'actors (ancestors)', deltaable: false)
     # 1c. All App definition nodes (incl. the identity-management base app).
     copier.copy(model: Actor, selector: { '_type' => 'Actors::App' },
-                label: 'actors (apps)', deltaable: false)
+                label: 'actors (apps)', deltaable: false, transform: apac_app_url_rewrite)
     # 1d. App-level skeleton (app "users"/app-admins groups, organization, OUs,
     #     containers) so app flows like ensure_app_membership! work on target.
     copier.copy(model: Actor, selector: { '_id' => { '$in' => resolver.app_skeleton_ids } },
                 label: 'actors (app skeleton)', deltaable: false)
+    # 1e. App-admin/tenant-admin grants (tenant_id: nil) — the actual rights
+    #     behind login-as-admin. NOT the app's generic "users" membership group
+    #     (excluded — would leak EU user actor ids for every registered user).
+    copier.copy(model: Actor, selector: { '_id' => { '$in' => resolver.system_admin_mapping_ids } },
+                label: 'actors (system admins)', deltaable: false)
     # 2. Personal Actors::User nodes of migrated users (live in user_container)
     copier.copy(model: Actor, selector: { '_id' => { '$in' => resolver.actor_user_ids } }, label: 'actors (user nodes)')
     # 3. User identities — EU cache fields stripped on copy
@@ -199,6 +261,7 @@ namespace :apac do
     else
       ApacMigration::LeakGuard.new(resolver).assert!(copier.target_client)
       puts "Leak guard passed. Total: #{copier.stats.sum { |_, v| v }} doc(s)."
+      apac_report_write_errors!(copier)
     end
   end
 
@@ -271,6 +334,41 @@ namespace :apac do
     end
   end
 
+  desc 'One-off fix: rewrite config.url on already-copied target Apps. Optional TARGET_APP_URLS override. [DRY_RUN]'
+  task fix_app_urls: :environment do
+    Actor.logs! false
+    dry = apac_dry_run?
+    url_map = apac_target_app_urls
+
+    copier = ApacMigration::MongoCopier.new(dry_run: dry)
+    apac_preflight!(copier)
+    target = copier.target_client
+
+    puts "apac:fix_app_urls (#{Rails.env})#{' [DRY_RUN]' if dry}"
+    puts apac_hr
+
+    url_map.each do |name, url|
+      doc = target['actors'].find(_type: 'Actors::App', name: name).first
+      if doc.nil?
+        puts "  ! no target App named '#{name}' — skipped"
+        next
+      end
+
+      current = doc.dig('config', 'url')
+      if current == url
+        puts "  = #{name}: already #{url}"
+        next
+      end
+
+      if dry
+        puts "  would update #{name}: #{current.inspect} -> #{url.inspect}"
+      else
+        target['actors'].update_one({ _id: doc['_id'] }, { '$set' => { 'config.url' => url } })
+        puts "  updated #{name}: #{current.inspect} -> #{url.inspect}"
+      end
+    end
+  end
+
   desc 'Verify source vs target counts + leak guard (requires TARGET_MONGODB_URI)'
   task verify: :environment do
     Actor.logs! false
@@ -282,10 +380,11 @@ namespace :apac do
     target = copier.target_client
 
     checks = {
-      'actors (subtree)' => [Actor, resolver.subtree_actor_criteria.selector],
-      'actors (users)'   => [Actor, { '_id' => { '$in' => resolver.actor_user_ids } }],
-      'users'            => [::User, { '_id' => { '$in' => resolver.user_ids } }],
-      'invites'          => [Invite, resolver.invite_criteria.selector]
+      'actors (subtree)'      => [Actor, resolver.subtree_actor_criteria.selector],
+      'actors (users)'        => [Actor, { '_id' => { '$in' => resolver.actor_user_ids } }],
+      'actors (sys admins)'   => [Actor, { '_id' => { '$in' => resolver.system_admin_mapping_ids } }],
+      'users'                 => [::User, { '_id' => { '$in' => resolver.user_ids } }],
+      'invites'               => [Invite, resolver.invite_criteria.selector]
     }
 
     puts "apac:verify (#{Rails.env})"

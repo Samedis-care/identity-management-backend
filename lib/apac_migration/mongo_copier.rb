@@ -14,7 +14,7 @@ module ApacMigration
     # (SCB uses samediscare_apac). Overridable via ENV for non-prod targets.
     TARGET_DATABASE = ENV.fetch('TARGET_MONGODB_DATABASE', 'identity_management_apac').freeze
 
-    attr_reader :dry_run, :limit, :updated_since, :batch_size, :threads, :stats
+    attr_reader :dry_run, :limit, :updated_since, :batch_size, :threads, :stats, :errors
 
     def initialize(dry_run: false, limit: nil, updated_since: nil)
       @dry_run       = dry_run
@@ -23,6 +23,7 @@ module ApacMigration
       @batch_size    = Integer(ENV.fetch('BATCH_SIZE', 500))
       @threads       = Integer(ENV.fetch('THREADS', 4))
       @stats         = Hash.new(0)
+      @errors        = []
     end
 
     # Lazily opens (and validates) the target connection. Aborts early if the
@@ -91,6 +92,7 @@ module ApacMigration
       progress(name, 'scanning…')
 
       total = 0
+      step_errors_before = errors.size
       next_mark = PROGRESS_EVERY
       view.each_slice(batch_size) do |batch|
         docs = transform ? batch.map { |d| transform.call(d) } : batch
@@ -103,8 +105,11 @@ module ApacMigration
       end
 
       stats[collection] += total
+      step_errors = errors.size - step_errors_before
       # final line (trailing spaces clear any leftover \r progress text)
-      puts "  #{name.ljust(28)} #{total} doc(s)#{dry_run ? ' (dry-run, not written)' : ' upserted'}        "
+      suffix = dry_run ? ' (dry-run, not written)' : ' upserted'
+      suffix += " — #{step_errors} FAILED (see summary below)" if step_errors.positive?
+      puts "  #{name.ljust(28)} #{total} doc(s)#{suffix}        "
       total
     end
 
@@ -122,6 +127,12 @@ module ApacMigration
       $stdout.flush
     end
 
+    # Unordered bulk upsert. A handful of docs failing (e.g. a unique-index
+    # collision against a document natively created on the target with a
+    # different _id) must NOT abort the whole multi-collection copy run — the
+    # other docs in this batch (and all other batches/collections) still need
+    # to be written. Failures are recorded in `errors` and surfaced in the
+    # final summary instead of raising.
     def write_batch(collection, docs)
       return if dry_run || docs.empty?
 
@@ -129,6 +140,26 @@ module ApacMigration
         { replace_one: { filter: { _id: doc['_id'] }, replacement: doc, upsert: true } }
       end
       target_client[collection].bulk_write(ops, ordered: false)
+    rescue Mongo::Error::BulkWriteError => e
+      record_bulk_write_errors(collection, docs, e)
+    end
+
+    def record_bulk_write_errors(collection, docs, error)
+      write_errors = error.result&.dig('writeErrors') || error.result&.dig(:writeErrors) || []
+      write_errors.each do |we|
+        doc = docs[we['index'] || we[:index]]
+        errors << {
+          collection: collection,
+          id: doc && doc['_id'],
+          name: doc && doc['name'],
+          path: doc && doc['path'],
+          message: we['errmsg'] || we[:errmsg]
+        }
+      end
+      return if write_errors.any?
+
+      # Unexpected shape — record the raw error so it isn't silently dropped.
+      errors << { collection: collection, id: nil, name: nil, path: nil, message: error.message }
     end
   end
 end

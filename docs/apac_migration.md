@@ -19,7 +19,7 @@ for which tenants are APAC; IMB only mirrors the id list.
 | Piece | Where |
 |---|---|
 | `region` field on the tenant actor (`nil`/`eu` = EU, `apac` = Singapore) | `app/models/actors/tenant.rb` |
-| `apac:*` rake tasks (mark / copy / verify / report_dangling) | `lib/tasks/apac_migration.rake` |
+| `apac:*` rake tasks (mark / copy / verify / report_dangling / fix_app_urls) | `lib/tasks/apac_migration.rake` |
 | Migration library (resolver, copier, leak guard, safety registry) | `lib/apac_migration/` |
 
 `region` flows into the SCB-facing view `view_samedis_care_actors` automatically
@@ -53,6 +53,13 @@ export TARGET_S3_ACCESS_KEY_ID="..."
 export TARGET_S3_SECRET_ACCESS_KEY="..."
 # export TARGET_S3_ENDPOINT="..."   # only for non-AWS / custom endpoints
 ```
+
+`Actors::App::Config#url` is a literal DB value (not derived from ENV at
+runtime — see `User.host`), so `apac:copy` **hardcodes** the correct APAC
+frontend URL per app (`identity-management` → `https://apac.ident.services`,
+`samedis-care` → `https://apac.samedis.care`) — no ENV needed, nothing to
+forget. Only set `TARGET_APP_URLS="name=url,..."` to override/extend this for
+a one-off (e.g. a staging APAC frontend with a different host).
 
 Optional knobs (all tasks): `DRY_RUN=true`, `LIMIT=<n>`, `THREADS=<n>` (default 4),
 `BATCH_SIZE=<n>` (default 500), `UPDATED_SINCE=<ISO8601>` (delta copy).
@@ -89,7 +96,7 @@ RAILS_ENV=live bundle exec rake apac:mark_region TENANT_IDS_FILE=apac_ids.txt
 
 ```bash
 RAILS_ENV=live TARGET_MONGODB_URI=... bundle exec rake apac:copy DRY_RUN=true   # verify selection counts
-RAILS_ENV=live TARGET_MONGODB_URI=... bundle exec rake apac:copy                # Mongo: full copy
+RAILS_ENV=live TARGET_MONGODB_URI=... bundle exec rake apac:copy                # Mongo: full copy (App URLs hardcoded, see below)
 RAILS_ENV=live TARGET_S3_BUCKET=... ... bundle exec rake apac:copy_s3           # S3: images/avatars
 RAILS_ENV=live bundle exec rake apac:report_dangling                            # cross-region refs → clarify
 RAILS_ENV=live TARGET_MONGODB_URI=... bundle exec rake apac:verify              # completeness + leak guard
@@ -128,9 +135,10 @@ authoritative. (SCB unlocks its tenants.)
 |---|---|---|
 | Tenant subtree (`actors`) | `_id ∈ apac_ids` ∪ `parent_ids ∈ apac_ids` | tenants + Organization/Ou/Group/**Mapping**; every Mapping here is APAC by definition |
 | Structural ancestors (`actors`) | `parent_ids` of the subtree + user nodes | App + ContainerApps/ContainerTenants/ContainerUsers, **id-preserving** — needed so the tree, paths and roles' `actors_app_id` resolve. App skeleton/config only, no tenant identity, no sibling tenants. |
-| App definitions (`actors`) | `_type == Actors::App` (wholesale) | all App nodes incl. the identity-management base app; skeleton/config only |
+| App definitions (`actors`) | `_type == Actors::App` (wholesale) | all App nodes incl. the identity-management base app; skeleton/config only. `config.url` is rewritten to the hardcoded APAC frontend URL for each app (see above) — use `apac:fix_app_urls` to patch a target that was copied before this was added |
 | App skeleton (`actors`) | direct children of each App + app Organization subtree, minus Tenants/Mappings | app "users"/app-admins/tenant-admins groups, containers, app OUs — needed for app flows like `ensure_app_membership!` on login. No tenant identity data. |
-| System records | MDM tenant (`samedis-care`, region nil) + `global_admin` (User **and** Actors::User) | always copied regardless of region — required on every cluster. The MDM subtree brings the master-data structure and global_admin's MDM-scoped mappings. |
+| System records | MDM tenant (`samedis-care`, region nil) + each App's own internal "system" tenant (e.g. identity-management's admin-org, created by `ensure_im_app!`) + `global_admin` (User **and** Actors::User) if present | always copied regardless of region — required on every cluster. |
+| App-admin grants (`actors`) | Mappings into each App's `admins`/`tenant_admins` groups with `tenant_id: nil` | the actual rights behind "who can administer this app/tenants". Deliberately **excludes** the app's generic `app_container_users` ("users") membership group — that holds one mapping per registered app user (thousands) and would leak EU user actor ids + membership facts if copied wholesale. |
 | User identities (`users`) | users with ≥1 APAC mapping | identity (email/name/pw) travels; **EU cache fields cleared** on copy |
 | Actors::User nodes (`actors`) | `actor_id` of migrated users | personal nodes live in the global `user_container` |
 | Invites (`invites`) | `tenant_id ∈ apac_ids` | |
