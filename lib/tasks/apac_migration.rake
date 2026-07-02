@@ -81,6 +81,25 @@ namespace :apac do
     puts apac_hr
   end
 
+  # Prints every write failure collected during the run (e.g. a unique-index
+  # collision against a doc created natively on the target with a different
+  # _id) and aborts — AFTER every copy step has already run, so a handful of
+  # collisions never blocks the rest of the migration, but the run still ends
+  # non-zero so it's never mistaken for a clean success.
+  def apac_report_write_errors!(copier)
+    return if copier.errors.empty?
+
+    puts '-' * 80
+    puts "WRITE ERRORS: #{copier.errors.size} doc(s) failed to write (target already has a" \
+         ' different-_id doc at the same natural key — needs manual reconciliation):'
+    copier.errors.each do |e|
+      where = [e[:name], e[:path]].compact.join(' @ ')
+      puts "  [#{e[:collection]}] _id=#{e[:id]} #{where}".rstrip
+      puts "    #{e[:message]}"
+    end
+    abort "#{copier.errors.size} write error(s) — see above. Other collections were still copied."
+  end
+
   # Clears EU tenant cache fields on user docs before they are written to APAC.
   def apac_user_cache_clear
     lambda do |doc|
@@ -242,6 +261,7 @@ namespace :apac do
     else
       ApacMigration::LeakGuard.new(resolver).assert!(copier.target_client)
       puts "Leak guard passed. Total: #{copier.stats.sum { |_, v| v }} doc(s)."
+      apac_report_write_errors!(copier)
     end
   end
 
