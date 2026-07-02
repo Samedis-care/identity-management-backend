@@ -94,15 +94,22 @@ namespace :apac do
     end
   end
 
-  # App name -> target (APAC) absolute frontend URL, e.g.
-  #   TARGET_APP_URLS="identity-management=https://apac.ident.services,samedis-care=https://apac.samedis.care"
-  # This task runs against the EU/source app, so ENV['WEB_APP_HOST'] here is the
-  # EU value — the target host has to be passed in explicitly.
+  # App name -> target (APAC) absolute frontend URL. Fixed defaults for the two
+  # known APAC frontends, so a plain `apac:copy` run (no extra ENV needed) always
+  # points post-login/OAuth redirects at the right host — no step to forget.
+  # TARGET_APP_URLS="name=url,..." overrides/extends these if ever needed
+  # (e.g. a staging APAC frontend with a different host).
+  def apac_default_target_app_urls
+    { 'identity-management' => 'https://apac.ident.services', 'samedis-care' => 'https://apac.samedis.care' }
+  end
+
   def apac_target_app_urls
-    @apac_target_app_urls ||= ENV['TARGET_APP_URLS'].to_s.split(',').filter_map do |pair|
-      name, url = pair.split('=', 2)
-      [name.to_s.strip, url.to_s.strip] if name.present? && url.present?
-    end.to_h
+    @apac_target_app_urls ||= apac_default_target_app_urls.merge(
+      ENV['TARGET_APP_URLS'].to_s.split(',').filter_map do |pair|
+        name, url = pair.split('=', 2)
+        [name.to_s.strip, url.to_s.strip] if name.present? && url.present?
+      end.to_h
+    )
   end
 
   # Actors::App::Config#url is a literal DB value, not derived from ENV at
@@ -188,11 +195,11 @@ namespace :apac do
     puts "apac:copy (#{Rails.env})#{' [DRY_RUN]' if dry} — #{resolver.apac_tenant_ids.size} tenant(s)"
     puts "  updated_since=#{updated_since || '(full)'} limit=#{limit || '(none)'}"
     puts "  threads=#{copier.threads} batch=#{copier.batch_size}"
-    if apac_target_app_urls.empty?
-      puts '  WARN: TARGET_APP_URLS not set — copied App config.url stays EU-valued; ' \
-           'post-login/OAuth redirects on the target will bounce back to the EU host.'
-    else
-      puts "  App URL overrides: #{apac_target_app_urls.map { |k, v| "#{k}->#{v}" }.join(', ')}"
+    puts "  App URLs (target): #{apac_target_app_urls.map { |k, v| "#{k}->#{v}" }.join(', ')}"
+    mapped_count = Actor.unscoped.where(:_id.in => resolver.app_actor_ids, :name.in => apac_target_app_urls.keys).count
+    unmapped = resolver.app_actor_ids.count - mapped_count
+    if unmapped.positive?
+      puts "  WARN: #{unmapped} app(s) have no TARGET_APP_URLS entry — their config.url stays EU-valued."
     end
     puts apac_hr
 
@@ -307,12 +314,11 @@ namespace :apac do
     end
   end
 
-  desc 'One-off fix: rewrite config.url on already-copied target App actors. TARGET_APP_URLS="name=url,..." [DRY_RUN]'
+  desc 'One-off fix: rewrite config.url on already-copied target Apps. Optional TARGET_APP_URLS override. [DRY_RUN]'
   task fix_app_urls: :environment do
     Actor.logs! false
     dry = apac_dry_run?
     url_map = apac_target_app_urls
-    abort 'Set TARGET_APP_URLS="identity-management=https://apac.ident.services,samedis-care=https://apac.samedis.care"' if url_map.empty?
 
     copier = ApacMigration::MongoCopier.new(dry_run: dry)
     apac_preflight!(copier)
