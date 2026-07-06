@@ -145,6 +145,36 @@ namespace :apac do
     end
   end
 
+  # `view_<app>_actors` (e.g. view_samedis_care_actors) is how SCB's read-only
+  # user reads IM actor data — see Actors::App#create_app_view!. It's a MongoDB
+  # VIEW (metadata in system.views), not a document collection, so the document
+  # copy never brings it over — it must be (re)created explicitly on the target,
+  # once per app (every App except identity-management, matching
+  # Actors::App.apps_for_views). Idempotent: drops-if-exists then creates,
+  # mirroring create_app_view! itself, just aimed at the target client instead
+  # of Mongoid's default (source) connection.
+  def apac_ensure_views!(copier)
+    Actors::App.apps_for_views.each do |app|
+      view_name = app.view_name
+      command = {
+        create: view_name,
+        viewOn: 'actors',
+        pipeline: [
+          { '$match' => { 'deleted' => false } },
+          { '$match' => { '$or' => [{ '_id' => app.id }, { 'parent_ids' => app.id }] } }
+        ]
+      }
+      if copier.dry_run
+        puts "  would (re)create view: #{view_name}"
+        next
+      end
+
+      copier.target_client[view_name].drop
+      copier.target_client.database.command(**command)
+      puts "  (re)created view: #{view_name}"
+    end
+  end
+
   # --- tasks ----------------------------------------------------------------
 
   desc 'Mark tenants as APAC region. TENANT_IDS="id1,id2" or TENANT_IDS_FILE=path [DRY_RUN=true]'
@@ -254,6 +284,9 @@ namespace :apac do
     # 6. Migration tracking (mongoid_rails_migrations) — so the target treats all
     #    historical migrations as already run and does not replay them on boot.
     copier.copy(model: DataMigration, selector: {}, label: 'data_migrations', deltaable: false)
+    # 7. (Re)create the view(s) SCB's read-only user reads actor data through —
+    #    a MongoDB view is metadata, never brought over by the document copy.
+    apac_ensure_views!(copier)
 
     puts '-' * 80
     if dry
@@ -332,6 +365,17 @@ namespace :apac do
       puts "copied=#{s3.stats[:copied]} skipped_existing=#{s3.stats[:skipped]} " \
            "missing_source=#{s3.stats[:missing_source]}"
     end
+  end
+
+  desc '(Re)create view_<app>_actors on the target — SCB reads IM actor data through it. [DRY_RUN]'
+  task ensure_views: :environment do
+    Actor.logs! false
+    copier = ApacMigration::MongoCopier.new(dry_run: apac_dry_run?)
+    apac_preflight!(copier)
+
+    puts "apac:ensure_views (#{Rails.env})#{' [DRY_RUN]' if copier.dry_run}"
+    puts apac_hr
+    apac_ensure_views!(copier)
   end
 
   desc 'One-off fix: rewrite config.url on already-copied target Apps. Optional TARGET_APP_URLS override. [DRY_RUN]'

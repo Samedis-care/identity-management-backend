@@ -19,12 +19,18 @@ for which tenants are APAC; IMB only mirrors the id list.
 | Piece | Where |
 |---|---|
 | `region` field on the tenant actor (`nil`/`eu` = EU, `apac` = Singapore) | `app/models/actors/tenant.rb` |
-| `apac:*` rake tasks (mark / copy / verify / report_dangling / fix_app_urls) | `lib/tasks/apac_migration.rake` |
+| `apac:*` rake tasks (mark / copy / verify / report_dangling / ensure_views / fix_app_urls) | `lib/tasks/apac_migration.rake` |
 | Migration library (resolver, copier, leak guard, safety registry) | `lib/apac_migration/` |
 
 `region` flows into the SCB-facing view `view_samedis_care_actors` automatically
 (the view is `viewOn: 'actors'` with only `$match` stages — no projection), so
-SCB sees `region` without any view change.
+SCB sees `region` without any view change — **once the view itself exists on the
+target**. A MongoDB view is metadata (`system.views`), not a document collection,
+so it is never brought over by the document copy. `apac:copy` (re)creates
+`view_<app>_actors` for every App except `identity-management` (matching
+`Actors::App.apps_for_views`) as its last step; `apac:ensure_views` does the same
+standalone, e.g. after a from-scratch target rebuild that skipped a full copy, or
+to repair a target where the view is missing/stale.
 
 There is **no routing code** in IMB: EU and APAC IMB are independent deployments;
 a user logs in on one or the other. `region` is a marker/selection source, not a
@@ -203,3 +209,7 @@ Configure per the existing schema:
   native on target)`) and the leak guard passes; copied users have **empty** EU
   cache fields.
 - In SCB: after `mark_region`, `region` is visible in `view_samedis_care_actors`.
+- On the target: `view_samedis_care_actors` exists (`apac:copy`/`apac:ensure_views`
+  create it) and returns the expected tenant rows — a fresh/rebuilt target has
+  none of the source's views until this runs, even though the underlying
+  `actors` documents are already there.
