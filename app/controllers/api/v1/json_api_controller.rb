@@ -383,6 +383,7 @@ class Api::V1::JsonApiController < ApplicationController
 
   def tenant_authorize
     return if performed?
+    return render_jsonapi_otp_required unless current_token.otp_satisfied?
     render_jsonapi_unauthorized unless tenant_authorization
   end
 
