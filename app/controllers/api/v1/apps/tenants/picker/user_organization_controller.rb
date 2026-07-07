@@ -14,10 +14,13 @@ class Api::V1::Apps::Tenants::Picker::UserOrganizationController < Api::V1::Json
   undef_method :update
   undef_method :destroy
 
+  # SECURITY (pen-test 2026-07): internal-admin-only. ~/tenant.admin intentionally
+  # excluded — it is a per-tenant customer cando; app-tenant.admin is app-wide by
+  # design, so the global authorize is correct here. Do not re-add ~/tenant.admin.
   def cando
     CANDO.merge({
-      index:   %w(~/app-tenant.admin ~/tenant.admin),
-      show:    %w(~/app-tenant.admin ~/tenant.admin)
+      index:   %w(~/app-tenant.admin),
+      show:    %w(~/app-tenant.admin)
     })
   end
 
