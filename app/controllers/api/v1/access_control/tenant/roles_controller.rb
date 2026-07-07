@@ -13,6 +13,11 @@ class Api::V1::AccessControl::Tenant::RolesController < Api::V1::JsonApiControll
 
   SWAGGER = { tag: 'Access Control', name: 'Tenant Role', header: 'Manage roles within tenant access control' }
 
+  # Tenant-scoped authorization — own-tenant only, matching the sibling
+  # access_control/tenant/{users,groups} controllers (security audit M-9).
+  skip_before_action :authorize
+  before_action :tenant_authorize
+
   undef_method :create
   undef_method :update
   undef_method :destroy
