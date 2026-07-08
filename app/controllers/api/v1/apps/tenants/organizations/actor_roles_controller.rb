@@ -12,7 +12,24 @@ class Api::V1::Apps::Tenants::Organizations::ActorRolesController < Api::V1::Jso
 
   PERMIT_CREATE = [:role_id]
 
-  SWAGGER = { tag: 'Tenant Org Roles', name: 'Organization Role', header: 'Manage roles within a tenant organization' }
+  SWAGGER = {
+    tag: 'Tenant Org Roles',
+    name: 'Organization Role',
+    header: 'Manage roles within a tenant organization'
+  }
+
+  # SECURITY / pen-test note (2026-07):
+  # Admin-only endpoint. Access is intentionally gated to ~/app-tenant.admin,
+  # which is an APP-WIDE (cross-tenant) admin cando by design — hence the global
+  # `authorize` (not tenant_authorize) is correct here.
+  # ~/tenant.admin was deliberately REMOVED from the cando list: it is a
+  # per-tenant cando bundled into ordinary customer roles (e.g. "Edit facility
+  # data"), and combined with the global cando check it let a plain tenant admin
+  # assign themselves privileged roles (incl. apps.admin) -> privilege
+  # escalation. Do not re-add ~/tenant.admin here.
+  # NOTE: an app-tenant.admin can still assign any app role to any actor
+  # (Actor.find/role lookups are unscoped); that is accepted as a trusted-admin
+  # capability. Keep app-tenant.admin restricted to trusted operators.
 
   undef_method :update
 
@@ -61,10 +78,10 @@ class Api::V1::Apps::Tenants::Organizations::ActorRolesController < Api::V1::Jso
 
   def cando
     CANDO.merge({
-      show:    %w(~/app-tenant.admin ~/tenant.admin),
-      index:   %w(~/app-tenant.admin ~/tenant.admin),
-      create:  %w(~/app-tenant.admin ~/tenant.admin),
-      destroy: %w(~/app-tenant.admin ~/tenant.admin)
+      show:    %w(~/app-tenant.admin),
+      index:   %w(~/app-tenant.admin),
+      create:  %w(~/app-tenant.admin),
+      destroy: %w(~/app-tenant.admin)
     })
   end
 

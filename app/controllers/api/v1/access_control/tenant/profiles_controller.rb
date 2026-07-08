@@ -18,6 +18,11 @@ class Api::V1::AccessControl::Tenant::ProfilesController < Api::V1::JsonApiContr
     action_suffix: 'Custom profiles'
   }.freeze
 
+  # Tenant-scoped authorization — own-tenant only, matching the sibling
+  # access_control/tenant/{users,groups} controllers (security audit H-6).
+  skip_before_action :authorize
+  before_action :tenant_authorize
+
   PERMIT_CREATE = [
     :title,
     :name,

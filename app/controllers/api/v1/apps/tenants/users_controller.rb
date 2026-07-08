@@ -29,6 +29,12 @@ class Api::V1::Apps::Tenants::UsersController < Api::V1::JsonApiController
 
   SWAGGER = { tag: 'Tenant Users', name: 'User', header: 'Manage users within a tenant of an app' }
 
+  # Tenant-scoped authorization: the required cando must be held IN the target
+  # tenant (current_tenant is membership-scoped). Prevents a tenant.admin of one
+  # tenant from acting on users of another tenant. See security audit C-1.
+  skip_before_action :authorize
+  before_action :tenant_authorize
+
   undef_method :create
   undef_method :destroy
 

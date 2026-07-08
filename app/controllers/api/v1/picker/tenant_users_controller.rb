@@ -8,7 +8,17 @@ class Api::V1::Picker::TenantUsersController < Api::V1::JsonApiController
 
   PARAM_UPDATE = [tenant_groups: []]
 
-  SWAGGER = { tag: 'Picker: Tenant Users', name: 'Tenant User', header: 'Tenant user picker for selection dialogs' }
+  SWAGGER = {
+    tag: 'Picker: Tenant Users',
+    name: 'Tenant User',
+    header: 'Tenant user picker for selection dialogs'
+  }
+
+  # Tenant-scoped authorization — own-tenant only, matching the
+  # access_control/tenant/* controllers: the cando must be held IN the target
+  # tenant, not merely somewhere in the user's global candos (security audit).
+  skip_before_action :authorize
+  before_action :tenant_authorize
 
   undef_method :create
   undef_method :destroy

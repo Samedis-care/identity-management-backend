@@ -2,7 +2,8 @@ class Api::V1::Apps::Tenants::Users::ActorsController < Api::V1::Apps::Users::Us
 
   MODEL_BASE = Actors::Mapping
   MODEL = -> {
-    current_app_actor.tenants.find(params_json_api[:tenant_id]).descendants.where(:id.in => mappings.distinct(:parent_id))
+    current_app_actor.tenants.find(params_json_api[:tenant_id])
+      .descendants.where(:id.in => mappings.distinct(:parent_id))
   }
   MODEL_OVERVIEW = MODEL
   SERIALIZER = UserOrganizationSerializer
@@ -10,7 +11,21 @@ class Api::V1::Apps::Tenants::Users::ActorsController < Api::V1::Apps::Users::Us
 
   PERMIT_UPDATE = []
 
-  SWAGGER = { tag: 'Tenant User Actors', name: 'Actor', header: 'Actor mappings for a tenant user' }
+  SWAGGER = {
+    tag: 'Tenant User Actors',
+    name: 'Actor',
+    header: 'Actor mappings for a tenant user'
+  }.freeze
+
+  # SECURITY / pen-test note (2026-07):
+  # Admin-only endpoint. Gated to ~/app-tenant.admin, an APP-WIDE (cross-tenant)
+  # admin cando by design — the global `authorize` is correct.
+  # ~/tenant.admin was deliberately REMOVED (per-tenant cando bundled into
+  # ordinary customer roles) to prevent a per-tenant admin from mapping users
+  # into arbitrary actors. Do not re-add ~/tenant.admin.
+  # NOTE: #create resolves actor_id / target_user app-wide (not tenant-scoped);
+  # that is accepted as a trusted-admin capability. Keep app-tenant.admin
+  # restricted to trusted operators.
 
   undef_method :update
 
@@ -47,10 +62,10 @@ class Api::V1::Apps::Tenants::Users::ActorsController < Api::V1::Apps::Users::Us
 
   def cando
     CANDO.merge({
-                  show:    %w(~/app-tenant.admin ~/tenant.admin),
-                  index:   %w(~/app-tenant.admin ~/tenant.admin),
-                  create:  %w(~/app-tenant.admin ~/tenant.admin),
-                  destroy: %w(~/app-tenant.admin ~/tenant.admin),
+                  show:    %w(~/app-tenant.admin),
+                  index:   %w(~/app-tenant.admin),
+                  create:  %w(~/app-tenant.admin),
+                  destroy: %w(~/app-tenant.admin),
                 })
   end
 
