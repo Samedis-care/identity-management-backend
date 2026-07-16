@@ -15,9 +15,16 @@ class Api::V1::User::TenantsController < Api::V1::JsonApiController
   }
 
   private
-  # restrict to the current_user's tenant(s)
+  # restrict to the current_user's tenant(s).
+  # SECURITY (pen-test 2026-07, cross-tenant enumeration): the previous guard
+  #   `if cando_any_for_tenants?("#{current_app}/app-tenant.admin")`
+  # was always truthy — cando_any_for_tenants? returns an Array (every Array,
+  # incl. []), and the cando was passed as a String (cando_any? returns false
+  # for non-Array input), so it unconditionally returned every tenant on the
+  # platform. Only genuine app-wide admins (holding app-tenant.admin for this
+  # app) may see all tenants; everyone else is scoped to their own memberships.
   def model_index
-    if cando_any_for_tenants?("#{current_app}/app-tenant.admin")
+    if current_user.global_candos.include?("#{current_app}/app-tenant.admin")
       self.class::MODEL_OVERVIEW
     else
       self.class::MODEL_OVERVIEW.where(:id.in => current_user.actor.actor_ids)
