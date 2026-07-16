@@ -435,7 +435,7 @@ class Api::V1::JsonApiController < ApplicationController
   # checks the cando requirements against all tenants the user is a member of
   # @return {Array} of tenants
   def authorized_tenants
-    @authorized_tenants ||= (cando_any_for_tenants?(current_cando_requirements) rescue [])
+    @authorized_tenants ||= (tenants_with_cando(current_cando_requirements) rescue [])
   end
 
   # checks the cando requirements against all tenants the user is a member of
@@ -444,10 +444,25 @@ class Api::V1::JsonApiController < ApplicationController
     @authorized_tenant_ids ||= authorized_tenants.pluck(:id)
   end
 
-  def cando_any_for_tenants?(of_these)
+  # Tenants of the current_user's memberships whose candos satisfy the
+  # requirement. `of_these` uses the nested cando_any? requirement shape
+  # (see get_candos / current_cando_requirements).
+  # @return {Array} of tenant hashes
+  def tenants_with_cando(of_these)
     current_user.tenants.select do |tenant|
       cando_any?(of_these, tenant)
     end
+  end
+
+  # Predicate: does the current_user hold the given cando in ANY of their
+  # tenants? Accepts a single cando string (or a flat AND-combo array) and wraps
+  # it into the cando_any? requirement shape.
+  # NOTE: returns a Boolean on purpose. The previous version returned an Array
+  # (every Array, incl. [], is truthy in Ruby), which — used in a boolean
+  # context — leaked every tenant on the platform (see
+  # User::TenantsController#model_index; pen-test cross-tenant enumeration).
+  def cando_any_for_tenants?(cando)
+    tenants_with_cando([[Array(cando)]]).any?
   end
 
   # Helper to compare required candos with those the current_user has
