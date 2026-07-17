@@ -17,11 +17,16 @@ class SocialTokenVerifier
     'google' => {
       jwks_uri: 'https://www.googleapis.com/oauth2/v3/certs',
       issuers: %w[accounts.google.com https://accounts.google.com],
+      # Pin the signature algorithm(s) per provider. The allowed algorithm MUST
+      # come from here, never from the attacker-controlled token header —
+      # otherwise `alg: none` (and RS/HS key confusion) forge arbitrary tokens.
+      algorithms: %w[RS256],
       audiences: -> { google_client_ids }
     },
     'apple' => {
       jwks_uri: 'https://appleid.apple.com/auth/keys',
       issuers: %w[https://appleid.apple.com],
+      algorithms: %w[ES256],
       audiences: -> { apple_client_ids }
     },
     'microsoft' => {
@@ -30,6 +35,7 @@ class SocialTokenVerifier
       # Multi-tenant apps receive tenant-specific issuers (e.g. /{tenant-uuid}/v2.0)
       # even when the app is configured with tenantId "common"
       issuer_pattern: %r{\Ahttps://login\.microsoftonline\.com/[0-9a-f\-]{36}/v2\.0\z},
+      algorithms: %w[RS256],
       audiences: -> { microsoft_client_ids }
     }
   }.freeze
@@ -65,7 +71,10 @@ class SocialTokenVerifier
     raise VerificationError, "No matching key found for kid: #{kid}" unless key_data
 
     jwk = JWT::JWK.import(key_data)
-    algorithms = [header['alg'] || 'RS256']
+    # Never trust the algorithm from the (unverified) token header — pin it to
+    # the provider's expected algorithm(s). This rejects `alg: none` and
+    # RS256/HS256 key-confusion forgeries.
+    algorithms = @config[:algorithms]
 
     decoded = JWT.decode(
       @id_token,

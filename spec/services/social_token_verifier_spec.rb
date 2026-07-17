@@ -111,10 +111,32 @@ RSpec.describe SocialTokenVerifier do
       verifier = described_class.new(provider:, id_token: token)
       expect { verifier.verify! }.to raise_error(SocialTokenVerifier::VerificationError, /No matching key/)
     end
+
+    # Regression: pen-test 2026-07, CVSS 9.8 — the verifier must pin the signature
+    # algorithm per provider and never trust the token header's `alg`. A forged
+    # unsigned token (alg: none) with an arbitrary email must be rejected.
+    it 'rejects an unsigned token (alg: none)' do
+      token = build_token(valid_claims, key: nil, algorithm: 'none')
+      verifier = described_class.new(provider:, id_token: token)
+      expect { verifier.verify! }.to raise_error(SocialTokenVerifier::VerificationError)
+    end
+
+    it 'rejects an HS256 token (algorithm confusion)' do
+      token = build_token(valid_claims, key: 'attacker-controlled-secret', algorithm: 'HS256')
+      verifier = described_class.new(provider:, id_token: token)
+      expect { verifier.verify! }.to raise_error(SocialTokenVerifier::VerificationError)
+    end
   end
 
   describe 'Apple verification' do
     let(:provider) { 'apple' }
+
+    # Apple signs id_tokens with ES256 (not RS256), so this provider needs an
+    # EC key + EC JWKS.
+    let(:ec_key) { OpenSSL::PKey::EC.generate('prime256v1') }
+    let(:jwks_response) do
+      { 'keys' => [JWT::JWK.new(ec_key, kid:).export] }.to_json
+    end
 
     let(:valid_claims) do
       {
@@ -136,7 +158,7 @@ RSpec.describe SocialTokenVerifier do
     end
 
     it 'verifies a valid Apple id_token' do
-      token = build_token(valid_claims)
+      token = build_token(valid_claims, key: ec_key, algorithm: 'ES256')
       verifier = described_class.new(provider:, id_token: token)
       claims = verifier.verify!
 
@@ -145,7 +167,7 @@ RSpec.describe SocialTokenVerifier do
     end
 
     it 'accepts email_verified as string "true"' do
-      token = build_token(valid_claims)
+      token = build_token(valid_claims, key: ec_key, algorithm: 'ES256')
       verifier = described_class.new(provider:, id_token: token)
       expect { verifier.verify! }.not_to raise_error
     end
