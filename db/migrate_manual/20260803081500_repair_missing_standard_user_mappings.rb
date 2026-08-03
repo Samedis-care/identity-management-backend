@@ -199,12 +199,22 @@ class RepairMissingStandardUserMappings < Mongoid::Migration
       say "rows in repair scope (#{in_scope.size}) - cross-check these against the " \
           'samedis-care Staff#login_allowed list before applying:'
       in_scope.sort_by { |r| r[:accepted_at] || Time.at(0) }.each do |row|
-        say format('  %-10s %-38s %s',
+        say format('  %-10s %-38s %-26s invite=%s',
                    row[:accepted_at]&.strftime('%Y-%m-%d') || '?',
-                   row[:email].to_s[0, 38], row[:tenant][0, 26])
+                   row[:email].presence || '<NO EMAIL>',
+                   row[:tenant][0, 26], row[:invite_id])
       end
       say '-' * 76
-      say "emails only: #{in_scope.map { |r| r[:email] }.compact.sort.join(' ')}"
+      mails = in_scope.map { |r| r[:email].presence }
+      say "emails only: #{mails.compact.sort.join(' ')}"
+      # without an address these cannot be matched against the samedis-care staff list,
+      # so they need deciding by hand rather than slipping through with the rest
+      blank = in_scope.reject { |r| r[:email].present? }
+      if blank.any?
+        say "WARNING: #{blank.size} of #{in_scope.size} in-scope rows have no email and " \
+            'are NOT covered by the list above - check by invite id: ' \
+            "#{blank.map { |r| r[:invite_id] }.join(' ')}"
+      end
     end
     say '=' * 76
     say(apply ? "repaired #{stats[:repaired]} mapping(s)" : 'DRY RUN - nothing written')
