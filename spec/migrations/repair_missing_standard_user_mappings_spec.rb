@@ -1,0 +1,128 @@
+require 'rails_helper'
+require Rails.root.join('db/migrate/manual/20260803081500_repair_missing_standard_user_mappings')
+
+# Cover for the manual repair migration for Samedis-care/samedis-care-issues#2403.
+# Runs scoped to its own tenant via TENANT_ID so leftovers from other specs cannot
+# influence the outcome.
+RSpec.describe RepairMissingStandardUserMappings do
+  let(:sfx) { SecureRandom.hex(4) }
+  let(:email) { "repair-#{sfx}@invite-spec.test" }
+
+  let!(:tenant) { Actors::Tenant.create!(name: "t#{sfx}") }
+  let!(:organization) { Actors::Organization.create!(name: "org#{sfx}", parent: tenant) }
+  let!(:tenant_profiles) { Actors::Ou.create!(name: 'tenant_profiles', parent: organization) }
+  let!(:standard_group) do
+    Actors::Group.create!(name: 'standard_user', parent: tenant_profiles, system: true)
+  end
+
+  let!(:user) do
+    User.new(
+      email: email,
+      email_confirmation: email,
+      first_name: 'Repair',
+      last_name: 'Spec',
+      password: 'Sup3rSecret!123',
+      password_confirmation: 'Sup3rSecret!123'
+    ).tap do |u|
+      u.skip_confirmation!
+      u.save!
+    end
+  end
+  let!(:user_actor) { user.actor }
+
+  # the state the bug left behind: accepted, done, but no mapping
+  let!(:invite) do
+    Invite.create!(
+      email: email,
+      tenant: tenant,
+      invitable_type: 'tenant',
+      invitable_id: tenant.id.to_s,
+      auto_accept: true,
+      valid_until: 1.day.from_now
+    ).tap { |i| i.set(done: true, accepted_at: Time.utc(2025, 6, 1)) }
+  end
+
+  around do |example|
+    was_verbose = Mongoid::Migration.verbose
+    Mongoid::Migration.verbose = false
+    ENV['TENANT_ID'] = tenant.id.to_s
+    example.run
+  ensure
+    Mongoid::Migration.verbose = was_verbose
+    ENV.delete('TENANT_ID')
+    ENV.delete('APPLY')
+    ENV.delete('LIMIT')
+  end
+
+  after do
+    Invite.where(email: email).delete_all
+    Actor.where(:parent_ids.in => [tenant.id]).delete_all
+    user_actor&.delete
+    user.delete
+    tenant.delete
+  end
+
+  def mappings
+    Actors::Mapping.where(parent: standard_group, map_actor: user_actor)
+  end
+
+  describe 'without APPLY' do
+    it 'writes nothing' do
+      expect { described_class.up rescue nil }.not_to change { mappings.count }.from(0)
+    end
+
+    it 'raises so the migration is not recorded as run' do
+      expect { described_class.up }.to raise_error(/DRY RUN/)
+    end
+  end
+
+  describe 'with APPLY' do
+    before { ENV['APPLY'] = 'true' }
+
+    it 'maps the user into standard_user' do
+      expect { described_class.up }.to change { mappings.count }.from(0).to(1)
+    end
+
+    it 'is idempotent' do
+      described_class.up
+      described_class.up
+
+      expect(mappings.count).to eq(1)
+    end
+
+    it 'leaves an already mapped user untouched' do
+      standard_group.map_into!(user_actor)
+
+      expect { described_class.up }.not_to change { mappings.count }.from(1)
+    end
+
+    it 'respects LIMIT' do
+      ENV['LIMIT'] = '0'
+
+      expect { described_class.up }.not_to change { mappings.count }.from(0)
+    end
+
+    # a user who reaches the tenant through another group is not this bug, and their
+    # missing standard_user mapping may well be deliberate
+    it 'skips users who already have other access to the tenant' do
+      other_group = Actors::Group.create!(
+        name: "custom_#{sfx}", parent: tenant_profiles, system: true
+      )
+      other_group.map_into!(user_actor)
+
+      expect { described_class.up }.not_to change { mappings.count }.from(0)
+    end
+
+    it 'ignores invites that were never accepted' do
+      invite.set(done: false, accepted_at: nil)
+
+      expect { described_class.up }.not_to change { mappings.count }.from(0)
+    end
+  end
+
+  describe '.down' do
+    it 'refuses to reverse' do
+      expect { described_class.down }.to raise_error(Mongoid::IrreversibleMigration)
+    end
+  end
+end
