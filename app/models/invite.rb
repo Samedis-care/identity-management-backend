@@ -96,7 +96,10 @@ class Invite < ApplicationDocument
 
     action = "_process_accept_#{self.invitable_type}".to_sym
     raise "NO ACCEPT ACTION FOUND: #{action}" unless self.respond_to?(action)
-    self.send(action, *args)
+    # only burn the invite once processing actually granted something, otherwise
+    # it stays retryable on the next login instead of being accepted for nothing
+    return false unless self.send(action, *args)
+
     self.update_attributes(accepted_at: Time.now, done: true)
   end
 
@@ -117,7 +120,20 @@ class Invite < ApplicationDocument
                            .groups
                            .where(system: true, name: :standard_user).first
 
-    standard_group.map_into!(user.actor) unless standard_group.is_a?(Actor)
+    # A tenant without the system group `standard_user` is misconfigured - the group
+    # comes from config/apps/samedis-care/actor_defaults/samedis-care.yml. Do not raise
+    # here: this runs inside the login flow (User#check_acceptances) where an exception
+    # would lock the user out of logging in entirely. Report it and leave the invite
+    # unaccepted so the next login retries once the tenant is repaired.
+    unless standard_group.is_a?(Actor)
+      Sentry.capture_message(
+        "Invite#accept!: no system group 'standard_user' below tenant #{tenant_id} - user not joined",
+        level: :error
+      )
+      return false
+    end
+
+    standard_group.map_into!(user.actor)
 
     true
   end
