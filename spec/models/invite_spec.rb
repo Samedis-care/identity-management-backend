@@ -138,6 +138,21 @@ RSpec.describe Invite, type: :model do
       end
     end
 
+    # `no organization` and `app declares no tenant_profiles` both surface as a nil from
+    # Actors::Tenant#profiles_ou_defaults, but only the second says anything about the app.
+    # A tenant whose organization node was soft-deleted must still be reported rather than
+    # silently accepted - and note the sibling spec above reaches the Sentry branch through
+    # the rescue in #standard_user_expected?, not through this distinction
+    context 'when the tenant has no organization node' do
+      it 'treats the group as expected and reports it' do
+        allow_any_instance_of(Actors::Tenant).to receive(:organization).and_return(nil)
+
+        expect(Sentry).to receive(:capture_message).with(/standard_user/, any_args)
+        expect(invite.accept!).to be(false)
+        expect(invite.reload.done).to be(false)
+      end
+    end
+
     # invitable_type 'tenant' is settable for any app's tenant, and other apps declare
     # other groups - identity-management has no tenant_profiles OU at all - so a missing
     # standard_user group is not a misconfiguration there

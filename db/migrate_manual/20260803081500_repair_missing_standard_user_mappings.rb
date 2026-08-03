@@ -20,6 +20,19 @@
 #   MANUAL=true APPLY=true EMAILS=a@x.de,b@y.de VERSION=20260803081500 \
 #     RAILS_ENV=live bundle exec rails db:migrate:up
 #
+# An APPLY run does not raise, so it records the version - and Mongoid::Migrator#run is a
+# silent no-op once a version is recorded: no output, no report, no error. A second batch
+# via db:migrate:up would look like a clean run that did nothing, and #down raises
+# IrreversibleMigration so there is no way back through the migrator either. This is not
+# hypothetical; it happened on live on 2026-08-03. Either apply the whole confirmed set in
+# one run and treat the recorded version as final, or run later batches directly, which
+# ignores the recorded version and needs no MANUAL because nothing consults the path:
+#
+#   # 3. later batches, and the repeatable way to re-report after recording
+#   APPLY=true EMAILS=c@x.de RAILS_ENV=live bundle exec rails runner \
+#     'load Rails.root.join("db/migrate_manual/20260803081500_repair_missing_standard_user_mappings.rb").to_s
+#      RepairMissingStandardUserMappings.up'
+#
 # Do not set INDEXES together with MANUAL: the INDEXES branch assigns the path while the
 # MANUAL branch appends, so db/migrate itself drops out.
 #
@@ -103,9 +116,12 @@ class RepairMissingStandardUserMappings < Mongoid::Migration
 
       # accepted tenant invites cluster heavily by tenant, so memoize rather than
       # repeating this lookup for every invite of the same tenant
-      groups_by_tenant[tenant.id] ||= tenant.descendants.groups.available
+      # fetch rather than ||=, which would re-query for every invite of a tenant that has
+      # no group - the one population the memoization is meant to cover
+      group = groups_by_tenant.fetch(tenant.id) do
+        groups_by_tenant[tenant.id] = tenant.descendants.groups.available
                                             .where(system: true, name: :standard_user).first
-      group = groups_by_tenant[tenant.id]
+      end
       if group.nil?
         # nothing to map into - the tenant itself needs repairing first
         stats[:skip_tenant_without_group] += 1
@@ -159,20 +175,21 @@ class RepairMissingStandardUserMappings < Mongoid::Migration
         next
       end
 
-      # pushed only past the limit check, so the printed list is the audit trail of what
-      # was actually written rather than of what merely passed the filters
-      in_scope << { email: user.email, tenant: tenant.name.to_s,
-                    tenant_id: tenant.id.to_s, accepted_at: invite.accepted_at,
-                    invite_id: invite.id.to_s }
+      # recorded only where something was actually written (or would be, on a dry run), so
+      # the printed list is a write log rather than a list of rows that passed the filters
+      row = { email: user.email, tenant: tenant.name.to_s, tenant_id: tenant.id.to_s,
+              accepted_at: invite.accepted_at, invite_id: invite.id.to_s }
 
       unless apply
         repaired << invite.id
+        in_scope << row
         next
       end
 
       begin
         group.map_into!(actor)
         repaired << invite.id
+        in_scope << row
         stats[:repaired] += 1
       rescue StandardError => e
         stats[:failed] += 1

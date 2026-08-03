@@ -168,6 +168,14 @@ class Invite < ApplicationDocument
   # OU at all. So a missing group is only a misconfiguration where the tenant's own app
   # defaults ask for it.
   def standard_user_expected?(tenant)
+    # Actors::Tenant#profiles_ou_defaults returns nil both when the app declares no
+    # tenant_profiles OU and when the tenant has no organization node at all
+    # (tenant.rb:100, and #organization filters by `available`, so a soft-deleted org tree
+    # gives nil on a live tenant). Only the first is an answer about the app; treating the
+    # second as "not expected" would burn the invite and report nothing, which is the
+    # silent no-op this whole change exists to remove.
+    return true if tenant.organization.nil?
+
     defaults = tenant.profiles_ou_defaults
     return false unless defaults.is_a?(Hash)
 
