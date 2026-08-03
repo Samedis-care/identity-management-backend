@@ -52,6 +52,7 @@ RSpec.describe RepairMissingStandardUserMappings do
     ENV.delete('TENANT_ID')
     ENV.delete('APPLY')
     ENV.delete('LIMIT')
+    ENV.delete('SINCE')
   end
 
   after do
@@ -115,6 +116,45 @@ RSpec.describe RepairMissingStandardUserMappings do
 
     it 'ignores invites that were never accepted' do
       invite.set(done: false, accepted_at: nil)
+
+      expect { described_class.up }.not_to change { mappings.count }.from(0)
+    end
+
+    # 68 of the first live report's 94 affected rows predate the bug, going back to 2019,
+    # so the default floor keeps the repair to rows this bug can actually explain
+    context 'with an acceptance date before the bug' do
+      before { invite.set(accepted_at: Time.utc(2024, 10, 1)) }
+
+      it 'does not repair by default' do
+        expect { described_class.up }.not_to change { mappings.count }.from(0)
+      end
+
+      it 'still counts it as affected in the report' do
+        expect(described_class).to receive(:report) do |stats, _months, _apply, since|
+          expect(stats[:affected]).to eq(1)
+          expect(stats[:skip_before_since]).to eq(1)
+          expect(stats[:in_repair_scope]).to eq(0)
+          expect(since).to eq(described_class::BUG_INTRODUCED)
+        end
+
+        described_class.up
+      end
+
+      it 'repairs with SINCE=all' do
+        ENV['SINCE'] = 'all'
+
+        expect { described_class.up }.to change { mappings.count }.from(0).to(1)
+      end
+
+      it 'repairs with an explicit earlier SINCE' do
+        ENV['SINCE'] = '2024-01-01'
+
+        expect { described_class.up }.to change { mappings.count }.from(0).to(1)
+      end
+    end
+
+    it 'does not repair invites with no acceptance date' do
+      invite.set(accepted_at: nil)
 
       expect { described_class.up }.not_to change { mappings.count }.from(0)
     end
