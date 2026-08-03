@@ -13,7 +13,8 @@
 #   MANUAL=true APPLY=true RAILS_ENV=live bundle exec rails db:migrate
 #
 # Knobs: APPLY=true (write), LIMIT=n (cap repairs), TENANT_ID=<id> (single tenant),
-#        SINCE=YYYY-MM-DD or SINCE=all (default floor: 2025-04-16, the day the bug shipped).
+#        SINCE=YYYY-MM-DD or SINCE=all (default floor: 2025-04-16, the day the bug shipped),
+#        EMAILS=a@x.de,b@y.de (repair only these, after confirming them on the samedis side).
 # Run once per cluster - the APAC cluster (RAILS_ENV=apac) has its own data.
 #
 # READ THIS BEFORE APPLYING
@@ -54,6 +55,10 @@ class RepairMissingStandardUserMappings < Mongoid::Migration
     limit = ENV['LIMIT'].presence&.to_i
     only_tenant = ENV['TENANT_ID'].presence
     since = since_floor
+    # EMAILS=a@x.de,b@y.de restricts the repair to an explicitly confirmed set. Rows
+    # outside it are still reported, so the full picture stays visible.
+    only_emails = ENV['EMAILS'].to_s.split(/[,\s]+/).map { |e| e.downcase.strip }
+                               .reject(&:empty?).presence
 
     scope = Invite.where(invitable_type: 'tenant', done: true)
     scope = scope.where(tenant_id: only_tenant) if only_tenant
@@ -118,9 +123,15 @@ class RepairMissingStandardUserMappings < Mongoid::Migration
         next
       end
 
+      if only_emails && !only_emails.include?(user.email.to_s.downcase)
+        stats[:skip_not_in_emails] += 1
+        next
+      end
+
       stats[:in_repair_scope] += 1
       in_scope << { email: user.email, tenant: tenant.name.to_s,
-                    accepted_at: invite.accepted_at, invite_id: invite.id.to_s }
+                    tenant_id: tenant.id.to_s, accepted_at: invite.accepted_at,
+                    invite_id: invite.id.to_s }
 
       if limit && repaired.size >= limit
         stats[:over_limit] += 1
@@ -180,8 +191,8 @@ class RepairMissingStandardUserMappings < Mongoid::Migration
       say format('  %-8s %5d %s', month, months[month], '#' * [months[month], 50].min)
     end
     say '-' * 76
-    %i[scanned affected affected_before_bug skip_before_since in_repair_scope
-       repaired failed already_mapped skip_has_other_access
+    %i[scanned affected affected_before_bug skip_before_since skip_not_in_emails
+       in_repair_scope repaired failed already_mapped skip_has_other_access
        skip_tenant_without_group skip_tenant_gone skip_user_gone
        skip_user_without_actor over_limit].each do |key|
       say format('  %-26s %6d', key, stats[key])
@@ -207,6 +218,11 @@ class RepairMissingStandardUserMappings < Mongoid::Migration
       say '-' * 76
       mails = in_scope.map { |r| r[:email].presence }
       say "emails only: #{mails.compact.sort.join(' ')}"
+      # email alone is ambiguous for a customer running many tenants - the same person can
+      # be staff at several, and only one of them may be the one that lost access
+      say 'email|tenant pairs: ' +
+          in_scope.select { |r| r[:email].present? }
+                  .map { |r| "#{r[:email]}|#{r[:tenant_id]}" }.sort.join(' ')
       # without an address these cannot be matched against the samedis-care staff list,
       # so they need deciding by hand rather than slipping through with the rest
       blank = in_scope.reject { |r| r[:email].present? }
