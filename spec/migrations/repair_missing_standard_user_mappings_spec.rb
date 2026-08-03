@@ -160,6 +160,43 @@ RSpec.describe RepairMissingStandardUserMappings do
     end
   end
 
+  describe 'SINCE parsing' do
+    it 'rejects input Time.parse would silently misread' do
+      ENV['SINCE'] = '2025'
+
+      expect { described_class.since_floor }.to raise_error(/SINCE must be YYYY-MM-DD/)
+    end
+
+    it 'rejects nonsense instead of aborting with a bare ArgumentError' do
+      ENV['SINCE'] = 'letztes jahr'
+
+      expect { described_class.since_floor }.to raise_error(/SINCE must be YYYY-MM-DD/)
+    end
+
+    it 'accepts a full date' do
+      ENV['SINCE'] = '2024-01-01'
+
+      expect(described_class.since_floor).to eq(Time.utc(2024, 1, 1))
+    end
+  end
+
+  describe 'LIMIT and the printed audit list' do
+    before do
+      ENV['APPLY'] = 'true'
+      ENV['LIMIT'] = '0'
+    end
+
+    it 'does not list rows it did not repair' do
+      expect(described_class).to receive(:report) do |stats, _months, _apply, _since, in_scope|
+        expect(stats[:in_repair_scope]).to eq(1)
+        expect(stats[:over_limit]).to eq(1)
+        expect(in_scope).to be_empty
+      end
+
+      described_class.up
+    end
+  end
+
   describe '.down' do
     it 'refuses to reverse' do
       expect { described_class.down }.to raise_error(Mongoid::IrreversibleMigration)

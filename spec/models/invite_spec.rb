@@ -138,6 +138,24 @@ RSpec.describe Invite, type: :model do
       end
     end
 
+    # invitable_type 'tenant' is settable for any app's tenant, and other apps declare
+    # other groups - identity-management has no tenant_profiles OU at all - so a missing
+    # standard_user group is not a misconfiguration there
+    context 'when the app does not declare a standard_user group' do
+      before { allow(invite).to receive(:standard_user_expected?).and_return(false) }
+
+      it 'accepts the invite instead of retrying it forever' do
+        expect(invite.accept!).to be_truthy
+        expect(invite.reload.done).to be(true)
+      end
+
+      it 'does not report a misconfiguration' do
+        expect(Sentry).not_to receive(:capture_message)
+
+        invite.accept!
+      end
+    end
+
     # the `system: true` filter is deliberate - a customer-created group of the same
     # name must not be able to hand out the samedis-care-employee role
     context 'when standard_user exists but is not a system group' do

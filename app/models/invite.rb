@@ -130,13 +130,20 @@ class Invite < ApplicationDocument
     # would lock the user out of logging in entirely. Report it and leave the invite
     # unaccepted so the next login retries once the tenant is repaired.
     unless standard_group.is_a?(Actor)
-      Sentry.capture_message(
-        "Invite#accept!: no system group 'standard_user' below tenant - user not joined",
-        level: :error,
-        tags: { tenant_id: tenant_id.to_s },
-        extra: { invite_id: id.to_s }
-      )
-      return false
+      if standard_user_expected?(tenant)
+        Sentry.capture_message(
+          "Invite#accept!: no system group 'standard_user' below tenant - user not joined",
+          level: :error,
+          tags: { tenant_id: tenant_id.to_s },
+          extra: { invite_id: id.to_s }
+        )
+        return false
+      end
+
+      # This app's tenants do not have that group, so there is nothing for this invite to
+      # grant and nothing to report. Count it as processed - leaving it unaccepted would
+      # re-run it on every login until it expires, for a condition that will never change.
+      return true
     end
 
     # same reasoning: `map_into!` raises on a missing or unpersisted actor (User#actor is
@@ -152,6 +159,22 @@ class Invite < ApplicationDocument
       return false
     end
 
+    true
+  end
+
+  # `standard_user` is a samedis-care actor default. invitable_type 'tenant' is settable for
+  # any app's tenant (both invitation controllers permit it), and other apps declare other
+  # groups - identity-management seeds `identity_management_admins` and no tenant_profiles
+  # OU at all. So a missing group is only a misconfiguration where the tenant's own app
+  # defaults ask for it.
+  def standard_user_expected?(tenant)
+    defaults = tenant.profiles_ou_defaults
+    return false unless defaults.is_a?(Hash)
+
+    Array(defaults['children']).any? { |child| child['name'].to_s.eql?('standard_user') }
+  rescue StandardError
+    # defaults unreadable: assume it was expected, so a real samedis-care misconfiguration
+    # still gets reported instead of being swallowed
     true
   end
 

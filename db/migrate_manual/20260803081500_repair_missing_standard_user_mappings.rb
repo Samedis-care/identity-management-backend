@@ -4,13 +4,24 @@
 # so `Staff#login_allowed` linked the account while the user got no access and no
 # samedis-care-employee role. See Samedis-care/samedis-care-issues#2403
 #
-# Lives in db/migrate_manual, so it only runs when MANUAL is set:
+# Lives in db/migrate_manual, so it is only on the migration path when MANUAL is set.
+#
+# Use db:migrate:up with an explicit VERSION, NOT db:migrate. MANUAL appends to the path
+# rather than replacing it (config/application.rb:95,105), so `db:migrate` would first
+# apply every pending regular migration on that cluster - and the dry-run raise below would
+# then cancel anything ordered after this one. On a cluster that is behind, or on APAC which
+# has never seen this file, that is not a report but a deploy. Check `db:migrate:status`
+# first if unsure.
 #
 #   # 1. report only, writes nothing, is NOT recorded as migrated (default)
-#   MANUAL=true RAILS_ENV=live bundle exec rails db:migrate
+#   MANUAL=true VERSION=20260803081500 RAILS_ENV=live bundle exec rails db:migrate:up
 #
-#   # 2. apply, after reviewing the report
-#   MANUAL=true APPLY=true RAILS_ENV=live bundle exec rails db:migrate
+#   # 2. apply, after reviewing the report and confirming the set on the samedis-care side
+#   MANUAL=true APPLY=true EMAILS=a@x.de,b@y.de VERSION=20260803081500 \
+#     RAILS_ENV=live bundle exec rails db:migrate:up
+#
+# Do not set INDEXES together with MANUAL: the INDEXES branch assigns the path while the
+# MANUAL branch appends, so db/migrate itself drops out.
 #
 # Knobs: APPLY=true (write), LIMIT=n (cap repairs), TENANT_ID=<id> (single tenant),
 #        SINCE=YYYY-MM-DD or SINCE=all (default floor: 2025-04-16, the day the bug shipped),
@@ -47,7 +58,16 @@ class RepairMissingStandardUserMappings < Mongoid::Migration
     return nil if raw.casecmp('all').zero?
     return BUG_INTRODUCED if raw.empty?
 
-    Time.parse(raw).utc
+    # Time.parse is lenient enough to turn a typo into a silent wrong answer: SINCE=2025
+    # parses as a time of day, giving a floor of today and a run that reports
+    # `in_repair_scope 0` as if there were nothing to repair.
+    unless raw.match?(/\A\d{4}-\d{2}-\d{2}\z/)
+      raise "SINCE must be YYYY-MM-DD or 'all', got #{raw.inspect}"
+    end
+
+    # built as UTC rather than via Time.parse, which would anchor the date in the server's
+    # local zone and land an hour off from BUG_INTRODUCED
+    Time.utc(*raw.split('-').map(&:to_i))
   end
 
   def self.up
@@ -67,6 +87,7 @@ class RepairMissingStandardUserMappings < Mongoid::Migration
     months = Hash.new(0)
     repaired = []
     in_scope = []
+    groups_by_tenant = {}
 
     say "scanning #{scope.count} accepted tenant invites (apply=#{apply})"
 
@@ -80,8 +101,11 @@ class RepairMissingStandardUserMappings < Mongoid::Migration
         next
       end
 
-      group = tenant.descendants.groups.available
-                    .where(system: true, name: :standard_user).first
+      # accepted tenant invites cluster heavily by tenant, so memoize rather than
+      # repeating this lookup for every invite of the same tenant
+      groups_by_tenant[tenant.id] ||= tenant.descendants.groups.available
+                                            .where(system: true, name: :standard_user).first
+      group = groups_by_tenant[tenant.id]
       if group.nil?
         # nothing to map into - the tenant itself needs repairing first
         stats[:skip_tenant_without_group] += 1
@@ -129,14 +153,17 @@ class RepairMissingStandardUserMappings < Mongoid::Migration
       end
 
       stats[:in_repair_scope] += 1
-      in_scope << { email: user.email, tenant: tenant.name.to_s,
-                    tenant_id: tenant.id.to_s, accepted_at: invite.accepted_at,
-                    invite_id: invite.id.to_s }
 
       if limit && repaired.size >= limit
         stats[:over_limit] += 1
         next
       end
+
+      # pushed only past the limit check, so the printed list is the audit trail of what
+      # was actually written rather than of what merely passed the filters
+      in_scope << { email: user.email, tenant: tenant.name.to_s,
+                    tenant_id: tenant.id.to_s, accepted_at: invite.accepted_at,
+                    invite_id: invite.id.to_s }
 
       unless apply
         repaired << invite.id
