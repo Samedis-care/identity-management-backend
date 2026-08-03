@@ -1,5 +1,5 @@
 require 'rails_helper'
-require Rails.root.join('db/migrate/manual/20260803081500_repair_missing_standard_user_mappings')
+require Rails.root.join('db/migrate_manual/20260803081500_repair_missing_standard_user_mappings')
 
 # Cover for the manual repair migration for Samedis-care/samedis-care-issues#2403.
 # Runs scoped to its own tenant via TENANT_ID so leftovers from other specs cannot

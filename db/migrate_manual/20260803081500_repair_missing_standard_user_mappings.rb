@@ -4,7 +4,7 @@
 # so `Staff#login_allowed` linked the account while the user got no access and no
 # samedis-care-employee role. See Samedis-care/samedis-care-issues#2403
 #
-# Lives in db/migrate/manual, so it only runs when MANUAL is set:
+# Lives in db/migrate_manual, so it only runs when MANUAL is set:
 #
 #   # 1. report only, writes nothing, is NOT recorded as migrated (default)
 #   MANUAL=true RAILS_ENV=live bundle exec rails db:migrate
