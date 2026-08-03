@@ -61,6 +61,7 @@ class RepairMissingStandardUserMappings < Mongoid::Migration
     stats = Hash.new(0)
     months = Hash.new(0)
     repaired = []
+    in_scope = []
 
     say "scanning #{scope.count} accepted tenant invites (apply=#{apply})"
 
@@ -118,6 +119,8 @@ class RepairMissingStandardUserMappings < Mongoid::Migration
       end
 
       stats[:in_repair_scope] += 1
+      in_scope << { email: user.email, tenant: tenant.name.to_s,
+                    accepted_at: invite.accepted_at, invite_id: invite.id.to_s }
 
       if limit && repaired.size >= limit
         stats[:over_limit] += 1
@@ -140,7 +143,7 @@ class RepairMissingStandardUserMappings < Mongoid::Migration
       end
     end
 
-    report(stats, months, apply, since)
+    report(stats, months, apply, since, in_scope)
 
     # keep the migration unrecorded so the real run still has something to do
     unless apply
@@ -169,7 +172,7 @@ class RepairMissingStandardUserMappings < Mongoid::Migration
     Actors::Tenant.available.where(_id: oid).first
   end
 
-  def self.report(stats, months, apply, since = nil)
+  def self.report(stats, months, apply, since = nil, in_scope = [])
     say '=' * 76
     say "accepted tenant invites with no standard_user mapping, by acceptance month"
     say "(the inverted guard shipped with 635b04f on #{BUG_INTRODUCED.strftime('%Y-%m-%d')})"
@@ -191,6 +194,18 @@ class RepairMissingStandardUserMappings < Mongoid::Migration
         else
           "repair scope: NO date floor, all #{stats[:affected]} affected rows in scope"
         end)
+    if in_scope.any?
+      say '-' * 76
+      say "rows in repair scope (#{in_scope.size}) - cross-check these against the " \
+          'samedis-care Staff#login_allowed list before applying:'
+      in_scope.sort_by { |r| r[:accepted_at] || Time.at(0) }.each do |row|
+        say format('  %-10s %-38s %s',
+                   row[:accepted_at]&.strftime('%Y-%m-%d') || '?',
+                   row[:email].to_s[0, 38], row[:tenant][0, 26])
+      end
+      say '-' * 76
+      say "emails only: #{in_scope.map { |r| r[:email] }.compact.sort.join(' ')}"
+    end
     say '=' * 76
     say(apply ? "repaired #{stats[:repaired]} mapping(s)" : 'DRY RUN - nothing written')
   end
