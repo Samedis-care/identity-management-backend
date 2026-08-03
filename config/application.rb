@@ -98,7 +98,11 @@ if ENV['INDEXES'].present?
   Mongoid::Migrator.migrations_path = ['db/migrate/indexes']
 end
 if ENV['MANUAL'].present?
-  Mongoid::Migrator.migrations_path << 'db/migrate/manual'
+  # sibling of db/migrate, not a subdirectory: Mongoid::Migrator globs each path
+  # recursively (`Dir["#{path}/**/[0-9]*_*.rb"]`), so a subdirectory would already be
+  # picked up by 'db/migrate' above - running manual migrations on every deploy and
+  # raising DuplicateMigrationVersionError once this path is appended as well
+  Mongoid::Migrator.migrations_path << 'db/migrate_manual'
 end
 puts '=' * 80
 puts "Mongoid::Migrator.migrations_path: #{Mongoid::Migrator.migrations_path}"
