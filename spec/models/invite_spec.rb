@@ -26,12 +26,15 @@ RSpec.describe Invite, type: :model do
     end
   end
 
+  # held separately so cleanup still works in examples that detach the actor
+  let!(:user_actor) { user.actor }
+
   # delete instead of destroy: skips the actor callbacks (cache expiry, write protection)
   # which are irrelevant here and would only slow the suite down
   after do
     Invite.where(email: email).delete_all
     Actor.where(:parent_ids.in => [tenant.id]).delete_all
-    user.actor&.delete
+    user_actor&.delete
     user.delete
     tenant.delete
   end
@@ -73,6 +76,43 @@ RSpec.describe Invite, type: :model do
         invite.accept!
 
         expect(mappings_into(standard_group).count).to eq(1)
+      end
+
+      it 'reports and stays retryable when the user has no actor to map' do
+        allow(Sentry).to receive(:capture_exception)
+        user.set(actor_id: nil)
+
+        expect { invite.accept! }.not_to raise_error
+        expect(invite.reload.done).to be(false)
+        expect(Sentry).to have_received(:capture_exception)
+      end
+    end
+
+    # soft-deleting an ancestor cascades through Actor#before_save with a raw
+    # `descendants.set(deleted: ...)`, which skips both the system protection guard and
+    # the rename applied to the deleted record itself - so the group keeps its name and
+    # system flag and would otherwise still be found here
+    context 'when the standard_user group sits in a soft-deleted subtree' do
+      let!(:deleted_group) do
+        Actors::Group.create!(name: 'standard_user', parent: tenant_profiles, system: true)
+                     .tap { |g| g.set(deleted: true) }
+      end
+
+      it 'does not map into it and leaves the invite retryable' do
+        allow(Sentry).to receive(:capture_message)
+
+        expect(invite.accept!).to be(false)
+        expect(mappings_into(deleted_group).count).to eq(0)
+        expect(invite.reload.done).to be(false)
+      end
+
+      it 'still maps into a live group next to the deleted one' do
+        live_group = Actors::Group.create!(
+          name: 'standard_user_live', parent: tenant_profiles, system: true
+        )
+        live_group.set(name: 'standard_user')
+
+        expect { invite.accept! }.to change { mappings_into(live_group).count }.from(0).to(1)
       end
     end
 

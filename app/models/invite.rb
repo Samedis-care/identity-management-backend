@@ -116,8 +116,12 @@ class Invite < ApplicationDocument
     user = get_user
     raise 'NO SUCH USER' unless user.is_a?(User)
 
+    # `available` matters: soft-deleting an ancestor cascades via a raw $set
+    # (`Actor#before_save`), which neither trips the system protection guard nor renames
+    # the group, so a group in a deleted subtree still matches name and system
     standard_group = tenant.descendants
                            .groups
+                           .available
                            .where(system: true, name: :standard_user).first
 
     # A tenant without the system group `standard_user` is misconfigured - the group
@@ -127,13 +131,26 @@ class Invite < ApplicationDocument
     # unaccepted so the next login retries once the tenant is repaired.
     unless standard_group.is_a?(Actor)
       Sentry.capture_message(
-        "Invite#accept!: no system group 'standard_user' below tenant #{tenant_id} - user not joined",
-        level: :error
+        "Invite#accept!: no system group 'standard_user' below tenant - user not joined",
+        level: :error,
+        tags: { tenant_id: tenant_id.to_s },
+        extra: { invite_id: id.to_s }
       )
       return false
     end
 
-    standard_group.map_into!(user.actor)
+    # same reasoning: `map_into!` raises on a missing or unpersisted actor (User#actor is
+    # optional) and can raise out of its own save!, and none of that may reach the login
+    begin
+      standard_group.map_into!(user.actor)
+    rescue StandardError => e
+      Sentry.capture_exception(
+        e,
+        tags: { tenant_id: tenant_id.to_s },
+        extra: { invite_id: id.to_s, group_id: standard_group.id.to_s }
+      )
+      return false
+    end
 
     true
   end
