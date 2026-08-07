@@ -5,38 +5,22 @@
 # samedis-care-employee role. See Samedis-care/samedis-care-issues#2403
 #
 # Lives in db/migrate_manual, so it is only on the migration path when MANUAL is set.
+# Use db:migrate:up with an explicit VERSION, NOT db:migrate (MANUAL appends to the path,
+# so db:migrate would first apply every pending regular migration on that cluster).
 #
-# Use db:migrate:up with an explicit VERSION, NOT db:migrate. MANUAL appends to the path
-# rather than replacing it (config/application.rb:95,105), so `db:migrate` would first
-# apply every pending regular migration on that cluster - and the dry-run raise below would
-# then cancel anything ordered after this one. On a cluster that is behind, or on APAC which
-# has never seen this file, that is not a report but a deploy. Check `db:migrate:status`
-# first if unsure.
+#   MANUAL=true EMAILS=a@x.de,b@y.de VERSION=20260803081500 RAILS_ENV=live bundle exec rails db:migrate:up
 #
-#   # 1. report only, writes nothing, is NOT recorded as migrated (default)
-#   MANUAL=true VERSION=20260803081500 RAILS_ENV=live bundle exec rails db:migrate:up
+# Mongoid::Migrator#run is a silent no-op once a version is recorded. For later batches
+# (after the version is recorded), run directly via rails runner:
 #
-#   # 2. apply, after reviewing the report and confirming the set on the samedis-care side
-#   MANUAL=true APPLY=true EMAILS=a@x.de,b@y.de VERSION=20260803081500 \
-#     RAILS_ENV=live bundle exec rails db:migrate:up
-#
-# An APPLY run does not raise, so it records the version - and Mongoid::Migrator#run is a
-# silent no-op once a version is recorded: no output, no report, no error. A second batch
-# via db:migrate:up would look like a clean run that did nothing, and #down raises
-# IrreversibleMigration so there is no way back through the migrator either. This is not
-# hypothetical; it happened on live on 2026-08-03. Either apply the whole confirmed set in
-# one run and treat the recorded version as final, or run later batches directly, which
-# ignores the recorded version and needs no MANUAL because nothing consults the path:
-#
-#   # 3. later batches, and the repeatable way to re-report after recording
-#   APPLY=true EMAILS=c@x.de RAILS_ENV=live bundle exec rails runner \
+#   EMAILS=c@x.de RAILS_ENV=live bundle exec rails runner \
 #     'load Rails.root.join("db/migrate_manual/20260803081500_repair_missing_standard_user_mappings.rb").to_s
 #      RepairMissingStandardUserMappings.up'
 #
 # Do not set INDEXES together with MANUAL: the INDEXES branch assigns the path while the
 # MANUAL branch appends, so db/migrate itself drops out.
 #
-# Knobs: APPLY=true (write), LIMIT=n (cap repairs), TENANT_ID=<id> (single tenant),
+# Knobs: LIMIT=n (cap repairs), TENANT_ID=<id> (single tenant),
 #        SINCE=YYYY-MM-DD or SINCE=all (default floor: 2025-04-16, the day the bug shipped),
 #        EMAILS=a@x.de,b@y.de (repair only these, after confirming them on the samedis side).
 # Run once per cluster - the APAC cluster (RAILS_ENV=apac) has its own data.
@@ -57,7 +41,7 @@
 #
 # The authoritative cross-check lives in the other database: samedis-care `Staff` records
 # with `login_allowed: true` and no `left` date are the users who are supposed to have
-# access. Reconcile the report against that list before running with APPLY=true.
+# access. Reconcile the report against that list before applying.
 class RepairMissingStandardUserMappings < Mongoid::Migration
 
   BUG_INTRODUCED = Time.utc(2025, 4, 16)
@@ -84,7 +68,6 @@ class RepairMissingStandardUserMappings < Mongoid::Migration
   end
 
   def self.up
-    apply = ENV['APPLY'].present?
     limit = ENV['LIMIT'].presence&.to_i
     only_tenant = ENV['TENANT_ID'].presence
     since = since_floor
@@ -102,7 +85,7 @@ class RepairMissingStandardUserMappings < Mongoid::Migration
     in_scope = []
     groups_by_tenant = {}
 
-    say "scanning #{scope.count} accepted tenant invites (apply=#{apply})"
+    say "scanning #{scope.count} accepted tenant invites"
 
     scope.each do |invite|
       stats[:scanned] += 1
@@ -175,16 +158,8 @@ class RepairMissingStandardUserMappings < Mongoid::Migration
         next
       end
 
-      # recorded only where something was actually written (or would be, on a dry run), so
-      # the printed list is a write log rather than a list of rows that passed the filters
       row = { email: user.email, tenant: tenant.name.to_s, tenant_id: tenant.id.to_s,
               accepted_at: invite.accepted_at, invite_id: invite.id.to_s }
-
-      unless apply
-        repaired << invite.id
-        in_scope << row
-        next
-      end
 
       begin
         group.map_into!(actor)
@@ -198,14 +173,7 @@ class RepairMissingStandardUserMappings < Mongoid::Migration
       end
     end
 
-    report(stats, months, apply, since, in_scope)
-
-    # keep the migration unrecorded so the real run still has something to do
-    unless apply
-      raise 'DRY RUN: nothing written and migration deliberately not recorded. ' \
-            'Re-run with APPLY=true once the report has been reconciled against the ' \
-            'samedis-care Staff#login_allowed list.'
-    end
+    report(stats, months, since, in_scope)
   end
 
   # Reversing would delete mappings, and because revoked mappings are hard-deleted there
@@ -227,7 +195,7 @@ class RepairMissingStandardUserMappings < Mongoid::Migration
     Actors::Tenant.available.where(_id: oid).first
   end
 
-  def self.report(stats, months, apply, since = nil, in_scope = [])
+  def self.report(stats, months, since = nil, in_scope = [])
     say '=' * 76
     say "accepted tenant invites with no standard_user mapping, by acceptance month"
     say "(the inverted guard shipped with 635b04f on #{BUG_INTRODUCED.strftime('%Y-%m-%d')})"
@@ -251,8 +219,7 @@ class RepairMissingStandardUserMappings < Mongoid::Migration
         end)
     if in_scope.any?
       say '-' * 76
-      say "rows in repair scope (#{in_scope.size}) - cross-check these against the " \
-          'samedis-care Staff#login_allowed list before applying:'
+      say "repaired (#{in_scope.size}):"
       in_scope.sort_by { |r| r[:accepted_at] || Time.at(0) }.each do |row|
         say format('  %-10s %-38s %-26s invite=%s',
                    row[:accepted_at]&.strftime('%Y-%m-%d') || '?',
@@ -271,13 +238,12 @@ class RepairMissingStandardUserMappings < Mongoid::Migration
       # so they need deciding by hand rather than slipping through with the rest
       blank = in_scope.reject { |r| r[:email].present? }
       if blank.any?
-        say "WARNING: #{blank.size} of #{in_scope.size} in-scope rows have no email and " \
-            'are NOT covered by the list above - check by invite id: ' \
-            "#{blank.map { |r| r[:invite_id] }.join(' ')}"
+        say "WARNING: #{blank.size} of #{in_scope.size} repaired rows have no email - " \
+            "check by invite id: #{blank.map { |r| r[:invite_id] }.join(' ')}"
       end
     end
     say '=' * 76
-    say(apply ? "repaired #{stats[:repaired]} mapping(s)" : 'DRY RUN - nothing written')
+    say "repaired #{stats[:repaired]} mapping(s)"
   end
 
 end
