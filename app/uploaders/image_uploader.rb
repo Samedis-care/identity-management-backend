@@ -8,6 +8,48 @@ class ImageUploader < Shrine
   plugin :add_metadata
   plugin :determine_mime_type, analyzer: :marcel
   plugin :derivatives, versions_compatibility: true
+  plugin :validation_helpers
+  # With `model, cache: false` an assignment uploads to permanent :store before
+  # the validation below runs, so a rejected file would sit in the bucket
+  # unreferenced forever — the record never saves. remove_invalid destroys it.
+  # Precisely: it reverts the *attacher* (record.image is the previous file again,
+  # the rejected object is deleted) but never writes through to the model, because
+  # deassign uses load_data rather than set. So record.image_data still holds the
+  # deleted file's JSON in memory. Harmless while the attacher's errors keep the
+  # record from saving — the trap is a save(validate: false) on the same in-memory
+  # record, e.g. User#tenant_access_group_ids, which would persist a reference to a
+  # deleted key.
+  plugin :remove_invalid
+
+  # Formats libvips can read with a fuzzed (trusted) loader, plus SVG, which
+  # config/initializers/vips.rb re-enables deliberately. Without this list,
+  # arbitrary uploaded bytes reach libvips and the loader is picked by content
+  # sniffing — see that initializer and CVE-2026-66066. None of these loaders is
+  # part of libvips' untrusted set, so allowing them costs nothing against the
+  # CVE; what the list buys is rejecting content that is not an image at all,
+  # with a clean validation error. HEIC/HEIF/AVIF and WebP matter because avatars
+  # come off phones, GIF and TIFF because they were uploadable before this list
+  # existed and turning a working upload into an error is the worse failure.
+  #
+  # The MIME type comes from marcel content analysis (determine_mime_type
+  # plugin), not from the client-supplied header — which matters for
+  # User#image_b64= and Actor#image_b64=, where Base64StringIO carries the
+  # content type the client declared in the data URI.
+  MIME_TYPES = %w[
+    image/png
+    image/jpeg
+    image/svg+xml
+    image/heic
+    image/heif
+    image/avif
+    image/webp
+    image/gif
+    image/tiff
+  ].freeze
+
+  Attacher.validate do
+    validate_mime_type_inclusion ImageUploader::MIME_TYPES
+  end
 
   add_metadata do |io, context|
     filename = context[:record].id

@@ -8,6 +8,19 @@ class ActorImageUploader < Shrine
   plugin :add_metadata
   plugin :determine_mime_type, analyzer: :marcel
   plugin :derivatives, versions_compatibility: true
+  plugin :validation_helpers
+  # See ImageUploader: `model, cache: false` uploads to :store before validating,
+  # so rejected files need destroying or they stay in the bucket unreferenced.
+  plugin :remove_invalid
+
+  Attacher.validate do
+    # Same allowlist as ImageUploader, deliberately shared rather than copied so
+    # the two cannot drift: both feed the same libvips loaders, and the reasoning
+    # behind the list lives on ImageUploader::MIME_TYPES
+    # (config/initializers/vips.rb, CVE-2026-66066). The MIME type comes from
+    # marcel content analysis, not from the client-supplied header.
+    validate_mime_type_inclusion ImageUploader::MIME_TYPES
+  end
 
   add_metadata do |io, context|
     filename = context[:record].id
