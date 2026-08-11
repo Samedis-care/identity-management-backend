@@ -29,10 +29,14 @@ Vips.block_untrusted(true)
 # every other untrusted loader/saver (BMP, ICO, PSD, JPEG XL, JPEG 2000, Netpbm,
 # FITS, Matlab, OpenSlide, anything delegated to ImageMagick) stays blocked.
 #
-# ImageUploader and ActorImageUploader validate against a png/jpeg/svg allowlist
-# with content sniffing (marcel) before any of this runs, so only content that
-# actually looks like SVG reaches librsvg. To drop SVG support entirely, delete
-# this block and remove image/svg+xml from both uploaders.
+# ImageUploader and ActorImageUploader both validate against
+# ImageUploader::MIME_TYPES with content sniffing (marcel) before any of this
+# runs, so only content that actually looks like SVG reaches librsvg — including
+# on the User#image_b64= / Actor#image_b64= paths, where the content type the
+# client declared in the data URI is not what gets validated.
+#
+# To drop SVG support entirely, delete this block and remove image/svg+xml from
+# ImageUploader::MIME_TYPES.
 %w[
   VipsForeignLoadSvgFile
   VipsForeignLoadSvgBuffer

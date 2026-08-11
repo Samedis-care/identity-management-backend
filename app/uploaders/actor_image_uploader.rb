@@ -11,11 +11,12 @@ class ActorImageUploader < Shrine
   plugin :validation_helpers
 
   Attacher.validate do
-    # Only formats we actually render derivatives for. Without this, arbitrary
-    # uploaded bytes reach libvips and the loader is picked by content sniffing —
-    # see config/initializers/vips.rb (CVE-2026-66066). The MIME type comes from
+    # Same allowlist as ImageUploader, deliberately shared rather than copied so
+    # the two cannot drift: both feed the same libvips loaders, and the reasoning
+    # behind the list lives on ImageUploader::MIME_TYPES
+    # (config/initializers/vips.rb, CVE-2026-66066). The MIME type comes from
     # marcel content analysis, not from the client-supplied header.
-    validate_mime_type_inclusion %w[image/png image/jpeg image/svg+xml]
+    validate_mime_type_inclusion ImageUploader::MIME_TYPES
   end
 
   add_metadata do |io, context|

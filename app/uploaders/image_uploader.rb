@@ -10,12 +10,34 @@ class ImageUploader < Shrine
   plugin :derivatives, versions_compatibility: true
   plugin :validation_helpers
 
+  # Formats libvips can read with a fuzzed (trusted) loader, plus SVG, which
+  # config/initializers/vips.rb re-enables deliberately. Without this list,
+  # arbitrary uploaded bytes reach libvips and the loader is picked by content
+  # sniffing — see that initializer and CVE-2026-66066. None of these loaders is
+  # part of libvips' untrusted set, so allowing them costs nothing against the
+  # CVE; what the list buys is rejecting content that is not an image at all,
+  # with a clean validation error. HEIC/HEIF/AVIF and WebP matter because avatars
+  # come off phones, GIF and TIFF because they were uploadable before this list
+  # existed and turning a working upload into an error is the worse failure.
+  #
+  # The MIME type comes from marcel content analysis (determine_mime_type
+  # plugin), not from the client-supplied header — which matters for
+  # User#image_b64= and Actor#image_b64=, where Base64StringIO carries the
+  # content type the client declared in the data URI.
+  MIME_TYPES = %w[
+    image/png
+    image/jpeg
+    image/svg+xml
+    image/heic
+    image/heif
+    image/avif
+    image/webp
+    image/gif
+    image/tiff
+  ].freeze
+
   Attacher.validate do
-    # Only formats we actually render derivatives for. Without this, arbitrary
-    # uploaded bytes reach libvips and the loader is picked by content sniffing —
-    # see config/initializers/vips.rb (CVE-2026-66066). The MIME type comes from
-    # marcel content analysis, not from the client-supplied header.
-    validate_mime_type_inclusion %w[image/png image/jpeg image/svg+xml]
+    validate_mime_type_inclusion ImageUploader::MIME_TYPES
   end
 
   add_metadata do |io, context|
