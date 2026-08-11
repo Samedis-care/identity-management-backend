@@ -8,8 +8,19 @@ class DeviseMailer < Devise::Mailer
   # so it needs its own content check: config/initializers/vips.rb re-enables the
   # SVG loader process-wide for the image uploaders, and without this gate an app
   # admin could store an SVG that librsvg parses during mail rendering.
-  # Both AppAdminSerializer and AppInfoSerializer document the field as a PNG.
-  LOGO_MIME_TYPES = %w[image/png image/jpeg].freeze
+  #
+  # Everything libvips reads with a fuzzed (trusted) loader, i.e. the uploader
+  # allowlist minus SVG — librsvg is exactly the loader that must not be reachable
+  # from here. Deliberately not narrower than that: until now the only gate on this
+  # path was libvips itself, so GIF, TIFF, WebP and HEIC logos rendered, and
+  # rejecting them here would make a working logo vanish from every mail with
+  # nothing but a log line to say why. The serializers document the field as a PNG,
+  # but nothing has ever enforced that — Actors::App::Config::Mailer#logo_b64=
+  # stores whatever the admin picked in the UI.
+  #
+  # Pre-existing quirk this does not address: attachments.inline hardcodes
+  # 'logo.png', so a JPEG or GIF logo is declared to the client as image/png.
+  LOGO_MIME_TYPES = (ImageUploader::MIME_TYPES - ['image/svg+xml']).freeze
 
   def unlock_instructions(user, token, opts = {})
     headers ApplicationMailer.default_headers
@@ -204,45 +215,23 @@ class DeviseMailer < Devise::Mailer
     @app ||= Actors::App.named(app_context).first
   end
 
+  # defined?, not ||=: nil is a meaningful result here (no logo configured, or one
+  # LOGO_MIME_TYPES rejects), and prepare_logo -> logo_size ->
+  # logo_width/height/style each re-enter this method. Without memoising nil, one
+  # rejected logo cost five base64 decodes of up to 1 MB, five Tempfiles, five
+  # marcel sniffs and five identical warnings on every mail that app sends.
   def logo
-    @logo ||= begin
-      _logo_b64 = app.config.try(:mailer).try(:logo_b64) rescue nil
-      return nil unless _logo_b64.present?
+    return @logo if defined?(@logo)
 
-      _file = Base64StringIO.from_base64(_logo_b64, 'logo')
-      _file.try :rewind
-      _file.binmode
-      _tmp = Tempfile.new(_file.original_filename)
-      _tmp.binmode
-      _tmp.write _file.read
-      _tmp.try :rewind
-
-      # Sniffed, not the content type Base64StringIO carried over from the data
-      # URI — that one is whatever the client declared.
-      _mime_type = Marcel::MimeType.for(_tmp)
-      unless LOGO_MIME_TYPES.include?(_mime_type)
-        Rails.logger.warn("DeviseMailer: ignoring mail logo of type #{_mime_type.inspect}")
-        _tmp.close
-        _tmp.delete
-        return nil
-      end
-      _tmp.try :rewind
-
-      _logo = Vips::Image.new_from_file _tmp.path
-      attachments.inline['logo.png'] = _tmp.read
-      _tmp.close
-      _tmp.delete
-      _logo
-    end
+    @logo = build_logo
   end
 
   def logo_size
-    @logo_size ||= begin
-      width = 250
-      _logo = logo
-      return "" if _logo.nil?
-      "#{width}x#{(_logo.height / (_logo.width.to_f / width)).to_i}"
-    end
+    return @logo_size if defined?(@logo_size) # same reason as #logo
+
+    width = 250
+    _logo = logo
+    @logo_size = _logo.nil? ? '' : "#{width}x#{(_logo.height / (_logo.width.to_f / width)).to_i}"
   end
 
   def logo_width
@@ -262,6 +251,36 @@ class DeviseMailer < Devise::Mailer
       _width, _height = logo_size.split('x')
       "width:#{_width}px; height:#{_height}px;"
     end
+  end
+
+  def build_logo
+    _logo_b64 = app.config.try(:mailer).try(:logo_b64) rescue nil
+    return nil unless _logo_b64.present?
+
+    _file = Base64StringIO.from_base64(_logo_b64, 'logo')
+    _file.try :rewind
+    _file.binmode
+    _tmp = Tempfile.new(_file.original_filename)
+    _tmp.binmode
+    _tmp.write _file.read
+    _tmp.try :rewind
+
+    # Sniffed, not the content type Base64StringIO carried over from the data
+    # URI — that one is whatever the client declared.
+    _mime_type = Marcel::MimeType.for(_tmp)
+    unless LOGO_MIME_TYPES.include?(_mime_type)
+      Rails.logger.warn("DeviseMailer: ignoring mail logo of type #{_mime_type.inspect}")
+      _tmp.close
+      _tmp.delete
+      return nil
+    end
+    _tmp.try :rewind
+
+    _logo = Vips::Image.new_from_file _tmp.path
+    attachments.inline['logo.png'] = _tmp.read
+    _tmp.close
+    _tmp.delete
+    _logo
   end
 
   def prepare_logo

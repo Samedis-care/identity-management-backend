@@ -38,6 +38,9 @@ gem 'shrine-mongoid'
 
 # For imageprocessing in shrine uploaders
 gem 'image_processing'
+# used directly by DeviseMailer#build_logo to sniff the configured mail logo;
+# otherwise only a transitive dependency (activestorage, which we do not load)
+gem 'marcel'
 gem 'ruby-vips'
 
 # HTTP client for microservice communication

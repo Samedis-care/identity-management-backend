@@ -80,6 +80,36 @@ describe 'image upload MIME allowlist', type: :model do
     SVG
   end
 
+  # Encoder-independent: the HEIC/WebP examples below gate on the *saver* being
+  # compiled in, so on a libvips without a HEIF encoder they skip and nothing would
+  # notice a misspelled allowlist key. A constructed ftyp header needs no encoder.
+  #
+  # marcel 1.2.1 does have magic entries for all six HEIF brands (tables.rb
+  # 2617-2621), but magic_match takes the *first* hit and video/quicktime's generic
+  # [4, 'ftyp'] pattern (line 2530) sits ahead of the brand-specific ones — so only
+  # heic/mif1/avif resolve to an image type, while heix/hevc/msf1 come back as
+  # video/quicktime. Putting image/heic-sequence on the allowlist would therefore
+  # buy nothing, and video/quicktime has no business on an image allowlist.
+  describe 'the MIME types marcel emits for HEIF brands' do
+    { 'ftypheic' => 'image/heic', 'ftypmif1' => 'image/heif', 'ftypavif' => 'image/avif' }
+      .each do |brand, mime_type|
+        it "detects #{brand} as #{mime_type}, which is on the allowlist" do
+          io = StringIO.new("\x00\x00\x00\x18#{brand}\x00\x00\x00\x00".b)
+          expect(Marcel::MimeType.for(io)).to eq(mime_type)
+          expect(ImageUploader::MIME_TYPES).to include(mime_type)
+        end
+      end
+
+    %w[ftypheix ftyphevc ftypmsf1].each do |brand|
+      it "resolves #{brand} to video/quicktime, so the allowlist rejects it" do
+        io = StringIO.new("\x00\x00\x00\x18#{brand}\x00\x00\x00\x00".b)
+        detected = Marcel::MimeType.for(io)
+        expect(detected).to eq('video/quicktime')
+        expect(ImageUploader::MIME_TYPES).not_to include(detected)
+      end
+    end
+  end
+
   describe ImageUploader do
     let(:record)   { User.new(email: 'vips-spec@example.com') }
     let(:attacher) { record.image_attacher }

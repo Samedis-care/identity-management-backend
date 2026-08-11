@@ -35,4 +35,28 @@ describe DeviseMailer, type: :mailer do
     mailer.send(:logo)
     expect(mailer.attachments['logo.png']).to be_nil
   end
+
+  it 'accepts a GIF, which rendered fine before this gate existed' do
+    stub_logo(Vips::Image.black(8, 8).write_to_buffer('.gif'), 'image/gif')
+    expect(mailer.send(:logo)).to be_a(Vips::Image)
+  rescue Vips::Error
+    skip 'this libvips build cannot write GIF'
+  end
+
+  # prepare_logo -> logo_size -> logo_width/height/style each call #logo, so a
+  # rejection that does not memoise costs five base64 decodes, five Tempfiles,
+  # five marcel sniffs and five identical warnings for every mail that app sends.
+  it 'builds the logo once even when it is rejected' do
+    stub_logo("P3\n1 1\n255\n0 0 0\n", 'image/png')
+    allow(mailer).to receive(:build_logo).and_call_original
+    mailer.send(:prepare_logo)
+    expect(mailer).to have_received(:build_logo).once
+  end
+
+  it 'builds the logo once when it is accepted' do
+    stub_logo(Vips::Image.black(8, 8).write_to_buffer('.png'), 'image/png')
+    allow(mailer).to receive(:build_logo).and_call_original
+    mailer.send(:prepare_logo)
+    expect(mailer).to have_received(:build_logo).once
+  end
 end

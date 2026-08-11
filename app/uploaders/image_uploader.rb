@@ -12,6 +12,13 @@ class ImageUploader < Shrine
   # With `model, cache: false` an assignment uploads to permanent :store before
   # the validation below runs, so a rejected file would sit in the bucket
   # unreferenced forever — the record never saves. remove_invalid destroys it.
+  # Precisely: it reverts the *attacher* (record.image is the previous file again,
+  # the rejected object is deleted) but never writes through to the model, because
+  # deassign uses load_data rather than set. So record.image_data still holds the
+  # deleted file's JSON in memory. Harmless while the attacher's errors keep the
+  # record from saving — the trap is a save(validate: false) on the same in-memory
+  # record, e.g. User#tenant_access_group_ids, which would persist a reference to a
+  # deleted key.
   plugin :remove_invalid
 
   # Formats libvips can read with a fuzzed (trusted) loader, plus SVG, which
