@@ -8,6 +8,15 @@ class ActorImageUploader < Shrine
   plugin :add_metadata
   plugin :determine_mime_type, analyzer: :marcel
   plugin :derivatives, versions_compatibility: true
+  plugin :validation_helpers
+
+  Attacher.validate do
+    # Only formats we actually render derivatives for. Without this, arbitrary
+    # uploaded bytes reach libvips and the loader is picked by content sniffing —
+    # see config/initializers/vips.rb (CVE-2026-66066). The MIME type comes from
+    # marcel content analysis, not from the client-supplied header.
+    validate_mime_type_inclusion %w[image/png image/jpeg image/svg+xml]
+  end
 
   add_metadata do |io, context|
     filename = context[:record].id
