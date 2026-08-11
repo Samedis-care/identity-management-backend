@@ -32,7 +32,21 @@ describe 'libvips untrusted operation blocking', type: :model do
   it 'blocks untrusted loaders' do
     # Netpbm stands in for the whole untrusted set (BMP, ICO, PSD, JPEG XL,
     # JPEG 2000, FITS, Matlab, OpenSlide, ImageMagick delegates).
-    expect(loadable?(tempfile("P3\n1 1\n255\n0 0 0\n", '.ppm'))).to be false
+    file = tempfile("P3\n1 1\n255\n0 0 0\n", '.ppm')
+
+    # Positive control: libvips reports a blocked loader and a loader that was
+    # never compiled in through the same "not a known file format" error, so
+    # without this the assertion below would be green on a build without
+    # ppmload — passing for the wrong reason on the one thing that matters here.
+    begin
+      Vips.block('VipsForeignLoadPpm', false)
+      expect(loadable?(file)).to be(true),
+                                 'ppmload is missing from this libvips build, so the block assertion proves nothing'
+    ensure
+      Vips.block('VipsForeignLoadPpm', true)
+    end
+
+    expect(loadable?(file)).to be false
   end
 
   it 'still allows the SVG loader, which user and actor images accept' do
@@ -48,14 +62,19 @@ describe 'libvips untrusted operation blocking', type: :model do
   end
 
   it 'still allows the camera formats in ImageUploader::MIME_TYPES' do
-    %w[.heic .webp].each do |extension|
+    checked = %w[.heic .webp].filter_map do |extension|
       begin
         bytes = Vips::Image.black(4, 4).write_to_buffer(extension)
       rescue Vips::Error
         next # saver not compiled in here; the loader is what production needs
       end
       expect(loadable?(tempfile(bytes, extension))).to be(true), "#{extension} should still load"
+      extension
     end
+
+    # Otherwise this passes vacuously on a build with neither saver, and the run
+    # output looks identical to a real check.
+    skip 'neither .heic nor .webp can be written by this libvips build' if checked.empty?
   end
 
   it 'processes an SVG through the uploader pipeline' do
