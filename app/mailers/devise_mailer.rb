@@ -1,5 +1,15 @@
+require 'marcel'
+
 class DeviseMailer < Devise::Mailer
   layout 'mailer'
+
+  # app.config.mailer.logo_b64 is client-settable (Api::V1::AppAdminController
+  # permits it) and #logo hands it straight to libvips with no uploader in front,
+  # so it needs its own content check: config/initializers/vips.rb re-enables the
+  # SVG loader process-wide for the image uploaders, and without this gate an app
+  # admin could store an SVG that librsvg parses during mail rendering.
+  # Both AppAdminSerializer and AppInfoSerializer document the field as a PNG.
+  LOGO_MIME_TYPES = %w[image/png image/jpeg].freeze
 
   def unlock_instructions(user, token, opts = {})
     headers ApplicationMailer.default_headers
@@ -206,6 +216,18 @@ class DeviseMailer < Devise::Mailer
       _tmp.binmode
       _tmp.write _file.read
       _tmp.try :rewind
+
+      # Sniffed, not the content type Base64StringIO carried over from the data
+      # URI — that one is whatever the client declared.
+      _mime_type = Marcel::MimeType.for(_tmp)
+      unless LOGO_MIME_TYPES.include?(_mime_type)
+        Rails.logger.warn("DeviseMailer: ignoring mail logo of type #{_mime_type.inspect}")
+        _tmp.close
+        _tmp.delete
+        return nil
+      end
+      _tmp.try :rewind
+
       _logo = Vips::Image.new_from_file _tmp.path
       attachments.inline['logo.png'] = _tmp.read
       _tmp.close

@@ -25,9 +25,16 @@ end
 Vips.block_untrusted(true)
 
 # The SVG loader (librsvg) is one of the untrusted ones, but SVG is an accepted
-# upload format for user and actor images. Re-enable just those three loaders;
-# every other untrusted loader/saver (BMP, ICO, PSD, JPEG XL, JPEG 2000, Netpbm,
-# FITS, Matlab, OpenSlide, anything delegated to ImageMagick) stays blocked.
+# upload format for user and actor images. Re-enable it; every other untrusted
+# loader/saver (BMP, ICO, PSD, JPEG XL, JPEG 2000, Netpbm, FITS, Matlab,
+# OpenSlide, anything delegated to ImageMagick) stays blocked. Naming the parent
+# class covers the file, buffer and source variants — vips_operation_block_set
+# applies to the named class and everything below it.
+#
+# This is process-wide, not per-uploader, so every caller that reaches libvips
+# needs its own content check, not just the uploaders — see
+# DeviseMailer::LOGO_MIME_TYPES for the mail logo, which has no uploader in front
+# of it.
 #
 # ImageUploader and ActorImageUploader both validate against
 # ImageUploader::MIME_TYPES with content sniffing (marcel) before any of this
@@ -37,8 +44,7 @@ Vips.block_untrusted(true)
 #
 # To drop SVG support entirely, delete this block and remove image/svg+xml from
 # ImageUploader::MIME_TYPES.
-%w[
-  VipsForeignLoadSvgFile
-  VipsForeignLoadSvgBuffer
-  VipsForeignLoadSvgSource
-].each { |loader| Vips.block(loader, false) }
+# NOTE: Vips.block is a no-op for an unknown operation name, so a typo or a
+# libvips built without librsvg fails silently — SVG simply stays blocked.
+# spec/lib/vips_blocking_spec.rb is what catches that.
+Vips.block('VipsForeignLoadSvg', false)

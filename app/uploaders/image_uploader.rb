@@ -9,6 +9,10 @@ class ImageUploader < Shrine
   plugin :determine_mime_type, analyzer: :marcel
   plugin :derivatives, versions_compatibility: true
   plugin :validation_helpers
+  # With `model, cache: false` an assignment uploads to permanent :store before
+  # the validation below runs, so a rejected file would sit in the bucket
+  # unreferenced forever — the record never saves. remove_invalid destroys it.
+  plugin :remove_invalid
 
   # Formats libvips can read with a fuzzed (trusted) loader, plus SVG, which
   # config/initializers/vips.rb re-enables deliberately. Without this list,

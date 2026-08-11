@@ -9,6 +9,9 @@ class ActorImageUploader < Shrine
   plugin :determine_mime_type, analyzer: :marcel
   plugin :derivatives, versions_compatibility: true
   plugin :validation_helpers
+  # See ImageUploader: `model, cache: false` uploads to :store before validating,
+  # so rejected files need destroying or they stay in the bucket unreferenced.
+  plugin :remove_invalid
 
   Attacher.validate do
     # Same allowlist as ImageUploader, deliberately shared rather than copied so

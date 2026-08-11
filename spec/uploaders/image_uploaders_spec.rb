@@ -32,6 +32,17 @@ describe 'image upload MIME allowlist', type: :model do
     attacher
   end
 
+  # The production path: `record.image =` goes through model_assign, which with
+  # `model, cache: false` uploads to permanent :store before validating.
+  def assign_via_model(record, bytes, filename: 'upload.png')
+    file = Tempfile.new([File.basename(filename, '.*'), File.extname(filename)])
+    file.binmode
+    file.write(bytes)
+    file.rewind
+    record.image = file
+    record
+  end
+
   def png
     Vips::Image.black(4, 4).write_to_buffer('.png')
   end
@@ -118,6 +129,20 @@ describe 'image upload MIME allowlist', type: :model do
     it 'rejects an image_b64 data URI whose declared image/png contradicts its content' do
       record.image_b64 = "data:image/png;base64,#{Base64.strict_encode64("P3\n1 1\n255\n0 0 0\n")}"
       expect(record.image_attacher.errors).not_to be_empty
+    end
+
+    # The production path is `record.image =`, which with `model, cache: false`
+    # uploads to permanent :store *before* validating. Without remove_invalid the
+    # rejected bytes would stay in the bucket forever: the record never saves, so
+    # nothing references or deletes them.
+    it 'leaves nothing in permanent storage when the upload is rejected' do
+      assign_via_model(record, pdf)
+      expect(described_class.storages[:store].store).to be_empty
+    end
+
+    it 'keeps an accepted upload in permanent storage' do
+      assign_via_model(record, png)
+      expect(described_class.storages[:store].store).not_to be_empty
     end
   end
 
