@@ -899,7 +899,34 @@ class User < ApplicationDocument
         group.unmap_from!(actor, cache_expire: false)
       end
     end
+    unmap_orphaned_group_memberships!
     @access_group_ids = tenant_access_group_ids[tenant_context.to_s] = _resulting_ids
+  end
+
+  # Mappings whose target group no longer exists at all (e.g. the group was
+  # deleted/merged elsewhere without cascading the cleanup). These can never
+  # show up in tenant_groups_available above, so the unmap loop above can
+  # never reach them via unmap_from! — without this, a full removal
+  # (`access_group_ids = []`, see
+  # Api::V1::AccessControl::Tenant::UsersController#destroy) can never
+  # actually clear them, and the same dead group id gets echoed back forever
+  # on every subsequent read. Scoped to the whole actor rather than just the
+  # current tenant: once the target group is gone there is no reliable way
+  # to recover which tenant it belonged to, and a mapping to a nonexistent
+  # group is garbage regardless of tenant.
+  # Uses `.delete` (matching unmap_from! and Actors::Mapping.cleanup_orphans!
+  # above) rather than `.destroy` — `.destroy` fires Actors::Mapping's
+  # `after_destroy :user_cache_expire!`, which calls back into this same
+  # user's cache/save machinery while we're still inside this user's own
+  # before_save, causing infinite reentrant recursion. `.delete` skips that
+  # callback entirely, which is fine here since do_before_save already calls
+  # record.cache_expire! right after this method returns.
+  def unmap_orphaned_group_memberships!
+    Actors::Mapping.where(map_actor: actor).each do |mapping|
+      next if Actors::Group.where(_id: mapping.parent_id).exists?
+
+      mapping.delete
+    end
   end
 
   def email_blacklisted
