@@ -166,6 +166,8 @@ de:
         Dieser Zugang wurde noch nicht bestätigt. Bitte bestätige zuerst Deine E-Mail
         Adresse.
   errors:
+    messages:
+      contains_html_tags: darf keine HTML-Tags enthalten
     actor:
       name_is_invalid: Der ausgewählte Name ist ungültig
     actor_role:
@@ -220,6 +222,7 @@ de:
     errors:
       messages:
         confirmation: ist ungültig.
+        contains_html_tags: darf keine HTML-Tags enthalten
         document_not_found:
           message: Der Datensatz mit der angeforderten ID existiert nicht.
           resolution: Versuchen es mit korrekter Datensatz ID erneut.

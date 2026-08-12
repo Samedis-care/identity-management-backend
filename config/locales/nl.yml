@@ -152,6 +152,8 @@ nl:
       unverified: >-
         Deze toegang is nog niet bevestigd. Bevestig eerst jouw e-mailadres.
   errors:
+    messages:
+      contains_html_tags: mag geen HTML-tags bevatten
     actor:
       name_is_invalid: De geselecteerde naam is ongeldig
     actor_role:
@@ -206,6 +208,7 @@ nl:
     errors:
       messages:
         confirmation: is ongeldig
+        contains_html_tags: mag geen HTML-tags bevatten
         document_not_found:
           message: Het gegevensrecord met de gevraagde ID bestaat niet.
           resolution: Probeer het opnieuw met de juiste record-ID.
