@@ -78,7 +78,7 @@ RSpec.describe User, '#set_access_group_ids=' do
     it 'still maps a selected group normally (not swept up as if orphaned)' do
       user.tenant_context = tenant.id
 
-      expect do 
+      expect do
         user.access_group_ids = [group.id.to_s]
         user.save!(validate: false)
       end
@@ -87,6 +87,26 @@ RSpec.describe User, '#set_access_group_ids=' do
       fresh = described_class.find(user.id)
       fresh.tenant_context = tenant.id
       expect(fresh.access_group_ids.to_a).to eq([group.id.to_s])
+    end
+  end
+
+  # Regression for the review finding on PR #275: mappings are not
+  # restricted to groups (Actor::MAPPABLE_TYPES includes ou/position/tenant
+  # too, e.g. Api::V1::Apps::Users::ActorsController#create maps a user
+  # into an arbitrary actor). A mapping into a live non-group actor must
+  # not be swept up as "orphaned" just because it isn't an Actors::Group.
+  context 'when mapped into a live non-group actor (an Ou)' do
+    before { tenant_profiles.map_into!(user_actor) }
+
+    it 'leaves the Ou mapping untouched when clearing access groups elsewhere' do
+      user.tenant_context = tenant.id
+
+      expect do
+        user.access_group_ids = []
+        user.save!(validate: false)
+      end.not_to change(mappings, :count)
+
+      expect(Actors::Mapping.where(parent: tenant_profiles, map_actor: user_actor).first).to be_present
     end
   end
 end
