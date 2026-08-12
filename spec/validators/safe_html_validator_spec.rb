@@ -37,9 +37,34 @@ RSpec.describe SafeHtmlValidator do
     end
   end
 
+  # PR #276 review (@SCjona) found the parser-only check has real bypasses:
+  # verified all three empirically before fixing, not just accepted them.
+  describe 'catches what the HTML5-fragment-parser-only check missed' do
+    it 'flags a no-tag attribute breakout (zero "<", so no Element node is possible)' do
+      instance = valid_for(%(NewTestFacility" autofocus onfocus=alert(1) x="))
+      expect(instance.errors[:content]).to be_present
+    end
+
+    it 'flags <body onload=...> (fragment parsing ignores body/html start tags -- no Element child results)' do
+      expect(valid_for('<body onload=alert(1)>').errors[:content]).to be_present
+    end
+
+    it 'flags a table-scoped tag outside a table (fragment parsing drops it -- no Element child results)' do
+      expect(valid_for('<td onmouseover=alert(1)>x</td>').errors[:content]).to be_present
+    end
+
+    it 'flags an EOF-truncated tag (no closing ">" -- tokenizer discards the pending tag token as a parse error)' do
+      expect(valid_for('NewTestFacility<img src=x onerror=alert(1)').errors[:content]).to be_present
+    end
+  end
+
   describe 'accepts ordinary text' do
     it 'does not flag a bare ampersand (e.g. an organization name)' do
       expect(valid_for('Müller & Sohn GmbH').errors[:content]).to be_empty
+    end
+
+    it 'does not flag an apostrophe (legitimate names commonly contain one, e.g. O\'Brien, L\'Oréal)' do
+      expect(valid_for("O'Brien's Medical Group").errors[:content]).to be_empty
     end
   end
 
@@ -66,6 +91,21 @@ RSpec.describe SafeHtmlValidator do
 
     it 'passes nil through unchanged' do
       expect(described_class.strip_tags(nil)).to be_nil
+    end
+
+    it 'removes the unsafe characters directly when there is no real tag to unwrap' do
+      result = described_class.strip_tags(%(NewTestFacility" autofocus onfocus=alert(1) x="))
+      expect(result).not_to match(/[<>"]/)
+    end
+
+    it 'does not leave entity-escaping garbage behind for the no-real-tag case' do
+      result = described_class.strip_tags(%(NewTestFacility" autofocus onfocus=alert(1) x="))
+      expect(result).not_to include('&quot;')
+    end
+
+    it 'leaves an apostrophe untouched even when other content needed cleaning' do
+      result = described_class.strip_tags(%(O'Brien" autofocus x="))
+      expect(result).to include("O'Brien")
     end
   end
 end
