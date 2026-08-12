@@ -32,7 +32,12 @@ namespace :cleanup do
     puts "STRIP PRE-EXISTING HTML INJECTION#{dry_run ? ' — DRY RUN' : ''}"
     puts '=' * 60
 
-    tag_regex = /[<>]/
+    # Derived from the validator's own constant, not a separately maintained
+    # copy -- a pre-filter narrower than SafeHtmlValidator's actual check
+    # means a record failing only on the characters this regex misses is
+    # never loaded, so contains_html_tag? never gets a chance to judge it,
+    # and it silently stays unfixed (see PR #276 review, round 2).
+    tag_regex = SafeHtmlValidator::UNSAFE_CHARS
     fixes = []
 
     Actors::Tenant.any_of({ name: tag_regex }, { short_name: tag_regex }, { full_name: tag_regex }).each do |tenant|
