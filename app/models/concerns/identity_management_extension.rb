@@ -15,8 +15,6 @@ module IdentityManagementExtension
 
     # token will be revoked after this many wrong OTPs
     OTP_MAX_TRIES = 3
-    # after first login this many seconds to supply OTP before token expires
-    OTP_TIME_TO_AUTHENTICATE = 300
     # Allow some seconds of drift (accepts shortly expired code) to compensate server clock drift
     OTP_DRIFT = 60
 
@@ -38,11 +36,26 @@ module IdentityManagementExtension
       # was provided for the token which is checked during JsonApiController#authorize
       if !self.im_otp_required.eql?(false) && self.user.otp_enabled?
         self.im_otp_required = true
-         # limit time to enter an otp before the token expires
-        if self.im_otp_provided
+
+        # Api::V1::Doorkeeper::TokensController#revoke kills a token immediately for
+        # the "soft" logout branch (token_type_hint: 'access_token') via
+        # update_attributes(expires_in: -1). Once expires_in is non-positive the
+        # token is dead and must STAY dead -- checking only "was expires_in changed
+        # in THIS save" is not enough: Api::V1::App::Doorkeeper::TokensController#create
+        # (the refresh_token grant) finds this same token by its still-live
+        # refresh_token, rotates that field, and calls save! on it -- an unrelated
+        # save that doesn't touch expires_in at all, so expires_in_changed? is false
+        # and this branch would otherwise revive a soft-killed token straight back to
+        # the full 30-day lifetime the moment its surviving refresh token is next
+        # used, resurrecting exactly the bug this fix exists to close (#2422).
+        #
+        # `nil` is not "dead" -- every real token-creation path sets expires_in
+        # explicitly, but a bare create without it must still default to a real
+        # lifetime rather than silently persisting nil, which Doorkeeper's
+        # Expirable#expired? treats as "never expires" (strictly more permissive
+        # than intended, not a safe fallback).
+        if expires_in.nil? || expires_in.to_i.positive?
           self.expires_in = Doorkeeper.configuration.access_token_expires_in
-        else
-          self.expires_in = Doorkeeper.configuration.access_token_expires_in #OTP_TIME_TO_AUTHENTICATE
         end
       else
         self.im_otp_required = false
