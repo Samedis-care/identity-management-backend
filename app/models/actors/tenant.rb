@@ -12,6 +12,17 @@ module Actors
 
     index({ region: 1 }, { sparse: true, name: 'tenant_region' })
 
+    # Scoped to Actors::Tenant specifically, not the shared Actor base class
+    # (name/short_name/full_name are used by every actor type -- Users,
+    # Groups, Apps, OUs -- and validating them there would need its own,
+    # separate audit). name is derived from short_name via get_name/to_slug
+    # in Actor#ensure_required_fields, which does NOT neutralize literal
+    # HTML tags (verified: only incidentally strips quotes/slashes), and
+    # full_name gets zero transformation at all when explicitly set --
+    # confirmed samedis-care-backend echoes both straight back into its own
+    # Tenant#handle field unvalidated (see that repo's issue #2417 / PR #4126).
+    validates :name, :short_name, :full_name, safe_html: true
+
     before_destroy :cache_expire!
 
     def self.apac

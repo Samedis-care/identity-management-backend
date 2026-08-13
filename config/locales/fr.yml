@@ -162,6 +162,8 @@ fr:
         Cet accès n'a pas encore été confirmé. Veuillez d'abord confirmer votre adresse
         e-mail.
   errors:
+    messages:
+      contains_html_tags: ne doit pas contenir de balises HTML
     actor:
       name_is_invalid: Le nom sélectionné n'est pas valide
     actor_role:
@@ -217,6 +219,7 @@ fr:
     errors:
       messages:
         confirmation: est invalide.
+        contains_html_tags: ne doit pas contenir de balises HTML
         document_not_found:
           message: L'enregistrement de données avec l'ID demandé n'existe pas.
           resolution: Réessayez avec l'ID d'enregistrement correct.

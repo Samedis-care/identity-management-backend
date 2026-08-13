@@ -8,6 +8,9 @@ gem 'bootsnap', require: false
 gem 'csv'
 gem 'enumerize'
 gem 'ffaker'
+# Pinned explicitly: SafeHtmlValidator depends on it directly as a security
+# control, not just via actionview/rails-html-sanitizer's transitive resolution.
+gem 'loofah'
 gem 'mongoid'
 gem 'mongoid-locker'
 gem 'mongoid_rails_migrations'

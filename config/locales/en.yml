@@ -152,6 +152,8 @@ en:
         This access has not yet been confirmed. Please confirm your email address
         first.
   errors:
+    messages:
+      contains_html_tags: must not contain HTML tags
     actor:
       name_is_invalid: The selected name is invalid
     actor_role:
@@ -202,6 +204,7 @@ en:
     errors:
       messages:
         confirmation: is invalid.
+        contains_html_tags: must not contain HTML tags
         document_not_found:
           message: The data record with the requested ID does not exist.
           resolution: Try again with the correct record ID.
