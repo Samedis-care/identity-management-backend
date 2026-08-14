@@ -190,12 +190,49 @@ class User < ApplicationDocument
   }
   validates_confirmation_of :email, message: -> { I18n.t('errors.email.confirmation') }, on: :create
 
+  # Minimum length matches identity-management-frontend's CreateAccount.tsx (minPwLen = 8).
   validates :password, presence: true,
-            length: { in: 6..1024,
+            length: { in: 8..1024,
               message: -> { I18n.t('mongoid.errors.models.user.attributes.password.too_short') }
             },
             confirmation: { case_sensitive: true }, on: :create, unless: :set_password
   validates :password_confirmation, presence: true, if: -> { password.present? }, unless: :set_password
+
+  # Server-side password strength check — see issue #2425 (Samedis-care/samedis-care-issues):
+  # the frontend's CreateAccount.tsx rejects weak passwords via zxcvbn (score >= 2 on a 0-4
+  # scale), but nothing enforced that on the API, so POST /register accepted e.g. "12345678"
+  # directly. This mirrors the same zxcvbn score threshold and applies to every path that can
+  # set a password — registration, self-service change, reset-by-token, AND admin/tenant-admin
+  # set_password (deliberate choice, see issue discussion — no "trusted admin" exemption).
+  #
+  # Deliberately NOT gated by `unless: :set_password` like the validations above: that bypass
+  # is also used by (a) the unconfirmed-account re-registration flow (User.new_with_session in
+  # config/initializers/devise.rb), reachable through the same public /register endpoint the
+  # pentest exploited, and (b) the admin/tenant-admin "set another user's password" controllers
+  # — both need the check. `set_password=` below defers its actual persist to before_save
+  # rather than writing eagerly, specifically so this validation always sees (and blocks on)
+  # the record's FINAL attribute state before anything is written — see the comment on
+  # `set_password=` for why that matters. `skip_password_strength_validation` is the ONLY
+  # bypass, and it is never a permitted controller param — set exclusively by
+  # User.global_admin's fixed system bootstrap password.
+  MIN_PASSWORD_STRENGTH_SCORE = 2
+
+  validate :validate_password_strength,
+           if: -> { password.present? },
+           unless: :skip_password_strength_validation
+
+  # @param password [String]
+  # @param user_inputs [Array<String>] words biased against (email, name, ...) — mirrors
+  #   identity-management-frontend's CreateAccount.tsx `userInputs` list
+  # @return [Boolean] true if the password's zxcvbn score meets MIN_PASSWORD_STRENGTH_SCORE
+  def self.password_strong_enough?(password, user_inputs: [])
+    return false if password.blank?
+
+    Zxcvbn.test(password, user_inputs).score >= MIN_PASSWORD_STRENGTH_SCORE
+  rescue Zxcvbn::PasswordTooLong
+    # Already covered by the dedicated length validation above — don't double-report here.
+    true
+  end
 
   # Relations
   has_many :oauth_tokens, class_name: 'Doorkeeper::AccessToken', foreign_key: 'resource_owner_id', dependent: :destroy
@@ -483,6 +520,10 @@ class User < ApplicationDocument
         title: nil,
         gender: 0,
         confirmed_at: Time.now,
+        # Fixed internal system service-account password, not a real user credential —
+        # exempt from the password-strength check (issue #2425). Must be assigned before
+        # set_password/password below so set_password='s inline check sees it in time.
+        skip_password_strength_validation: true,
         set_password: default_pwd,
         password: default_pwd,
         password_confirmation: default_pwd
@@ -731,12 +772,59 @@ class User < ApplicationDocument
   # @return {Bool} indication if password update was successful
   def set_password=(pwd)
     self.password = self.password_confirmation = @set_password = pwd
-    set(encrypted_password: password_digest(pwd))
-    set_password
+  end
+
+  # The actual persist for set_password= is deferred to before_save (issue #2425 review
+  # finding) rather than done eagerly inside the setter above. Reason: `password_strength_
+  # user_inputs` (email/first_name/last_name) is read at whatever point it runs — if the
+  # eager write happened synchronously inside the setter, it saw those fields at THEIR
+  # STATE AT THAT MOMENT, not their final values. Mass-assignment order matters: all 3
+  # admin/tenant-admin controllers list `:set_password` before `:first_name`/`:last_name`
+  # in PERMIT_UPDATE, so an admin request that renames a user AND sets their password in
+  # the same call could persist a password chosen while it still looked "strong" against
+  # the OLD name, moments before the rename made it match the password (e.g. surname
+  # "Xylonqvist" + password "Xylonqvist99" — scores 4/Strong with no bias, 1/Weak once
+  # biased against that surname) — reporting "too weak" to the caller while the weak
+  # password was already live. Deferring to before_save means this runs only once ALL
+  # mass-assigned attributes are final AND `validate_password_strength` (which is NOT
+  # gated by `unless: :set_password`, see above) has already confirmed the password
+  # against that same final state — save simply never reaches before_save if it didn't.
+  before_save :persist_set_password, if: :set_password
+
+  def persist_set_password
+    # `set()` persists immediately via an atomic op that bypasses normal dirty-tracking
+    # (see CLAUDE.md's Mongoid section) — this is intentional: `password=` above already
+    # assigned `encrypted_password` through Devise's normal (dirty-tracked) setter, so
+    # this atomic write's side effect of marking it "clean" again is what suppresses
+    # `send_password_change_notification` for admin-set/OAuth-provisioned passwords
+    # (verified: `send_password_change_notification?` returns false both immediately
+    # after `set_password=` and after the subsequent `.save`, with this deferred timing).
+    set(encrypted_password: password_digest(@set_password))
   end
 
   def set_password
     @set_password.present?
+  end
+
+  # Internal-only bypass for the password-strength check — NEVER add to any controller's
+  # PERMIT_CREATE/PERMIT_UPDATE. Used exclusively by User.global_admin to bootstrap the
+  # fixed internal system service-account password ("#" * 18), which is not a real user's
+  # credential and predates this check. Every other path (registration, self-service change,
+  # reset-by-token, admin/tenant-admin set_password) is intentionally NOT exempted.
+  attr_writer :skip_password_strength_validation
+
+  def skip_password_strength_validation
+    @skip_password_strength_validation.present?
+  end
+
+  def validate_password_strength
+    return if self.class.password_strong_enough?(password, user_inputs: password_strength_user_inputs)
+
+    errors.add(:password, I18n.t('mongoid.errors.models.user.attributes.password.too_weak'))
+  end
+
+  def password_strength_user_inputs
+    [email, first_name, last_name].compact
   end
 
   def get_short_name

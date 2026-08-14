@@ -272,6 +272,7 @@ de:
             password:
               blank: darf nicht leer sein.
               too_short: ist zu kurz.
+              too_weak: ist zu schwach. Vermeiden Sie gängige Wörter, Zahlenfolgen oder persönliche Angaben.
             password_confirmation:
               blank: Passwort ist nicht gleich!
     models:

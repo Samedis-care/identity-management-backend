@@ -63,6 +63,9 @@ gem 'omniauth-microsoft_graph'
 gem 'omniauth-rails_csrf_protection'
 gem 'recaptcha', require: 'recaptcha/rails'
 gem 'tzinfo-data'
+# server-side password strength check (mirrors identity-management-frontend's
+# react-password-strength-bar, which also wraps zxcvbn) — issue #2425
+gem 'zxcvbn-ruby', require: 'zxcvbn'
 
 # Browser detection for account activity
 gem 'browser', require: 'browser/browser'
