@@ -28,6 +28,28 @@ module IdentityManagementExtension
     field :im_otp_provided, type: Mongoid::Boolean
     field :im_otp_tries, type: Integer, default: 0
 
+    # Inverse of doorkeeper-mongodb's own `not_expired` scope, restricted to tokens
+    # that were never hard-revoked: tokens whose own expiry window has closed. Used
+    # by User#expired_logins so that pair stays a true partition of a user's
+    # unrevoked tokens (#2422).
+    #
+    # expires_in is per-document, so the comparison needs $expr -- this mirrors the
+    # expression in doorkeeper-mongodb's `not_expired` (mixins/mongoid/
+    # access_token_mixin.rb) with the operator inverted. expires_in is in seconds
+    # while $add treats a plain number added to a date as milliseconds, hence *1000.
+    # A nil expires_in is excluded on purpose: Doorkeeper::Expirable#expired? treats
+    # nil as "never expires", so such a token is active, not expired.
+    scope :expired, -> {
+      where(revoked_at: nil, :expires_in.ne => nil).where(
+        '$expr' => {
+          '$lte' => [
+            { '$add' => ['$created_at', { '$multiply' => ['$expires_in', 1000] }] },
+            Time.now.utc
+          ]
+        }
+      )
+    }
+
     before_create :fill_computed
     before_save :fill_computed
 
