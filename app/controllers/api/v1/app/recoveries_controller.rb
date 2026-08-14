@@ -12,11 +12,13 @@ class Api::V1::App::RecoveriesController < ApplicationController
   def create
     recovery_user = User.login_allowed.where(email: params[:email]).first
 
-    unless recovery_user.is_a?(User)
-      render_jsonapi_error(I18n.t('errors.user.record_not_found_error'), 'record_error', 404) and return
-    end
-
-    unless recovery_user.recovery_email
+    # SECURITY / PENTEST NOTE (issue #2419): do NOT split this into a distinct
+    # "user not found" vs "no recovery email configured" response. A separate
+    # 404 for non-existent accounts let an attacker enumerate registered email
+    # addresses (Cognisys pentest finding, July 2026). Both cases must render
+    # the exact same status/message so the response carries no signal about
+    # whether the email is registered.
+    unless recovery_user.is_a?(User) && recovery_user.recovery_email
       render_jsonapi_error(I18n.t('errors.user.recovery_token.recovery_email_unset'), 'record_error', 400) and return
     end
 
