@@ -107,7 +107,7 @@ RSpec.describe User, '#validate_password_strength' do
 
     after { user.delete }
 
-    it 'does not persist the weak digest (skips the eager set() call) and reports the error on save' do
+    it 'does not persist the weak digest (the before_save persist never fires) and reports the error on save' do
       original_digest = user.encrypted_password
 
       user.set_password = '12345678'
@@ -118,6 +118,10 @@ RSpec.describe User, '#validate_password_strength' do
 
       expect(user.save).to be(false)
       expect(user.errors[:password]).to include(I18n.t('mongoid.errors.models.user.attributes.password.too_weak'))
+
+      still_reloaded = described_class.find(user.id)
+      expect(still_reloaded.encrypted_password)
+        .to eq(original_digest), 'weak password must not reach the DB after the failed save either'
     end
 
     it 'does not persist a too-short-but-high-entropy password (score alone is not sufficient)' do
@@ -146,9 +150,44 @@ RSpec.describe User, '#validate_password_strength' do
       expect(user.errors[:password]).to be_present
     end
 
-    it 'persists a strong password normally via set_password=' do
+    it 'persists a strong password via set_password= once save actually runs' do
       user.set_password = 'Tr0ub4dor&3xyz'
-      expect(user.valid_password?('Tr0ub4dor&3xyz')).to be(true)
+      expect(user.save).to be(true)
+      expect(described_class.find(user.id).valid_password?('Tr0ub4dor&3xyz')).to be(true)
+    end
+
+    it 'does not fire the password-change notification for a set_password= write' do
+      user.set_password = 'Tr0ub4dor&3xyz'
+      expect(user.save).to be(true)
+      expect(user.send(:send_password_change_notification?)).to be(false)
+    end
+
+    # Regression for the exact review finding on this PR: password_strength_user_inputs is
+    # read at whatever point the persist runs. If it ran eagerly inside set_password= (as
+    # originally written), an admin request that renames a user AND sets their password in
+    # the same call could score the password against the OLD name, persist it, and only
+    # then have validate_password_strength re-score against the NEW (final) name and fail --
+    # reporting "too weak" to the caller while the weak password was already live. Deferring
+    # the persist to before_save (so it only runs once validation already passed against the
+    # FINAL attribute state) closes this.
+    it 'does not persist a password chosen to exploit a same-request name change' do
+      original_digest = user.encrypted_password
+      surname_matching_password = 'Xylonqvist99' # scores 4/Strong unbiased, 1/Weak once the new surname is factored in
+      expect(described_class.password_strong_enough?(surname_matching_password)).to be(true)
+      biased = described_class.password_strong_enough?(surname_matching_password, user_inputs: ['Xylonqvist'])
+      expect(biased).to be(false)
+
+      # Mirrors ActionController::Parameters#permit + Mongoid attributes= assignment order:
+      # :set_password precedes :first_name/:last_name in every admin PERMIT_UPDATE list.
+      user.set_password = surname_matching_password
+      user.last_name = 'Xylonqvist'
+
+      expect(user.save).to be(false)
+      expect(user.errors[:password]).to include(I18n.t('mongoid.errors.models.user.attributes.password.too_weak'))
+
+      reloaded = described_class.find(user.id)
+      expect(reloaded.encrypted_password).to eq(original_digest), 'password matching the new name must not reach the DB'
+      expect(reloaded.valid_password?('Sup3rSecret!123')).to be(true), 'the original password must still work'
     end
   end
 

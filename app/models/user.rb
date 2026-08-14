@@ -209,11 +209,12 @@ class User < ApplicationDocument
   # is also used by (a) the unconfirmed-account re-registration flow (User.new_with_session in
   # config/initializers/devise.rb), reachable through the same public /register endpoint the
   # pentest exploited, and (b) the admin/tenant-admin "set another user's password" controllers
-  # — both need the check. `set_password=` below additionally skips its own eager persist for
-  # a weak password so the weak digest is never written before this validation gets a chance
-  # to run (`self.set()` bypasses callbacks/validations, see CLAUDE.md's Mongoid section).
-  # `skip_password_strength_validation` is the ONLY bypass, and it is never a permitted
-  # controller param — set exclusively by User.global_admin's fixed system bootstrap password.
+  # — both need the check. `set_password=` below defers its actual persist to before_save
+  # rather than writing eagerly, specifically so this validation always sees (and blocks on)
+  # the record's FINAL attribute state before anything is written — see the comment on
+  # `set_password=` for why that matters. `skip_password_strength_validation` is the ONLY
+  # bypass, and it is never a permitted controller param — set exclusively by
+  # User.global_admin's fixed system bootstrap password.
   MIN_PASSWORD_STRENGTH_SCORE = 2
 
   validate :validate_password_strength,
@@ -771,22 +772,34 @@ class User < ApplicationDocument
   # @return {Bool} indication if password update was successful
   def set_password=(pwd)
     self.password = self.password_confirmation = @set_password = pwd
-    # `set()` persists immediately and bypasses callbacks/validations (see CLAUDE.md's
-    # Mongoid section) — so both bounds normally enforced by validation (length AND
-    # strength) must be rechecked HERE, before that write, not only in the validations
-    # below. `password_strong_enough?` alone is NOT sufficient: it only measures zxcvbn
-    # score, so a too-short (or, via the Zxcvbn::PasswordTooLong rescue, too-long) password
-    # can score as "strong" while still failing the length validation that runs later —
-    # letting a weak-but-short password slip through this eager persist even though the
-    # subsequent `.save` correctly reports "too short" (issue #2425 review finding).
-    # `password`/`password_confirmation` are already assigned above, so the subsequent
-    # `valid?`/`save` call still runs both validations and reports the real error.
-    acceptable = pwd.present? && self.class.password_length.cover?(pwd.length) &&
-                 self.class.password_strong_enough?(pwd, user_inputs: password_strength_user_inputs)
-    return unless skip_password_strength_validation || acceptable
+  end
 
-    set(encrypted_password: password_digest(pwd))
-    set_password
+  # The actual persist for set_password= is deferred to before_save (issue #2425 review
+  # finding) rather than done eagerly inside the setter above. Reason: `password_strength_
+  # user_inputs` (email/first_name/last_name) is read at whatever point it runs — if the
+  # eager write happened synchronously inside the setter, it saw those fields at THEIR
+  # STATE AT THAT MOMENT, not their final values. Mass-assignment order matters: all 3
+  # admin/tenant-admin controllers list `:set_password` before `:first_name`/`:last_name`
+  # in PERMIT_UPDATE, so an admin request that renames a user AND sets their password in
+  # the same call could persist a password chosen while it still looked "strong" against
+  # the OLD name, moments before the rename made it match the password (e.g. surname
+  # "Xylonqvist" + password "Xylonqvist99" — scores 4/Strong with no bias, 1/Weak once
+  # biased against that surname) — reporting "too weak" to the caller while the weak
+  # password was already live. Deferring to before_save means this runs only once ALL
+  # mass-assigned attributes are final AND `validate_password_strength` (which is NOT
+  # gated by `unless: :set_password`, see above) has already confirmed the password
+  # against that same final state — save simply never reaches before_save if it didn't.
+  before_save :persist_set_password, if: :set_password
+
+  def persist_set_password
+    # `set()` persists immediately via an atomic op that bypasses normal dirty-tracking
+    # (see CLAUDE.md's Mongoid section) — this is intentional: `password=` above already
+    # assigned `encrypted_password` through Devise's normal (dirty-tracked) setter, so
+    # this atomic write's side effect of marking it "clean" again is what suppresses
+    # `send_password_change_notification` for admin-set/OAuth-provisioned passwords
+    # (verified: `send_password_change_notification?` returns false both immediately
+    # after `set_password=` and after the subsequent `.save`, with this deferred timing).
+    set(encrypted_password: password_digest(@set_password))
   end
 
   def set_password
