@@ -60,6 +60,22 @@ RSpec.describe Api::V1::User::AccountLoginsController do
     it 'does not list a session that was logged out' do
       expect(controller_instance.send(:model_index).pluck(:_id)).not_to include(soft_killed.id)
     end
+
+    # User#active_logins delegates to doorkeeper-mongodb's `not_expired`, which builds
+    # its condition with Mongoid's `.or` -- the one combinator that treats the
+    # receiver's existing criteria as a branch rather than a conjunct. If a gem
+    # upgrade reshaped that scope so the has_many's resource_owner_id landed inside a
+    # branch instead of above it, this endpoint would quietly list every user's
+    # sessions. Verified by hand once; pinned here so it cannot regress silently.
+    it 'stays scoped to the caller, so it never lists another user\'s session' do
+      other_user = build_user
+      other = Doorkeeper::AccessToken.create!(resource_owner_id: other_user.id, expires_in: full_lifetime)
+
+      expect(controller_instance.send(:model_index).pluck(:_id)).not_to include(other.id)
+    ensure
+      other&.delete
+      other_user&.delete
+    end
   end
 
   describe 'the destroy scope (MODEL)' do
