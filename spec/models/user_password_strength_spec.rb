@@ -120,6 +120,32 @@ RSpec.describe User, '#validate_password_strength' do
       expect(user.errors[:password]).to include(I18n.t('mongoid.errors.models.user.attributes.password.too_weak'))
     end
 
+    it 'does not persist a too-short-but-high-entropy password (score alone is not sufficient)' do
+      original_digest = user.encrypted_password
+      short_but_strong = 'Xk7mQaZ' # 7 chars, scores >= MIN_PASSWORD_STRENGTH_SCORE on its own
+
+      expect(described_class.password_strong_enough?(short_but_strong)).to be(true)
+
+      user.set_password = short_but_strong
+      reloaded = described_class.find(user.id)
+      expect(reloaded.encrypted_password).to eq(original_digest), 'too-short password must not reach the database'
+
+      expect(user.save).to be(false)
+      expect(user.errors[:password]).to include(I18n.t('mongoid.errors.models.user.attributes.password.too_short'))
+    end
+
+    it 'does not persist a too-long password (Zxcvbn::PasswordTooLong is rescued to true, length must still gate)' do
+      original_digest = user.encrypted_password
+      too_long = 'a' * 300 # exceeds both zxcvbn-ruby's 256-char limit and Devise's 128-char max
+
+      user.set_password = too_long
+      reloaded = described_class.find(user.id)
+      expect(reloaded.encrypted_password).to eq(original_digest), 'too-long password must not reach the database'
+
+      expect(user.save).to be(false)
+      expect(user.errors[:password]).to be_present
+    end
+
     it 'persists a strong password normally via set_password=' do
       user.set_password = 'Tr0ub4dor&3xyz'
       expect(user.valid_password?('Tr0ub4dor&3xyz')).to be(true)

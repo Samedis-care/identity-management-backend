@@ -772,12 +772,18 @@ class User < ApplicationDocument
   def set_password=(pwd)
     self.password = self.password_confirmation = @set_password = pwd
     # `set()` persists immediately and bypasses callbacks/validations (see CLAUDE.md's
-    # Mongoid section) — so a weak password must be rejected HERE, before that write, not
-    # only in `validate_password_strength` below. Skip the eager persist on a weak password;
+    # Mongoid section) — so both bounds normally enforced by validation (length AND
+    # strength) must be rechecked HERE, before that write, not only in the validations
+    # below. `password_strong_enough?` alone is NOT sufficient: it only measures zxcvbn
+    # score, so a too-short (or, via the Zxcvbn::PasswordTooLong rescue, too-long) password
+    # can score as "strong" while still failing the length validation that runs later —
+    # letting a weak-but-short password slip through this eager persist even though the
+    # subsequent `.save` correctly reports "too short" (issue #2425 review finding).
     # `password`/`password_confirmation` are already assigned above, so the subsequent
-    # `valid?`/`save` call still runs the strength validation and reports the real error.
-    strong_enough = self.class.password_strong_enough?(pwd, user_inputs: password_strength_user_inputs)
-    return unless skip_password_strength_validation || strong_enough
+    # `valid?`/`save` call still runs both validations and reports the real error.
+    acceptable = pwd.present? && self.class.password_length.cover?(pwd.length) &&
+                 self.class.password_strong_enough?(pwd, user_inputs: password_strength_user_inputs)
+    return unless skip_password_strength_validation || acceptable
 
     set(encrypted_password: password_digest(pwd))
     set_password
