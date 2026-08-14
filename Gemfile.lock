@@ -540,6 +540,7 @@ GEM
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
     zeitwerk (2.8.2)
+    zxcvbn-ruby (2.0.1)
 
 PLATFORMS
   aarch64-linux-gnu
@@ -621,6 +622,7 @@ DEPENDENCIES
   snappy
   strip_attributes
   tzinfo-data
+  zxcvbn-ruby
 
 BUNDLED WITH
    2.6.2

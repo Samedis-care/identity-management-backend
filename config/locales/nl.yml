@@ -255,6 +255,7 @@ nl:
             password:
               blank: mag niet leeg zijn.
               too_short: is te kort.
+              too_weak: is te zwak. Vermijd veelvoorkomende woorden, reeksen of persoonlijke gegevens.
             password_confirmation:
               blank: Wachtwoord is niet gelijk!
     models:

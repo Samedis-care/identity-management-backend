@@ -252,6 +252,7 @@ en:
             password:
               blank: must not be empty.
               too_short: is too short.
+              too_weak: is too weak. Avoid common words, sequences, or personal details.
             password_confirmation:
               blank: Password is not equal!
     models:

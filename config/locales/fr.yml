@@ -267,6 +267,7 @@ fr:
             password:
               blank: ne doit pas être vide.
               too_short: est trop court.
+              too_weak: est trop faible. Évitez les mots courants, les suites de caractères ou les informations personnelles.
             password_confirmation:
               blank: Le mot de passe n'est pas égal !
     models:
