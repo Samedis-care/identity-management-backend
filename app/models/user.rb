@@ -877,16 +877,31 @@ class User < ApplicationDocument
     @access_group_ids
   end
 
+  # Sessions the user currently has: not hard-revoked, and their OWN expiry window
+  # still open. Both of these used to derive that window from created_at plus the
+  # GLOBALLY configured lifetime, ignoring the token's own expires_in -- so a token
+  # soft-killed on logout (Api::V1::Doorkeeper::TokensController#revoke writes
+  # expires_in: -1 for the token_type_hint: 'access_token' branch) kept counting as
+  # an active session until its created_at aged past that global lifetime: up to 30
+  # days after the user logged out, in the very screen someone opens to check that
+  # logout worked (#2422). It also kept those sessions out of the account activity
+  # log, which deliberately lists everything that is NOT an active login
+  # (Api::V1::User::AccountActivityController#model_index).
+  #
+  # Doorkeeper::AccessToken.not_expired (from doorkeeper-mongodb) already encodes
+  # exactly this, per document and including revoked_at, so use it rather than
+  # rebuilding the comparison here.
   def active_logins
-    oauth_tokens
-      .where(revoked_at: nil)
-      .where(:created_at.gt => Doorkeeper.configuration.access_token_expires_in.seconds.ago)
+    oauth_tokens.not_expired
   end
 
+  # Complement of #active_logins among tokens that were never hard-revoked: sessions
+  # whose own expiry window has closed, including the soft-killed ones above. Kept a
+  # true complement on purpose -- a soft-killed token's refresh_token deliberately
+  # survives logout (it powers the remembered-account fast path on the login page),
+  # so this is the set whose leftover refresh credentials are still live.
   def expired_logins
-    oauth_tokens
-      .where(revoked_at: nil)
-      .where(:created_at.lte => Doorkeeper.configuration.access_token_expires_in.seconds.ago)
+    oauth_tokens.expired
   end
 
   # this will personalize a formely anonymous token to the user
