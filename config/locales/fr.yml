@@ -146,9 +146,6 @@ fr:
         header: Confirmez votre adresse e-mail mise à jour
         message: 'Pour confirmer votre adresse e-mail, veuillez cliquer sur le lien
           suivant:'
-      reset_password_delayed: Un lien pour réinitialiser votre mot de passe a 
-        déjà été envoyé à votre adresse e-mail (%{email}). Veuillez patienter 
-        quelques minutes avant de le recevoir et de suivre les instructions.
       unlock_instructions:
         subject: Déverrouiller le compte
         header: Votre compte a été verrouillé pour des raisons de sécurité.
