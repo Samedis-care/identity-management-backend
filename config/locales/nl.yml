@@ -137,9 +137,6 @@ nl:
         subject: Bevestig uw %{app_name} e-mailadres
         header: Bevestig uw bijgewerkte e-mailadres
         message: 'Klik op de volgende link om jouw e-mailadres te bevestigen:'
-      reset_password_delayed: Er is al een link naar je e-mailadres (%{email}) 
-        gestuurd om je wachtwoord opnieuw in te stellen. Wacht minstens een paar
-        minuten tot je deze e-mail ontvangt en volg de instructies.
       unlock_instructions:
         subject: Account ontgrendelen
         header: Je account is om veiligheidsredenen vergrendeld.

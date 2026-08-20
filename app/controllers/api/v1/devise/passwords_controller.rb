@@ -14,11 +14,18 @@ module Api::V1::Devise
       email = params.dig(:user, :email).to_s.downcase
       user = User.login_allowed.where(email: email).first
       if user.present?
-        if user.reset_password_sent_at && user.reset_password_sent_at > 5.minutes.ago
-          render_jsonapi_error(I18n.t('devise.mailer.reset_password_delayed', email: email), 'reset_password_delayed', 400) and return
+        # SECURITY / PENTEST NOTE (issue #2419): the delayed-resend guard must
+        # stay silent. Returning a distinct response (or skipping straight to
+        # the generic one only for existing users) when a resend is throttled
+        # is itself an email-enumeration oracle - repeating the same request
+        # twice within 5 minutes would then reveal whether the address is
+        # registered, exactly as re-splitting the 404 case did before. Every
+        # branch here - unregistered, registered-and-sent, registered-and-
+        # throttled - must fall through to the one generic response below.
+        unless user.reset_password_sent_at && user.reset_password_sent_at > 5.minutes.ago
+          user.app_context = current_app
+          user.send_reset_password_instructions
         end
-        user.app_context = current_app
-        user.send_reset_password_instructions
       end
       render_jsonapi_msg({ success: true, message: I18n.t('devise.mailer.reset_password_msg', email: email) }, 200)
     end
