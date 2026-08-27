@@ -373,15 +373,26 @@ class ApplicationDocument
       # roughly 800k matches that's a Mongo::Error::MaxBSONSize, which
       # isn't a Mongo::Error::OperationFailure and so isn't caught by
       # base_controller_methods.rb's rescue_from - an unhandled 500, not a
-      # slow page. Fall back to the plain (slower, but bounded and always
-      # correct) regex once the match set exceeds the limit.
+      # slow page.
+      #
+      # Above the limit this raises GridfilterError (-> a 400 the grid can
+      # surface) rather than silently falling back to a plain regex: the
+      # collated range is case- *and diacritic*-insensitive (`strength: 1`),
+      # a bare `Regexp::IGNORECASE` is only case-insensitive, and on a
+      # German-language identity store an umlaut in name/last_name is the
+      # normal case, not an edge case - a fallback would make "startsWith
+      # Mueller" silently stop matching "M\u00FCller" the moment the match count
+      # crosses the limit, with the crossing point moving with data volume
+      # rather than with anything about the request itself.
       criteria_starts_with = where(field => {
                                      '$gte': condition_value.to_s,
                                      '$lt': "#{condition_value}\uFFFF"
                                    }).collation(locale: collation_locale, strength: 1)
       ids = criteria_starts_with.limit(GRIDFILTER_STARTS_WITH_ID_LIMIT + 1).pluck(:_id)
       if ids.size > GRIDFILTER_STARTS_WITH_ID_LIMIT
-        Regexp.new("^#{Regexp.escape(condition_value.to_s)}", Regexp::IGNORECASE)
+        raise GridfilterError.new(<<~ERR.chomp)
+          prefix filter on #{field} matches too many records (over #{GRIDFILTER_STARTS_WITH_ID_LIMIT}) - please narrow it
+        ERR
       else
         where(:_id.in => ids)
       end
@@ -493,7 +504,11 @@ class ApplicationDocument
 
   # Formats a (filter type datetime) condition type into the Mongoid equivalent
   def self._gridfilter_datetime_to_criterion_value(condition_type, condition_value, condition_value2)
-    date_time_from = Time.parse(condition_value) rescue (raise GridfilterError.new("invalid dateTimeFrom (#{condition_value}) for #{condition_type}"))
+    date_time_from = begin
+      Time.zone.parse(condition_value)
+    rescue StandardError
+      raise GridfilterError.new("invalid dateTimeFrom (#{condition_value}) for #{condition_type}")
+    end
 
     case condition_type.to_s.underscore
     when 'equals'
@@ -514,8 +529,15 @@ class ApplicationDocument
     when 'greater_than_or_equal'
       { '$gte' => date_time_from }
     when 'in_range'
-      raise GridfilterError.new("missing condition dateTimeTo for #{condition_type.inspect}") unless condition_value2.present?
-      date_time_to = Time.parse(condition_value2) rescue (raise GridfilterError.new("invalid dateTimeTo (#{condition_value2}) for #{condition_type}"))
+      unless condition_value2.present?
+        raise GridfilterError.new("missing condition dateTimeTo for #{condition_type.inspect}")
+      end
+
+      date_time_to = begin
+        Time.zone.parse(condition_value2)
+      rescue StandardError
+        raise GridfilterError.new("invalid dateTimeTo (#{condition_value2}) for #{condition_type}")
+      end
       { '$gte' => date_time_from, '$lte' => date_time_to }
     else
       raise GridfilterError.new("unsupported condition_type #{condition_type}")
@@ -535,7 +557,9 @@ class ApplicationDocument
     truthy = %w(true yes).include? condition_value
     non_truthy = %w(false no).include? condition_value
     unless truthy || non_truthy
-      raise GridfilterError.new("invalid value (#{condition_value}) for #{condition_type}. accepted: true/yes or false/no")
+      raise GridfilterError.new(<<~ERR.chomp)
+        invalid value (#{condition_value}) for #{condition_type}. accepted: true/yes or false/no
+      ERR
     end
 
     case condition_type.to_s.underscore
@@ -545,7 +569,7 @@ class ApplicationDocument
               else
                 non_truthy ? 'less_than' : 'greater_than'
               end
-      _value = condition_type.to_s.underscore.ends_with?('_now') ? Time.now : Date.today
+      _value = condition_type.to_s.underscore.ends_with?('_now') ? Time.zone.now : Time.zone.today
       _gridfilter_datetime_to_criterion_value(_type, _value.to_fs(:db), nil)
     when 'equals'
       _gridfilter_bool_equals_criterion(truthy, field)
@@ -666,43 +690,53 @@ class ApplicationDocument
         criterion = { '$ne' => nil }
       end
     else
-      raise GridfilterError.new("missing condition filterType within #{condition.inspect}") unless condition[:filterType].present?
+      unless condition[:filterType].present?
+        raise GridfilterError.new("missing condition filterType within #{condition.inspect}")
+      end
       case condition[:filterType].to_s.downcase
       when 'object_id'
         _gridfilter_check_condition field, condition, allowed_options: %i(filterType type filter)
         case condition[:type].to_s.underscore
         when 'in_set', 'not_in_set'
-          # Accept an Array OR a comma-joined String - not just
-          # `condition[:filter].is_a?(Array)`, and NOT the original
-          # `ensure_bson(condition[:filter]).is_a?(Array)` (ensure_bson always
-          # returns an Array, even for nil/a bare String, so that check could
-          # never raise: a missing/malformed filter silently became `$in: []`
-          # (matches nothing) or, worse, `$nin: []` for not_in_set (matches
-          # EVERY document) instead of the intended error). ensure_bson itself
-          # explicitly splits a comma-joined String ("id1,id2") into multiple
-          # ids - the shape request batching produces before the frontend
-          # splits it back into an array - so keep accepting that form too.
-          unless condition[:filter].is_a?(Array) || condition[:filter].is_a?(String)
-            raise GridfilterError.new("missing condition filter array within #{condition.inspect}")
-          end
+          # Validate the RESULT of ensure_bson, not just the input's shape.
+          # An Array-or-String shape check alone still lets `filter: ""`,
+          # `filter: ","`, or `filter: []` through - ensure_bson reduces all
+          # three to `[]`, and an empty $in/$nin is not "no match" - for
+          # not_in_set it's "matches EVERY document", the exact
+          # silent-widening the previous fix was for, just reached via an
+          # empty value instead of a missing one. ensure_bson also explicitly
+          # splits a comma-joined String ("id1,id2") into multiple ids - the
+          # shape request batching produces before the frontend splits it
+          # back into an array - so both Array and String are still accepted,
+          # just no longer blindly.
+          _ids = ensure_bson(condition[:filter]) if condition[:filter].is_a?(Array) || condition[:filter].is_a?(String)
+          raise GridfilterError.new("missing condition filter array within #{condition.inspect}") if _ids.blank?
         else
-          raise GridfilterError.new("missing condition filter within #{condition.inspect}") unless condition[:filter].is_a?(String) || condition[:type] == 'empty'
+          unless condition[:filter].is_a?(String) || condition[:type] == 'empty'
+            raise GridfilterError.new("missing condition filter within #{condition.inspect}")
+          end
         end
         criterion = _gridfilter_object_id_to_criterion_value(condition[:type], condition[:filter])
       when 'text'
         _gridfilter_check_condition field, condition, allowed_options: %i(filterType type filter)
         case condition[:type].to_s.underscore
         when 'in_set', 'not_in_set'
-          raise GridfilterError.new("missing condition filter array within #{condition.inspect}") unless condition[:filter].is_a?(Array)
+          unless condition[:filter].is_a?(Array)
+            raise GridfilterError.new("missing condition filter array within #{condition.inspect}")
+          end
         else
-          raise GridfilterError.new("missing condition filter within #{condition.inspect}") unless condition[:filter].is_a?(String) || condition[:type] == 'empty'
+          unless condition[:filter].is_a?(String) || condition[:type] == 'empty'
+            raise GridfilterError.new("missing condition filter within #{condition.inspect}")
+          end
         end
         criterion = _gridfilter_text_to_criterion_value(condition[:type], condition[:filter], field: field)
       when 'number'
         case condition[:type].to_s.underscore
         when 'in_set', 'not_in_set'
           _gridfilter_check_condition field, condition, allowed_options: %i(filterType type filter)
-          raise GridfilterError.new("missing condition filter array within #{condition.inspect}") unless condition[:filter].is_a?(Array)
+          unless condition[:filter].is_a?(Array)
+            raise GridfilterError.new("missing condition filter array within #{condition.inspect}")
+          end
           _filter_value = condition[:filter].collect { |v| _gridfilter_number_coerce_set_element(v, field: field) }
         else
           _gridfilter_check_condition field, condition, allowed_options: %i(filterType type filter filterTo)
@@ -710,15 +744,23 @@ class ApplicationDocument
           _filter_value = _gridfilter_number_coerce(condition[:filter], field: field)
         end
         _filter_to_value = _gridfilter_number_coerce(condition[:filterTo], field: field)
-        criterion = _gridfilter_number_to_criterion_value(condition[:type], _filter_value, _filter_to_value, field: field)
+        criterion = _gridfilter_number_to_criterion_value(
+          condition[:type], _filter_value, _filter_to_value, field: field
+        )
       when 'date'
         _gridfilter_check_condition field, condition, allowed_options: %i(filterType type dateFrom dateTo)
-        raise GridfilterError.new("missing condition dateFrom within #{condition.inspect}") unless condition[:dateFrom].present?
+        unless condition[:dateFrom].present?
+          raise GridfilterError.new("missing condition dateFrom within #{condition.inspect}")
+        end
         criterion = _gridfilter_date_to_criterion_value(condition[:type], condition[:dateFrom], condition[:dateTo])
       when 'datetime'
         _gridfilter_check_condition field, condition, allowed_options: %i(filterType type dateTimeFrom dateTimeTo)
-        raise GridfilterError.new("missing condition dateTimeFrom within #{condition.inspect}") unless condition[:dateTimeFrom].present?
-        criterion = _gridfilter_datetime_to_criterion_value(condition[:type], condition[:dateTimeFrom], condition[:dateTimeTo])
+        unless condition[:dateTimeFrom].present?
+          raise GridfilterError.new("missing condition dateTimeFrom within #{condition.inspect}")
+        end
+        criterion = _gridfilter_datetime_to_criterion_value(
+          condition[:type], condition[:dateTimeFrom], condition[:dateTimeTo]
+        )
       when 'bool'
         _gridfilter_check_condition field, condition, allowed_options: %i(filterType type filter)
         criterion = _gridfilter_bool_to_criterion_value(condition[:type], condition[:filter], field: field)

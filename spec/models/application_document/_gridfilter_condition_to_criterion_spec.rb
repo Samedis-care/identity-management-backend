@@ -38,6 +38,26 @@ RSpec.describe ApplicationDocument, '._gridfilter_condition_to_criterion' do
       result = User._gridfilter_condition_to_criterion(:actor_id, condition)
       expect(result[:actor_id][:'$in']).to contain_exactly(oid, other_oid)
     end
+
+    # Regression guard for review round 2 on PR #284: an Array-or-String shape check
+    # alone still let an empty String/Array through - ensure_bson reduces "", "," and
+    # [] all down to [], and an empty $nin is not "no match", it's "matches EVERY
+    # document" for not_in_set - the exact silent-widening the round-1 fix was for,
+    # just reached via an empty value instead of a missing one. Validate the RESULT
+    # of ensure_bson, not just the input's shape.
+    ['', ',', []].each do |empty_filter|
+      it "raises GridfilterError for not_in_set with filter #{empty_filter.inspect} instead of matching everything" do
+        condition = { filterType: 'object_id', type: 'not_in_set', filter: empty_filter }
+        expect { User._gridfilter_condition_to_criterion(:actor_id, condition) }
+          .to raise_error(ApplicationDocument::GridfilterError, /missing condition filter array/)
+      end
+
+      it "raises GridfilterError for in_set with filter #{empty_filter.inspect} instead of silently matching nothing" do
+        condition = { filterType: 'object_id', type: 'in_set', filter: empty_filter }
+        expect { User._gridfilter_condition_to_criterion(:actor_id, condition) }
+          .to raise_error(ApplicationDocument::GridfilterError, /missing condition filter array/)
+      end
+    end
   end
 
   describe 'datetime filterType' do
@@ -53,22 +73,31 @@ RSpec.describe ApplicationDocument, '._gridfilter_condition_to_criterion' do
         .to raise_error(ApplicationDocument::GridfilterError, /missing condition dateTimeFrom/)
     end
 
-    it 'not_equal builds a Mongo-valid $ne selector, not an invalid $not-on-scalar' do
+    it 'not_equal builds a $ne selector, not $not-on-scalar' do
       condition = { filterType: 'datetime', type: 'not_equal', dateTimeFrom: '2024-01-01T00:00:00Z' }
       result = User._gridfilter_condition_to_criterion(:created_at, condition)
       expect(result[:created_at].keys).to eq(['$ne'])
-      # regression guard for the actual defect: MongoDB rejects $not wrapping a bare
-      # scalar ("$not argument must be a regex or an object") - exercise the real
+    end
+
+    it 'not_equal executes as a real query, rather than a selector MongoDB itself rejects' do
+      # regression guard for the actual defect: MongoDB rejects a bare scalar wrapped
+      # in $not ("$not argument must be a regex or an object") - exercise the real
       # query, not just the built selector shape.
+      condition = { filterType: 'datetime', type: 'not_equal', dateTimeFrom: '2024-01-01T00:00:00Z' }
+      result = User._gridfilter_condition_to_criterion(:created_at, condition)
       expect { User.where(result).to_a }.not_to raise_error
     end
 
-    it 'less_than_or_equal and greater_than_or_equal are supported (a real IM grid column exposes both)' do
+    it 'less_than_or_equal is supported (a real IM grid column - ProfileActivityModel#created_at - exposes it)' do
       condition = { filterType: 'datetime', type: 'less_than_or_equal', dateTimeFrom: '2026-01-01T00:00:00Z' }
-      expect(User._gridfilter_condition_to_criterion(:created_at, condition)).to eq(created_at: { '$lte' => Time.parse('2026-01-01T00:00:00Z') })
+      result = User._gridfilter_condition_to_criterion(:created_at, condition)
+      expect(result).to eq(created_at: { '$lte' => Time.parse('2026-01-01T00:00:00Z') })
+    end
 
+    it 'greater_than_or_equal is supported (a real IM grid column - ProfileActivityModel#created_at - exposes it)' do
       condition = { filterType: 'datetime', type: 'greater_than_or_equal', dateTimeFrom: '2026-01-01T00:00:00Z' }
-      expect(User._gridfilter_condition_to_criterion(:created_at, condition)).to eq(created_at: { '$gte' => Time.parse('2026-01-01T00:00:00Z') })
+      result = User._gridfilter_condition_to_criterion(:created_at, condition)
+      expect(result).to eq(created_at: { '$gte' => Time.parse('2026-01-01T00:00:00Z') })
     end
   end
 
