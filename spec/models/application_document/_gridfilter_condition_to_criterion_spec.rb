@@ -159,6 +159,21 @@ RSpec.describe ApplicationDocument, '._gridfilter_condition_to_criterion' do
       expect { User._gridfilter_condition_to_criterion(:email, condition) }
         .to raise_error(ApplicationDocument::GridfilterError, /missing condition filter array/)
     end
+
+    # Regression guard for review round 5 on PR #284: a non-empty array of nothing
+    # BUT garbage (here: a bare Integer, which _gridfilter_text_to_criterion_value's
+    # own [NilClass, String] whitelist drops) still widened to $nin: [] one level
+    # deeper than the round-4 fix - the array-presence check alone doesn't see it.
+    it 'raises GridfilterError for not_in_set with an array of only non-String garbage' do
+      condition = { filterType: 'text', type: 'not_in_set', filter: [123] }
+      expect { User._gridfilter_condition_to_criterion(:email, condition) }
+        .to raise_error(ApplicationDocument::GridfilterError, /no usable values/)
+    end
+
+    it 'keeps [nil] working as a meaningful not_in_set value' do
+      condition = { filterType: 'text', type: 'not_in_set', filter: [nil] }
+      expect(User._gridfilter_condition_to_criterion(:email, condition)).to eq(email: { '$nin': [nil] })
+    end
   end
 
   describe 'number filterType hardening' do
@@ -168,6 +183,32 @@ RSpec.describe ApplicationDocument, '._gridfilter_condition_to_criterion' do
       condition = { filterType: 'number', type: 'not_in_set', filter: [] }
       expect { Actor._gridfilter_condition_to_criterion(:children_count, condition) }
         .to raise_error(ApplicationDocument::GridfilterError, /missing condition filter array/)
+    end
+
+    # Regression guard for review round 5 on PR #284: a non-empty array of nothing
+    # BUT garbage strings (dropped by _gridfilter_number_coerce_set_element's own
+    # tolerant design, then by _gridfilter_number_to_criterion_value's whitelist)
+    # still widened to $nin: [] one level deeper than the round-4 fix.
+    it 'raises GridfilterError for not_in_set with an array of only non-numeric garbage' do
+      condition = { filterType: 'number', type: 'not_in_set', filter: ['abc'] }
+      expect { Actor._gridfilter_condition_to_criterion(:children_count, condition) }
+        .to raise_error(ApplicationDocument::GridfilterError, /no usable values/)
+    end
+
+    it 'keeps a mix of usable and garbage elements working, dropping only the garbage' do
+      condition = { filterType: 'number', type: 'not_in_set', filter: %w[abc 1] }
+      result = Actor._gridfilter_condition_to_criterion(:children_count, condition)
+      expect(result[:children_count][:'$nin']).to eq([1])
+    end
+
+    # Review round 5: a digit string long enough to overflow BSON's 64-bit
+    # int/long serializer ("9"*100) raised an unrescued RangeError at query send
+    # time, on both main and this PR before this fix - not a regression, but the
+    # same "value must actually be usable, not just numeric-looking" fix applies.
+    it 'raises GridfilterError for a too-large digit string, rather than crashing at BSON serialization' do
+      condition = { filterType: 'number', type: 'equals', filter: '9' * 30 }
+      expect { Actor._gridfilter_condition_to_criterion(:children_count, condition) }
+        .to raise_error(ApplicationDocument::GridfilterError, /invalid numeric filter value/)
     end
   end
 

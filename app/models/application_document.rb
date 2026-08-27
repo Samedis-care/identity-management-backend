@@ -628,20 +628,30 @@ class ApplicationDocument
     end
   end
 
+  # A digit string long enough to overflow BSON's 64-bit int/long serializer
+  # (RangeError: bignum too big to convert into 'long long') isn't usable as
+  # a number here regardless of how it arrived - checked once, shared by
+  # `_gridfilter_number_coerce` and `_gridfilter_number_coerce_set_element`.
+  def self._gridfilter_numeric_string?(value)
+    return false unless value.is_a?(String) && /\A-?\d+(\.\d+)?\z/.match?(value.strip)
+    value.strip.to_i.abs <= 2**63 - 1
+  end
+
   # Coerces a single `number` gridfilter scalar value for `field` to the
   # field's own declared Mongoid type (Float/BigDecimal fields via `.to_f`,
   # everything else via `.to_i`) so it compares as the right type regardless
   # of whether it arrived as a String or a bare JSON number.
   def self._gridfilter_number_coerce(value, field: nil)
     return value if value.nil?
-    # A String has to actually look like a number - `.to_i`/`.to_f` turn any
-    # non-numeric String into 0 silently (`"abc".to_i` => 0), which would
-    # otherwise build a valid-looking comparison against 0 instead of raising.
-    # On a field with a numeric default (e.g. `children_count, default: 0`)
-    # the nil-fold above makes that worse: "greater than 'abc'" would return
-    # every row that never set the field, not an error.
-    _numeric_string = value.is_a?(String) && /\A-?\d+(\.\d+)?\z/.match?(value.strip)
-    unless value.is_a?(Numeric) || _numeric_string
+    # A String has to actually look like a number (and fit a 64-bit int) -
+    # `.to_i`/`.to_f` turn any non-numeric String into 0 silently
+    # (`"abc".to_i` => 0), which would otherwise build a valid-looking
+    # comparison against 0 instead of raising. On a field with a numeric
+    # default (e.g. `children_count, default: 0`) the nil-fold above makes
+    # that worse: "greater than 'abc'" would return every row that never set
+    # the field, not an error. A too-long digit string ("9"*100) would
+    # instead reach BSON serialization and raise an unrescued RangeError.
+    unless value.is_a?(Numeric) || _gridfilter_numeric_string?(value)
       raise GridfilterError.new("invalid numeric filter value #{value.inspect}")
     end
 
@@ -659,7 +669,7 @@ class ApplicationDocument
   # request over it.
   def self._gridfilter_number_coerce_set_element(value, field: nil)
     return value if value.nil? || value.is_a?(Numeric)
-    return value unless value.is_a?(String) && /\A-?\d+(\.\d+)?\z/.match?(value.strip)
+    return value unless _gridfilter_numeric_string?(value)
 
     _gridfilter_number_coerce(value, field: field)
   end
@@ -756,6 +766,15 @@ class ApplicationDocument
           unless condition[:filter].is_a?(Array) && condition[:filter].present?
             raise GridfilterError.new("missing condition filter array within #{condition.inspect}")
           end
+          # A non-empty array of nothing BUT garbage (e.g. [123], [[]]) still
+          # widens to $nin: [] once `_gridfilter_text_to_criterion_value`'s own
+          # [NilClass, String] whitelist drops every element - the same hole
+          # the check above closes for a literally empty array, one level
+          # deeper. Validate what the whitelist will actually keep, not just
+          # that something was sent.
+          unless condition[:filter].any? { |v| v.nil? || v.is_a?(String) }
+            raise GridfilterError.new("no usable values in condition filter array within #{condition.inspect}")
+          end
         else
           unless condition[:filter].is_a?(String) || condition[:type] == 'empty'
             raise GridfilterError.new("missing condition filter within #{condition.inspect}")
@@ -771,6 +790,11 @@ class ApplicationDocument
             raise GridfilterError.new("missing condition filter array within #{condition.inspect}")
           end
           _filter_value = condition[:filter].collect { |v| _gridfilter_number_coerce_set_element(v, field: field) }
+          # Same "the whitelist can still reduce this to []" hole as the text
+          # branch above, one level deeper than the array-presence check.
+          unless _filter_value.any? { |v| v.nil? || v.is_a?(Numeric) }
+            raise GridfilterError.new("no usable values in condition filter array within #{condition.inspect}")
+          end
         else
           _gridfilter_check_condition field, condition, allowed_options: %i(filterType type filter filterTo)
           raise GridfilterError.new("missing condition filter within #{condition.inspect}") unless condition[:filter].present?

@@ -33,6 +33,22 @@ RSpec.describe ApplicationDocument, '._gridfilter_number_coerce' do
       .to raise_error(ApplicationDocument::GridfilterError, /invalid numeric filter value/)
   end
 
+  # Regression guard for review round 5 on PR #284: a digit string this long
+  # overflows BSON's 64-bit int/long serializer ("9"*100 -> RangeError: bignum
+  # too big to convert into 'long long') at query send time - unrescued, an
+  # HTTP 500. Not a regression (main has the identical crash via Mongoid's own
+  # String-to-Integer evolution), but this line is now the one place that
+  # decides what a numeric filter value may be, so it's the place to bound it.
+  it 'raises GridfilterError for a digit string too large for a 64-bit int' do
+    expect { User._gridfilter_number_coerce('9' * 30, field: :sign_in_count) }
+      .to raise_error(ApplicationDocument::GridfilterError, /invalid numeric filter value/)
+  end
+
+  it 'still accepts the largest valid 64-bit int' do
+    max_int64 = (2**63 - 1).to_s
+    expect(User._gridfilter_number_coerce(max_int64, field: :sign_in_count)).to eq(2**63 - 1)
+  end
+
   describe '._gridfilter_number_coerce_set_element' do
     it 'coerces a valid element the same way as the scalar coercion' do
       expect(User._gridfilter_number_coerce_set_element('5', field: :sign_in_count)).to eq(5)
@@ -53,6 +69,11 @@ RSpec.describe ApplicationDocument, '._gridfilter_number_coerce' do
     # from an otherwise-valid set is more useful than rejecting the whole request.
     it 'passes a non-numeric String element through unchanged too, rather than coercing it to 0' do
       expect(User._gridfilter_number_coerce_set_element('abc', field: :sign_in_count)).to eq('abc')
+    end
+
+    it 'passes a too-large digit string through unchanged too, rather than crashing at BSON serialization' do
+      too_big = '9' * 30
+      expect(User._gridfilter_number_coerce_set_element(too_big, field: :sign_in_count)).to eq(too_big)
     end
   end
 end
