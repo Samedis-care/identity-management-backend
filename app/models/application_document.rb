@@ -318,60 +318,167 @@ class ApplicationDocument
   # Default is all existing fields of the collection are valid.
   # @return {Boolean} indicating if the field can be filtered
   def self._gridfilter_field_valid?(field)
-    field = field.to_s.split('.').first
+    return true if gridfilter_fields.include?(field.to_sym)
+    field = field.to_s.split('.').first # to allow dynamically nested field contents
     gridfilter_fields.include?(field.to_sym)
   end
 
+  # Formats a (filter type object_id) condition type into the Mongoid equivalent
+  def self._gridfilter_object_id_to_criterion_value(condition_type, condition_value)
+    case condition_type.to_s.underscore
+    when 'equals'
+      BSON::ObjectId(condition_value.to_s)
+    when 'not_equal'
+      { '$ne' => BSON::ObjectId(condition_value.to_s) }
+    when 'in_set'
+      { '$in': ensure_bson(condition_value) }
+    when 'not_in_set'
+      { '$nin': ensure_bson(condition_value) }
+    when 'greater_than'
+      { '$gt' => BSON::ObjectId(condition_value.to_s) }
+    when 'greater_than_or_equal'
+      { '$gte' => BSON::ObjectId(condition_value.to_s) }
+    when 'less_than'
+      { '$lt' => BSON::ObjectId(condition_value.to_s) }
+    when 'less_than_or_equal'
+      { '$lte' => BSON::ObjectId(condition_value.to_s) }
+    when 'empty'
+      { '$eq': nil }
+    when 'not_empty'
+      { '$ne': nil }
+    else
+      raise GridfilterError.new("unsupported condition_type #{condition_type}")
+    end
+  end
+
+  # Above this many matches, `starts_with` (below) raises rather than
+  # materializing every matching _id into an $in array. ~19.6 bytes per
+  # ObjectId in the query document and a 16MB ceiling puts the real failure
+  # around 800k matches; 100_000 (~2MB) leaves 8x headroom while staying
+  # well clear of the range ordinary broad prefixes land in.
+  GRIDFILTER_STARTS_WITH_ID_LIMIT = 100_000
+
   # Formats a (filter type text) condition type into the Mongoid equivalent
-  def self._gridfilter_text_to_criterion_value(condition_type, condition_value)
+  def self._gridfilter_text_to_criterion_value(condition_type, condition_value, field: nil)
     case condition_type.to_s.underscore
     when 'contains'
       Regexp.new(Regexp.escape(condition_value.to_s), Regexp::IGNORECASE)
     when 'not_contains'
       { '$not' => Regexp.new(Regexp.escape(condition_value.to_s), Regexp::IGNORECASE) }
     when 'starts_with'
-      Regexp.new("^#{Regexp.escape(condition_value.to_s)}", Regexp::IGNORECASE)
+      # a plain "^..." regexp works but can't use an index range scan and does
+      # not mix with numericOrdering: true - use a collated range instead,
+      # then fold the matching _id's back into a normal selector.
+      #
+      # Bounded: an unselective prefix (e.g. a single letter on a large
+      # collection) would otherwise pull every matching _id into Ruby and
+      # inline a multi-MB $in array into the outer query - and above
+      # roughly 800k matches that's a Mongo::Error::MaxBSONSize, which
+      # isn't a Mongo::Error::OperationFailure and so isn't caught by
+      # base_controller_methods.rb's rescue_from - an unhandled 500, not a
+      # slow page.
+      #
+      # Above the limit this raises GridfilterError (-> a 400 the grid can
+      # surface) rather than silently falling back to a plain regex: the
+      # collated range is case- *and diacritic*-insensitive (`strength: 1`),
+      # a bare `Regexp::IGNORECASE` is only case-insensitive, and on a
+      # German-language identity store an umlaut in name/last_name is the
+      # normal case, not an edge case - a fallback would make "startsWith
+      # Mueller" silently stop matching "M\u00FCller" the moment the match count
+      # crosses the limit, with the crossing point moving with data volume
+      # rather than with anything about the request itself.
+      criteria_starts_with = where(field => {
+                                     '$gte': condition_value.to_s,
+                                     '$lt': "#{condition_value}\uFFFF"
+                                   }).collation(locale: collation_locale, strength: 1)
+      ids = criteria_starts_with.limit(GRIDFILTER_STARTS_WITH_ID_LIMIT + 1).pluck(:_id)
+      if ids.size > GRIDFILTER_STARTS_WITH_ID_LIMIT
+        raise GridfilterError.new(<<~ERR.chomp)
+          prefix filter on #{field} matches too many records (over #{GRIDFILTER_STARTS_WITH_ID_LIMIT}) - please narrow it
+        ERR
+      else
+        where(:_id.in => ids)
+      end
     when 'ends_with'
       Regexp.new("#{Regexp.escape(condition_value.to_s)}$", Regexp::IGNORECASE)
     when 'equals'
       condition_value.to_s
     when 'not_equal'
+      { '$ne' => condition_value.to_s }
+    when 'matches'
+      Regexp.new("^#{Regexp.escape(condition_value.to_s)}$", Regexp::IGNORECASE)
+    when 'not_matches'
       { '$not' => Regexp.new("^#{Regexp.escape(condition_value.to_s)}$", Regexp::IGNORECASE) }
     when 'in_set'
       { '$in': [condition_value].flatten.select{|_| [NilClass, String].include?(_.class) } }
     when 'not_in_set'
       { '$nin': [condition_value].flatten.select{|_| [NilClass, String].include?(_.class) } }
     when 'empty'
-      nil
+      { '$in': [nil, ''] }
+    when 'not_empty'
+      { '$nin': [nil, ''] }
     else
       raise GridfilterError.new("unsupported condition_type #{condition_type}")
     end
   end
 
-  # Formats a (filter type number) condition type into the Mongoid equivalent
-  def self._gridfilter_number_to_criterion_value(condition_type, condition_value, condition_value2)
-    case condition_type.to_s.underscore
-    when 'equals'
-      condition_value
-    when 'not_equal'
-      { '$ne' => condition_value }
-    when 'less_than'
-      { '$lt' => condition_value }
-    when 'less_than_or_equal'
-      { '$lte' => condition_value }
-    when 'greater_than'
-      { '$gt' => condition_value }
-    when 'greater_than_or_equal'
-      { '$gte' => condition_value }
-    when 'in_range'
-      raise GridfilterError.new("missing condition filterTo for #{condition_type.inspect}") unless condition_value2.present?
-      { '$gte' => condition_value, '$lte' => condition_value2 }
-    when 'in_set'
-      { '$in': [condition_value].flatten.select{|_| [NilClass, Integer, Float].include?(_.class) } }
-    when 'not_in_set'
-      { '$nin': [condition_value].flatten.select{|_| [NilClass, Integer, Float].include?(_.class) } }
+  # Formats a (filter type number) condition type into the Mongoid equivalent.
+  #
+  # nil/unset documents only fold into the matching side of the comparison
+  # when `field` declares a *numeric* Mongoid default - that default IS what
+  # nil means there. A field with no declared default (or a non-numeric one)
+  # gets the strict numeric selector, with no fold - we don't know what nil
+  # means there, so we don't guess. Same reasoning as
+  # `_gridfilter_bool_to_criterion_value` below, for numeric fields.
+  def self._gridfilter_number_to_criterion_value(condition_type, condition_value, condition_value2, field: nil)
+    default_val = _gridfilter_field_default_val(field)
+    fold_value = default_val.is_a?(Numeric) ? default_val : nil
+
+    _with_null = fold_value && condition_value == fold_value
+    _cond = case condition_type.to_s.underscore
+            when 'equals'
+              { '$eq' => condition_value }
+            when 'not_equal'
+              { '$ne' => condition_value }
+            when 'less_than'
+              _with_null = fold_value && fold_value < condition_value
+              { '$lt' => condition_value }
+            when 'less_than_or_equal'
+              _with_null = fold_value && fold_value <= condition_value
+              { '$lte' => condition_value }
+            when 'greater_than'
+              _with_null = fold_value && fold_value > condition_value
+              { '$gt' => condition_value }
+            when 'greater_than_or_equal'
+              _with_null = fold_value && fold_value >= condition_value
+              { '$gte' => condition_value }
+            when 'in_range'
+              raise GridfilterError.new("missing condition filterTo for #{condition_type.inspect}") unless condition_value2.present?
+              _with_null = fold_value && (condition_value..condition_value2).include?(fold_value)
+              { '$gte' => condition_value, '$lte' => condition_value2 }
+            when 'in_set'
+              _set = [condition_value].flatten.select{|_| [NilClass, Integer, Float].include?(_.class) }
+              if fold_value && _set.include?(fold_value)
+                _with_null = false
+                _set << nil
+              end
+              { '$in': _set }
+            when 'not_in_set'
+              _set = [condition_value].flatten.select{|_| [NilClass, Integer, Float].include?(_.class) }
+              if fold_value && _set.include?(fold_value)
+                _with_null = false
+                _set << nil
+              end
+              { '$nin': _set }
+            else
+              raise GridfilterError.new("unsupported condition_type #{condition_type}")
+            end
+    return _cond unless _with_null
+
+    if condition_type.to_s.underscore.start_with?('not')
+      [[_cond, { '$ne' => nil }], '$and']
     else
-      raise GridfilterError.new("unsupported condition_type #{condition_type}")
+      [[_cond, { '$eq' => nil }], '$or']
     end
   end
 
@@ -398,6 +505,186 @@ class ApplicationDocument
     end
   end
 
+  # Formats a (filter type datetime) condition type into the Mongoid equivalent
+  def self._gridfilter_datetime_to_criterion_value(condition_type, condition_value, condition_value2)
+    # Time.zone.parse (unlike Time.parse) returns nil rather than raising for
+    # input Date._parse can't use at all ("hello", "tomorrow") - only checking
+    # the rescue would silently let those through as a nil comparison instead
+    # of the intended GridfilterError.
+    date_time_from = begin
+      Time.zone.parse(condition_value)
+    rescue StandardError
+      nil
+    end
+    if date_time_from.nil?
+      raise GridfilterError.new("invalid dateTimeFrom (#{condition_value}) for #{condition_type}")
+    end
+
+    case condition_type.to_s.underscore
+    when 'equals'
+      date_time_from
+    when 'not_equal'
+      # NOT `{ '$not' => date_time_from }` - unlike `_gridfilter_date_to_criterion_value`'s
+      # 'not_equal' (which wraps a Range that Mongoid expands into $gte/$lte before it
+      # reaches the driver), this compares a bare scalar Time - MongoDB's $not requires
+      # its argument to be a regex or an operator expression, not a plain scalar, and
+      # rejects this with "$not argument must be a regex or an object" (Mongo::Error::OperationFailure).
+      { '$ne' => date_time_from }
+    when 'less_than'
+      { '$lt' => date_time_from }
+    when 'less_than_or_equal'
+      { '$lte' => date_time_from }
+    when 'greater_than'
+      { '$gt' => date_time_from }
+    when 'greater_than_or_equal'
+      { '$gte' => date_time_from }
+    when 'in_range'
+      unless condition_value2.present?
+        raise GridfilterError.new("missing condition dateTimeTo for #{condition_type.inspect}")
+      end
+
+      date_time_to = begin
+        Time.zone.parse(condition_value2)
+      rescue StandardError
+        nil
+      end
+      if date_time_to.nil?
+        raise GridfilterError.new("invalid dateTimeTo (#{condition_value2}) for #{condition_type}")
+      end
+      { '$gte' => date_time_from, '$lte' => date_time_to }
+    else
+      raise GridfilterError.new("unsupported condition_type #{condition_type}")
+    end
+  end
+
+  # Formats a (filter type bool) condition type into the Mongoid equivalent.
+  #
+  # `field` (when it names a plain, non-dotted field on this class) is used to
+  # look up that field's own Mongoid default. Only a field that explicitly
+  # declares `default: false` / `default: true` gets nil/unset documents
+  # folded into the matching side of the comparison - a field with NO
+  # declared default keeps the original bare-boolean behavior (unset never
+  # matches either side).
+  def self._gridfilter_bool_to_criterion_value(condition_type, condition_value, field: nil)
+    condition_value = condition_value.to_s.downcase
+    truthy = %w(true yes).include? condition_value
+    non_truthy = %w(false no).include? condition_value
+    unless truthy || non_truthy
+      raise GridfilterError.new(<<~ERR.chomp)
+        invalid value (#{condition_value}) for #{condition_type}. accepted: true/yes or false/no
+      ERR
+    end
+
+    case condition_type.to_s.underscore
+    when 'before_today', 'after_today', 'before_now', 'after_now'
+      _type = if condition_type.to_s.underscore.starts_with?('before_')
+                truthy ? 'less_than' : 'greater_than'
+              else
+                non_truthy ? 'less_than' : 'greater_than'
+              end
+      _value = condition_type.to_s.underscore.ends_with?('_now') ? Time.zone.now : Time.zone.today
+      _gridfilter_datetime_to_criterion_value(_type, _value.to_fs(:db), nil)
+    when 'equals'
+      _gridfilter_bool_equals_criterion(truthy, field)
+    when 'not_equal'
+      # "not_equal x" is exactly "equals !x" once nil-folding depends on the
+      # field's default rather than a hardcoded direction.
+      _gridfilter_bool_equals_criterion(non_truthy, field)
+    else
+      raise GridfilterError.new("unsupported condition_type #{condition_type}")
+    end
+  end
+
+  # Shared by every default-aware gridfilter comparison
+  # (`_gridfilter_bool_equals_criterion`, `_gridfilter_number_to_criterion_value`):
+  # looks up `field`'s own declared Mongoid default, or nil if that can't be
+  # determined.
+  #
+  # Only trusted for a plain, non-dotted field name on THIS class. `fields`
+  # holds this class's own top-level Mongoid fields only - a dotted path
+  # (e.g. an embedded doc's "statistics.count") isn't in there and resolves
+  # to nil here, same as "no declared default": the fold simply doesn't fire
+  # for it, rather than guessing wrong.
+  def self._gridfilter_field_default_val(field)
+    field.present? ? fields[field.to_s]&.default_val : nil
+  end
+
+  # `want` is the boolean value the caller asks the field to equal. See
+  # `_gridfilter_bool_to_criterion_value` above for why nil-folding is gated
+  # on the field's own declared default instead of being unconditional.
+  def self._gridfilter_bool_equals_criterion(want, field)
+    default_val = _gridfilter_field_default_val(field)
+
+    # `$in => [x, nil]` rather than `$ne => !x`: for a boolean field the two
+    # are equivalent, but `$ne` cannot use an index range scan while `$in` on
+    # an explicit short value list can.
+    case default_val
+    when true
+      want ? { '$in' => [true, nil] } : false
+    when false
+      want ? true : { '$in' => [false, nil] }
+    else
+      want
+    end
+  end
+
+  # A digit string long enough to overflow BSON's 64-bit int/long serializer
+  # (RangeError: bignum too big to convert into 'long long') isn't usable as
+  # a number here regardless of how it arrived - checked once, shared by
+  # `_gridfilter_number_coerce` and `_gridfilter_number_coerce_set_element`.
+  def self._gridfilter_numeric_string?(value)
+    return false unless value.is_a?(String) && /\A-?\d+(\.\d+)?\z/.match?(value.strip)
+    value.strip.to_i.abs <= 2**63 - 1
+  end
+
+  # Coerces a single `number` gridfilter scalar value for `field` to the
+  # field's own declared Mongoid type (Float/BigDecimal fields via `.to_f`,
+  # everything else via `.to_i`) so it compares as the right type regardless
+  # of whether it arrived as a String or a bare JSON number.
+  def self._gridfilter_number_coerce(value, field: nil)
+    return value if value.nil?
+    # A String has to actually look like a number (and fit a 64-bit int) -
+    # `.to_i`/`.to_f` turn any non-numeric String into 0 silently
+    # (`"abc".to_i` => 0), which would otherwise build a valid-looking
+    # comparison against 0 instead of raising. On a field with a numeric
+    # default (e.g. `children_count, default: 0`) the nil-fold above makes
+    # that worse: "greater than 'abc'" would return every row that never set
+    # the field, not an error. A too-long digit string ("9"*100) would
+    # instead reach BSON serialization and raise an unrescued RangeError.
+    unless value.is_a?(Numeric) || _gridfilter_numeric_string?(value)
+      raise GridfilterError.new("invalid numeric filter value #{value.inspect}")
+    end
+
+    field_type = field.present? ? fields[field.to_s]&.type : nil
+    [Float, BigDecimal].include?(field_type) ? value.to_f : value.to_i
+  end
+
+  # Same coercion as `_gridfilter_number_coerce`, but for one element of an
+  # `in_set`/`not_in_set` filter array. A garbage element - including a
+  # non-numeric String, same as any other garbage here - is passed through
+  # unchanged rather than raising: `_gridfilter_number_to_criterion_value`'s
+  # own whitelist then silently drops it. Unlike the scalar coercion, there's
+  # no single required value to fail on here, so excluding one bad element
+  # from an otherwise-valid set is more useful than rejecting the whole
+  # request over it.
+  def self._gridfilter_number_coerce_set_element(value, field: nil)
+    return value if value.nil? || value.is_a?(Numeric)
+    return value unless _gridfilter_numeric_string?(value)
+
+    _gridfilter_number_coerce(value, field: field)
+  end
+
+  # Raises when `condition` carries any key not in `allowed_options`.
+  def self._gridfilter_check_condition(field_name, condition, allowed_options: [])
+    _unsupported_options = condition.keys - allowed_options
+    raise GridfilterError.new(<<~ERR.chomp) if _unsupported_options.any?
+      at field: '#{field_name}'
+      we detected unsupported options: '#{_unsupported_options.join(', ')}' -
+      valid options are: '#{allowed_options.join(', ')}'
+    ERR
+    true
+  end
+
   # Turns a specific condition into a Mongoid Criterion
   def self._gridfilter_condition_to_criterion(field, condition)
     condition = condition.symbolize_keys
@@ -405,36 +692,150 @@ class ApplicationDocument
 
     case condition[:type].to_s.underscore
     when 'empty'
-      criterion = { '$eq' => nil }
-    when 'not_empty'
-      criterion = { '$ne' => nil }
-    else
-      raise GridfilterError.new("missing condition filterType within #{condition.inspect}") unless condition[:filterType].present?
       case condition[:filterType].to_s.downcase
       when 'text'
+        _gridfilter_check_condition field, condition, allowed_options: %i(filterType type filter)
+        criterion = { '$in' => [nil, ''] } # DOES NOT WORK WITH TIME FIELDS
+      when 'array'
+        _gridfilter_check_condition field, condition, allowed_options: %i(filterType type filter)
+        criterion = { '$in' => [nil, []] }
+      when 'datetime'
+        _gridfilter_check_condition field, condition, allowed_options: %i(filterType type dateTimeFrom)
+        criterion = { '$eq' => nil }
+      when 'date'
+        _gridfilter_check_condition field, condition, allowed_options: %i(filterType type dateFrom)
+        criterion = { '$eq' => nil }
+      else
+        criterion = { '$eq' => nil }
+      end
+    when 'not_empty'
+      case condition[:filterType].to_s.downcase
+      when 'text'
+        _gridfilter_check_condition field, condition, allowed_options: %i(filterType type filter)
+        criterion = { '$nin' => [nil, ''] } # DOES NOT WORK WITH TIME FIELDS
+      when 'array'
+        _gridfilter_check_condition field, condition, allowed_options: %i(filterType type filter)
+        criterion = { '$exists': true, '$not': { '$size': 0 } }
+      when 'datetime'
+        _gridfilter_check_condition field, condition, allowed_options: %i(filterType type dateTimeFrom)
+        criterion = { '$ne' => nil }
+      when 'date'
+        _gridfilter_check_condition field, condition, allowed_options: %i(filterType type dateFrom)
+        criterion = { '$ne' => nil }
+      else
+        criterion = { '$ne' => nil }
+      end
+    else
+      unless condition[:filterType].present?
+        raise GridfilterError.new("missing condition filterType within #{condition.inspect}")
+      end
+      case condition[:filterType].to_s.downcase
+      when 'object_id'
+        _gridfilter_check_condition field, condition, allowed_options: %i(filterType type filter)
         case condition[:type].to_s.underscore
         when 'in_set', 'not_in_set'
-          raise GridfilterError.new("missing condition filter array within #{condition.inspect}") unless condition[:filter].is_a?(Array)
+          # Validate the RESULT of ensure_bson, not just the input's shape.
+          # An Array-or-String shape check alone still lets `filter: ""`,
+          # `filter: ","`, or `filter: []` through - ensure_bson reduces all
+          # three to `[]`, and an empty $in/$nin is not "no match" - for
+          # not_in_set it's "matches EVERY document", the exact
+          # silent-widening the previous fix was for, just reached via an
+          # empty value instead of a missing one. ensure_bson also explicitly
+          # splits a comma-joined String ("id1,id2") into multiple ids - the
+          # shape request batching produces before the frontend splits it
+          # back into an array - so both Array and String are still accepted,
+          # just no longer blindly.
+          _filter_is_settish = condition[:filter].is_a?(Array) || condition[:filter].is_a?(String)
+          if !_filter_is_settish || ensure_bson(condition[:filter]).blank?
+            raise GridfilterError.new("missing condition filter array within #{condition.inspect}")
+          end
         else
-          raise GridfilterError.new("missing condition filter within #{condition.inspect}") unless condition[:filter].is_a?(String) || condition[:type] == 'empty'
+          unless condition[:filter].is_a?(String) || condition[:type] == 'empty'
+            raise GridfilterError.new("missing condition filter within #{condition.inspect}")
+          end
         end
-        criterion = _gridfilter_text_to_criterion_value(condition[:type], condition[:filter])
+        criterion = _gridfilter_object_id_to_criterion_value(condition[:type], condition[:filter])
+      when 'text'
+        _gridfilter_check_condition field, condition, allowed_options: %i(filterType type filter)
+        case condition[:type].to_s.underscore
+        when 'in_set', 'not_in_set'
+          # `.present?`, not just `.is_a?(Array)` - an empty filter: [] would
+          # otherwise build not_in_set as `$nin: []`, matching EVERY document
+          # (the same silent-widening already fixed for object_id above),
+          # while still allowing a meaningful [nil] set through.
+          unless condition[:filter].is_a?(Array) && condition[:filter].present?
+            raise GridfilterError.new("missing condition filter array within #{condition.inspect}")
+          end
+          # A non-empty array of nothing BUT garbage (e.g. [123], [[]]) still
+          # widens to $nin: [] once `_gridfilter_text_to_criterion_value`'s own
+          # [NilClass, String] whitelist drops every element - the same hole
+          # the check above closes for a literally empty array, one level
+          # deeper. Validate what the whitelist will actually keep, not just
+          # that something was sent.
+          unless condition[:filter].any? { |v| v.nil? || v.is_a?(String) }
+            raise GridfilterError.new("no usable values in condition filter array within #{condition.inspect}")
+          end
+        else
+          unless condition[:filter].is_a?(String) || condition[:type] == 'empty'
+            raise GridfilterError.new("missing condition filter within #{condition.inspect}")
+          end
+        end
+        criterion = _gridfilter_text_to_criterion_value(condition[:type], condition[:filter], field: field)
       when 'number'
         case condition[:type].to_s.underscore
         when 'in_set', 'not_in_set'
-          raise GridfilterError.new("missing condition filter array within #{condition.inspect}") unless condition[:filter].is_a?(Array)
+          _gridfilter_check_condition field, condition, allowed_options: %i(filterType type filter)
+          # See the 'text' branch above for why `.present?` matters here too.
+          unless condition[:filter].is_a?(Array) && condition[:filter].present?
+            raise GridfilterError.new("missing condition filter array within #{condition.inspect}")
+          end
+          _filter_value = condition[:filter].collect { |v| _gridfilter_number_coerce_set_element(v, field: field) }
+          # Same "the whitelist can still reduce this to []" hole as the text
+          # branch above, one level deeper than the array-presence check.
+          unless _filter_value.any? { |v| v.nil? || v.is_a?(Numeric) }
+            raise GridfilterError.new("no usable values in condition filter array within #{condition.inspect}")
+          end
         else
+          _gridfilter_check_condition field, condition, allowed_options: %i(filterType type filter filterTo)
           raise GridfilterError.new("missing condition filter within #{condition.inspect}") unless condition[:filter].present?
+          _filter_value = _gridfilter_number_coerce(condition[:filter], field: field)
         end
-        criterion = _gridfilter_number_to_criterion_value(condition[:type], condition[:filter], condition[:filterTo])
+        _filter_to_value = _gridfilter_number_coerce(condition[:filterTo], field: field)
+        criterion = _gridfilter_number_to_criterion_value(
+          condition[:type], _filter_value, _filter_to_value, field: field
+        )
       when 'date'
-        raise GridfilterError.new("missing condition dateFrom within #{condition.inspect}") unless condition[:dateFrom].present?
+        _gridfilter_check_condition field, condition, allowed_options: %i(filterType type dateFrom dateTo)
+        unless condition[:dateFrom].present?
+          raise GridfilterError.new("missing condition dateFrom within #{condition.inspect}")
+        end
         criterion = _gridfilter_date_to_criterion_value(condition[:type], condition[:dateFrom], condition[:dateTo])
+      when 'datetime'
+        _gridfilter_check_condition field, condition, allowed_options: %i(filterType type dateTimeFrom dateTimeTo)
+        unless condition[:dateTimeFrom].present?
+          raise GridfilterError.new("missing condition dateTimeFrom within #{condition.inspect}")
+        end
+        criterion = _gridfilter_datetime_to_criterion_value(
+          condition[:type], condition[:dateTimeFrom], condition[:dateTimeTo]
+        )
+      when 'bool'
+        _gridfilter_check_condition field, condition, allowed_options: %i(filterType type filter)
+        criterion = _gridfilter_bool_to_criterion_value(condition[:type], condition[:filter], field: field)
       else
         raise GridfilterError.new("unsupported condition filterType #{condition[:filterType]}")
       end
     end
-    { field => criterion }
+
+    if criterion.is_a?(Mongoid::Criteria)
+      criterion.selector
+    elsif criterion.is_a?(Array)
+      _conditions, _and_or = criterion
+      {
+        _and_or => _conditions.collect { |c| c.is_a?(Mongoid::Criteria) ? c.selector : { field => c } }
+      }
+    else
+      { field => criterion }
+    end
   end
 
   # Turns a single field filter defintion (single or joined with second condition)
