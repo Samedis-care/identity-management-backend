@@ -73,6 +73,25 @@ RSpec.describe ApplicationDocument, '._gridfilter_condition_to_criterion' do
         .to raise_error(ApplicationDocument::GridfilterError, /missing condition dateTimeFrom/)
     end
 
+    # Regression guard for review round 3 on PR #284: Time.zone.parse (needed to
+    # satisfy Rails/TimeZone) returns nil rather than raising for input Date._parse
+    # can't use at all ("yesterday", "hello") - unlike Time.parse, which raised.
+    # Checking only the rescue silently let that nil flow into the built selector
+    # instead of the intended GridfilterError - notEqual on garbage input matched
+    # every row with the field set, instead of returning a 400.
+    it 'raises GridfilterError for a dateTimeFrom that Time.zone.parse silently returns nil for' do
+      condition = { filterType: 'datetime', type: 'not_equal', dateTimeFrom: 'yesterday' }
+      expect { User._gridfilter_condition_to_criterion(:created_at, condition) }
+        .to raise_error(ApplicationDocument::GridfilterError, /invalid dateTimeFrom/)
+    end
+
+    it 'raises GridfilterError for a dateTimeTo that Time.zone.parse silently returns nil for' do
+      from = '2026-01-01T00:00:00Z'
+      condition = { filterType: 'datetime', type: 'in_range', dateTimeFrom: from, dateTimeTo: 'yesterday' }
+      expect { User._gridfilter_condition_to_criterion(:created_at, condition) }
+        .to raise_error(ApplicationDocument::GridfilterError, /invalid dateTimeTo/)
+    end
+
     it 'not_equal builds a $ne selector, not $not-on-scalar' do
       condition = { filterType: 'datetime', type: 'not_equal', dateTimeFrom: '2024-01-01T00:00:00Z' }
       result = User._gridfilter_condition_to_criterion(:created_at, condition)

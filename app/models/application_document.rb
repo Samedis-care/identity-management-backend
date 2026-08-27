@@ -351,9 +351,12 @@ class ApplicationDocument
     end
   end
 
-  # Above this many matches, `starts_with` (below) falls back to a plain
-  # regex instead of materializing every matching _id into an $in array.
-  GRIDFILTER_STARTS_WITH_ID_LIMIT = 5_000
+  # Above this many matches, `starts_with` (below) raises rather than
+  # materializing every matching _id into an $in array. ~19.6 bytes per
+  # ObjectId in the query document and a 16MB ceiling puts the real failure
+  # around 800k matches; 100_000 (~2MB) leaves 8x headroom while staying
+  # well clear of the range ordinary broad prefixes land in.
+  GRIDFILTER_STARTS_WITH_ID_LIMIT = 100_000
 
   # Formats a (filter type text) condition type into the Mongoid equivalent
   def self._gridfilter_text_to_criterion_value(condition_type, condition_value, field: nil)
@@ -504,9 +507,16 @@ class ApplicationDocument
 
   # Formats a (filter type datetime) condition type into the Mongoid equivalent
   def self._gridfilter_datetime_to_criterion_value(condition_type, condition_value, condition_value2)
+    # Time.zone.parse (unlike Time.parse) returns nil rather than raising for
+    # input Date._parse can't use at all ("hello", "tomorrow") - only checking
+    # the rescue would silently let those through as a nil comparison instead
+    # of the intended GridfilterError.
     date_time_from = begin
       Time.zone.parse(condition_value)
     rescue StandardError
+      nil
+    end
+    if date_time_from.nil?
       raise GridfilterError.new("invalid dateTimeFrom (#{condition_value}) for #{condition_type}")
     end
 
@@ -536,6 +546,9 @@ class ApplicationDocument
       date_time_to = begin
         Time.zone.parse(condition_value2)
       rescue StandardError
+        nil
+      end
+      if date_time_to.nil?
         raise GridfilterError.new("invalid dateTimeTo (#{condition_value2}) for #{condition_type}")
       end
       { '$gte' => date_time_from, '$lte' => date_time_to }
@@ -709,8 +722,10 @@ class ApplicationDocument
           # shape request batching produces before the frontend splits it
           # back into an array - so both Array and String are still accepted,
           # just no longer blindly.
-          _ids = ensure_bson(condition[:filter]) if condition[:filter].is_a?(Array) || condition[:filter].is_a?(String)
-          raise GridfilterError.new("missing condition filter array within #{condition.inspect}") if _ids.blank?
+          _filter_is_settish = condition[:filter].is_a?(Array) || condition[:filter].is_a?(String)
+          if !_filter_is_settish || ensure_bson(condition[:filter]).blank?
+            raise GridfilterError.new("missing condition filter array within #{condition.inspect}")
+          end
         else
           unless condition[:filter].is_a?(String) || condition[:type] == 'empty'
             raise GridfilterError.new("missing condition filter within #{condition.inspect}")
