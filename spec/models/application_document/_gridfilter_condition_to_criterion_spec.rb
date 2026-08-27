@@ -19,6 +19,18 @@ RSpec.describe ApplicationDocument, '._gridfilter_condition_to_criterion' do
       expect { User._gridfilter_condition_to_criterion(:actor_id, condition) }
         .to raise_error(ApplicationDocument::GridfilterError, /unsupported options/)
     end
+
+    it 'raises GridfilterError for in_set with no filter array, rather than silently matching nothing' do
+      condition = { filterType: 'object_id', type: 'in_set' }
+      expect { User._gridfilter_condition_to_criterion(:actor_id, condition) }
+        .to raise_error(ApplicationDocument::GridfilterError, /missing condition filter array/)
+    end
+
+    it 'raises GridfilterError for not_in_set with no filter array, rather than silently matching everything' do
+      condition = { filterType: 'object_id', type: 'not_in_set' }
+      expect { User._gridfilter_condition_to_criterion(:actor_id, condition) }
+        .to raise_error(ApplicationDocument::GridfilterError, /missing condition filter array/)
+    end
   end
 
   describe 'datetime filterType' do
@@ -32,6 +44,16 @@ RSpec.describe ApplicationDocument, '._gridfilter_condition_to_criterion' do
       condition = { filterType: 'datetime', type: 'equals' }
       expect { User._gridfilter_condition_to_criterion(:created_at, condition) }
         .to raise_error(ApplicationDocument::GridfilterError, /missing condition dateTimeFrom/)
+    end
+
+    it 'not_equal builds a Mongo-valid $ne selector, not an invalid $not-on-scalar' do
+      condition = { filterType: 'datetime', type: 'not_equal', dateTimeFrom: '2024-01-01T00:00:00Z' }
+      result = User._gridfilter_condition_to_criterion(:created_at, condition)
+      expect(result[:created_at].keys).to eq(['$ne'])
+      # regression guard for the actual defect: MongoDB rejects $not wrapping a bare
+      # scalar ("$not argument must be a regex or an object") - exercise the real
+      # query, not just the built selector shape.
+      expect { User.where(result).to_a }.not_to raise_error
     end
   end
 

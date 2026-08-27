@@ -481,7 +481,12 @@ class ApplicationDocument
     when 'equals'
       date_time_from
     when 'not_equal'
-      { '$not' => date_time_from }
+      # NOT `{ '$not' => date_time_from }` - unlike `_gridfilter_date_to_criterion_value`'s
+      # 'not_equal' (which wraps a Range that Mongoid expands into $gte/$lte before it
+      # reaches the driver), this compares a bare scalar Time - MongoDB's $not requires
+      # its argument to be a regex or an operator expression, not a plain scalar, and
+      # rejects this with "$not argument must be a regex or an object" (Mongo::Error::OperationFailure).
+      { '$ne' => date_time_from }
     when 'less_than'
       { '$lt' => date_time_from }
     when 'greater_than'
@@ -645,7 +650,11 @@ class ApplicationDocument
         _gridfilter_check_condition field, condition, allowed_options: %i(filterType type filter)
         case condition[:type].to_s.underscore
         when 'in_set', 'not_in_set'
-          raise GridfilterError.new("missing condition filter array within #{condition.inspect}") unless ensure_bson(condition[:filter]).is_a?(Array)
+          # `condition[:filter].is_a?(Array)`, not `ensure_bson(condition[:filter]).is_a?(Array)` -
+          # ensure_bson always returns an Array (even for nil/a bare String), so that check could
+          # never raise: a missing/malformed filter silently became `$in: []` (matches nothing) or,
+          # worse, `$nin: []` for not_in_set (matches EVERY document) instead of the intended error.
+          raise GridfilterError.new("missing condition filter array within #{condition.inspect}") unless condition[:filter].is_a?(Array)
         else
           raise GridfilterError.new("missing condition filter within #{condition.inspect}") unless condition[:filter].is_a?(String) || condition[:type] == 'empty'
         end
