@@ -31,6 +31,13 @@ RSpec.describe ApplicationDocument, '._gridfilter_condition_to_criterion' do
       expect { User._gridfilter_condition_to_criterion(:actor_id, condition) }
         .to raise_error(ApplicationDocument::GridfilterError, /missing condition filter array/)
     end
+
+    it 'accepts a comma-joined String for in_set (the shape request batching produces)' do
+      other_oid = BSON::ObjectId.new
+      condition = { filterType: 'object_id', type: 'in_set', filter: "#{oid},#{other_oid}" }
+      result = User._gridfilter_condition_to_criterion(:actor_id, condition)
+      expect(result[:actor_id][:'$in']).to contain_exactly(oid, other_oid)
+    end
   end
 
   describe 'datetime filterType' do
@@ -54,6 +61,14 @@ RSpec.describe ApplicationDocument, '._gridfilter_condition_to_criterion' do
       # scalar ("$not argument must be a regex or an object") - exercise the real
       # query, not just the built selector shape.
       expect { User.where(result).to_a }.not_to raise_error
+    end
+
+    it 'less_than_or_equal and greater_than_or_equal are supported (a real IM grid column exposes both)' do
+      condition = { filterType: 'datetime', type: 'less_than_or_equal', dateTimeFrom: '2026-01-01T00:00:00Z' }
+      expect(User._gridfilter_condition_to_criterion(:created_at, condition)).to eq(created_at: { '$lte' => Time.parse('2026-01-01T00:00:00Z') })
+
+      condition = { filterType: 'datetime', type: 'greater_than_or_equal', dateTimeFrom: '2026-01-01T00:00:00Z' }
+      expect(User._gridfilter_condition_to_criterion(:created_at, condition)).to eq(created_at: { '$gte' => Time.parse('2026-01-01T00:00:00Z') })
     end
   end
 

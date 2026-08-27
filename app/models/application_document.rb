@@ -351,6 +351,10 @@ class ApplicationDocument
     end
   end
 
+  # Above this many matches, `starts_with` (below) falls back to a plain
+  # regex instead of materializing every matching _id into an $in array.
+  GRIDFILTER_STARTS_WITH_ID_LIMIT = 5_000
+
   # Formats a (filter type text) condition type into the Mongoid equivalent
   def self._gridfilter_text_to_criterion_value(condition_type, condition_value, field: nil)
     case condition_type.to_s.underscore
@@ -361,12 +365,26 @@ class ApplicationDocument
     when 'starts_with'
       # a plain "^..." regexp works but can't use an index range scan and does
       # not mix with numericOrdering: true - use a collated range instead,
-      # then fold the matching _id's back into a normal selector
+      # then fold the matching _id's back into a normal selector.
+      #
+      # Bounded: an unselective prefix (e.g. a single letter on a large
+      # collection) would otherwise pull every matching _id into Ruby and
+      # inline a multi-MB $in array into the outer query - and above
+      # roughly 800k matches that's a Mongo::Error::MaxBSONSize, which
+      # isn't a Mongo::Error::OperationFailure and so isn't caught by
+      # base_controller_methods.rb's rescue_from - an unhandled 500, not a
+      # slow page. Fall back to the plain (slower, but bounded and always
+      # correct) regex once the match set exceeds the limit.
       criteria_starts_with = where(field => {
                                      '$gte': condition_value.to_s,
-                                     '$lt': "#{condition_value}￿"
-                                   })
-      where(:_id.in => criteria_starts_with.collation(locale: collation_locale, strength: 1).pluck(:_id))
+                                     '$lt': "#{condition_value}\uFFFF"
+                                   }).collation(locale: collation_locale, strength: 1)
+      ids = criteria_starts_with.limit(GRIDFILTER_STARTS_WITH_ID_LIMIT + 1).pluck(:_id)
+      if ids.size > GRIDFILTER_STARTS_WITH_ID_LIMIT
+        Regexp.new("^#{Regexp.escape(condition_value.to_s)}", Regexp::IGNORECASE)
+      else
+        where(:_id.in => ids)
+      end
     when 'ends_with'
       Regexp.new("#{Regexp.escape(condition_value.to_s)}$", Regexp::IGNORECASE)
     when 'equals'
@@ -489,8 +507,12 @@ class ApplicationDocument
       { '$ne' => date_time_from }
     when 'less_than'
       { '$lt' => date_time_from }
+    when 'less_than_or_equal'
+      { '$lte' => date_time_from }
     when 'greater_than'
       { '$gt' => date_time_from }
+    when 'greater_than_or_equal'
+      { '$gte' => date_time_from }
     when 'in_range'
       raise GridfilterError.new("missing condition dateTimeTo for #{condition_type.inspect}") unless condition_value2.present?
       date_time_to = Time.parse(condition_value2) rescue (raise GridfilterError.new("invalid dateTimeTo (#{condition_value2}) for #{condition_type}"))
@@ -650,11 +672,19 @@ class ApplicationDocument
         _gridfilter_check_condition field, condition, allowed_options: %i(filterType type filter)
         case condition[:type].to_s.underscore
         when 'in_set', 'not_in_set'
-          # `condition[:filter].is_a?(Array)`, not `ensure_bson(condition[:filter]).is_a?(Array)` -
-          # ensure_bson always returns an Array (even for nil/a bare String), so that check could
-          # never raise: a missing/malformed filter silently became `$in: []` (matches nothing) or,
-          # worse, `$nin: []` for not_in_set (matches EVERY document) instead of the intended error.
-          raise GridfilterError.new("missing condition filter array within #{condition.inspect}") unless condition[:filter].is_a?(Array)
+          # Accept an Array OR a comma-joined String - not just
+          # `condition[:filter].is_a?(Array)`, and NOT the original
+          # `ensure_bson(condition[:filter]).is_a?(Array)` (ensure_bson always
+          # returns an Array, even for nil/a bare String, so that check could
+          # never raise: a missing/malformed filter silently became `$in: []`
+          # (matches nothing) or, worse, `$nin: []` for not_in_set (matches
+          # EVERY document) instead of the intended error). ensure_bson itself
+          # explicitly splits a comma-joined String ("id1,id2") into multiple
+          # ids - the shape request batching produces before the frontend
+          # splits it back into an array - so keep accepting that form too.
+          unless condition[:filter].is_a?(Array) || condition[:filter].is_a?(String)
+            raise GridfilterError.new("missing condition filter array within #{condition.inspect}")
+          end
         else
           raise GridfilterError.new("missing condition filter within #{condition.inspect}") unless condition[:filter].is_a?(String) || condition[:type] == 'empty'
         end
