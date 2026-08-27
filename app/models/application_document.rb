@@ -634,7 +634,14 @@ class ApplicationDocument
   # of whether it arrived as a String or a bare JSON number.
   def self._gridfilter_number_coerce(value, field: nil)
     return value if value.nil?
-    unless value.is_a?(Numeric) || value.is_a?(String)
+    # A String has to actually look like a number - `.to_i`/`.to_f` turn any
+    # non-numeric String into 0 silently (`"abc".to_i` => 0), which would
+    # otherwise build a valid-looking comparison against 0 instead of raising.
+    # On a field with a numeric default (e.g. `children_count, default: 0`)
+    # the nil-fold above makes that worse: "greater than 'abc'" would return
+    # every row that never set the field, not an error.
+    _numeric_string = value.is_a?(String) && /\A-?\d+(\.\d+)?\z/.match?(value.strip)
+    unless value.is_a?(Numeric) || _numeric_string
       raise GridfilterError.new("invalid numeric filter value #{value.inspect}")
     end
 
@@ -643,11 +650,17 @@ class ApplicationDocument
   end
 
   # Same coercion as `_gridfilter_number_coerce`, but for one element of an
-  # `in_set`/`not_in_set` filter array. A garbage element is passed through
-  # unchanged - `_gridfilter_number_to_criterion_value`'s own whitelist then
-  # silently drops it.
+  # `in_set`/`not_in_set` filter array. A garbage element - including a
+  # non-numeric String, same as any other garbage here - is passed through
+  # unchanged rather than raising: `_gridfilter_number_to_criterion_value`'s
+  # own whitelist then silently drops it. Unlike the scalar coercion, there's
+  # no single required value to fail on here, so excluding one bad element
+  # from an otherwise-valid set is more useful than rejecting the whole
+  # request over it.
   def self._gridfilter_number_coerce_set_element(value, field: nil)
-    return value unless value.nil? || value.is_a?(Numeric) || value.is_a?(String)
+    return value if value.nil? || value.is_a?(Numeric)
+    return value unless value.is_a?(String) && /\A-?\d+(\.\d+)?\z/.match?(value.strip)
+
     _gridfilter_number_coerce(value, field: field)
   end
 
@@ -736,7 +749,11 @@ class ApplicationDocument
         _gridfilter_check_condition field, condition, allowed_options: %i(filterType type filter)
         case condition[:type].to_s.underscore
         when 'in_set', 'not_in_set'
-          unless condition[:filter].is_a?(Array)
+          # `.present?`, not just `.is_a?(Array)` - an empty filter: [] would
+          # otherwise build not_in_set as `$nin: []`, matching EVERY document
+          # (the same silent-widening already fixed for object_id above),
+          # while still allowing a meaningful [nil] set through.
+          unless condition[:filter].is_a?(Array) && condition[:filter].present?
             raise GridfilterError.new("missing condition filter array within #{condition.inspect}")
           end
         else
@@ -749,7 +766,8 @@ class ApplicationDocument
         case condition[:type].to_s.underscore
         when 'in_set', 'not_in_set'
           _gridfilter_check_condition field, condition, allowed_options: %i(filterType type filter)
-          unless condition[:filter].is_a?(Array)
+          # See the 'text' branch above for why `.present?` matters here too.
+          unless condition[:filter].is_a?(Array) && condition[:filter].present?
             raise GridfilterError.new("missing condition filter array within #{condition.inspect}")
           end
           _filter_value = condition[:filter].collect { |v| _gridfilter_number_coerce_set_element(v, field: field) }

@@ -22,6 +22,17 @@ RSpec.describe ApplicationDocument, '._gridfilter_number_coerce' do
       .to raise_error(ApplicationDocument::GridfilterError, /invalid numeric filter value/)
   end
 
+  # Regression guard for review round 4 on PR #284: `"abc".to_i` is silently 0, not
+  # an error - a garbage-text filter value used to build a valid-looking comparison
+  # against 0 instead of raising, and on a field with a numeric default (like
+  # sign_in_count, default: 0) the nil-fold made it worse: "greater than 'abc'"
+  # would return every row that never set the field, reachable from the Contents
+  # grid's plain TextField for a "number" filterType column.
+  it 'raises GridfilterError for a non-numeric String, rather than silently coercing it to 0' do
+    expect { User._gridfilter_number_coerce('abc', field: :sign_in_count) }
+      .to raise_error(ApplicationDocument::GridfilterError, /invalid numeric filter value/)
+  end
+
   describe '._gridfilter_number_coerce_set_element' do
     it 'coerces a valid element the same way as the scalar coercion' do
       expect(User._gridfilter_number_coerce_set_element('5', field: :sign_in_count)).to eq(5)
@@ -34,6 +45,14 @@ RSpec.describe ApplicationDocument, '._gridfilter_number_coerce' do
     it 'passes a garbage element through unchanged instead of raising' do
       garbage = { a: 1 }
       expect(User._gridfilter_number_coerce_set_element(garbage, field: :sign_in_count)).to eq(garbage)
+    end
+
+    # Unlike the scalar coercion (which raises - there's exactly one value to fail
+    # on), a non-numeric String set element is dropped like any other garbage
+    # element here: there's no single required value, so excluding one bad element
+    # from an otherwise-valid set is more useful than rejecting the whole request.
+    it 'passes a non-numeric String element through unchanged too, rather than coercing it to 0' do
+      expect(User._gridfilter_number_coerce_set_element('abc', field: :sign_in_count)).to eq('abc')
     end
   end
 end

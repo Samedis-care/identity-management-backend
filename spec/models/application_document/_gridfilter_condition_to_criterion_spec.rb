@@ -150,6 +150,25 @@ RSpec.describe ApplicationDocument, '._gridfilter_condition_to_criterion' do
       result = User._gridfilter_condition_to_criterion(:email, condition)
       expect(result[:email].source).to eq('^foo$')
     end
+
+    # Regression guard for review round 4 on PR #284: an empty filter: [] for
+    # not_in_set built `$nin: []`, matching EVERY document instead of raising -
+    # the same silent-widening already fixed for object_id, one filterType over.
+    it 'raises GridfilterError for not_in_set with an empty filter array, rather than matching everything' do
+      condition = { filterType: 'text', type: 'not_in_set', filter: [] }
+      expect { User._gridfilter_condition_to_criterion(:email, condition) }
+        .to raise_error(ApplicationDocument::GridfilterError, /missing condition filter array/)
+    end
+  end
+
+  describe 'number filterType hardening' do
+    # Same regression as the text case above, for the number filterType's
+    # not_in_set branch.
+    it 'raises GridfilterError for not_in_set with an empty filter array, rather than matching everything' do
+      condition = { filterType: 'number', type: 'not_in_set', filter: [] }
+      expect { Actor._gridfilter_condition_to_criterion(:children_count, condition) }
+        .to raise_error(ApplicationDocument::GridfilterError, /missing condition filter array/)
+    end
   end
 
   it 'raises GridfilterError for an unsupported filterType' do
