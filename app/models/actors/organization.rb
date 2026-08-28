@@ -26,10 +26,11 @@ module Actors
         if parent.is_a?(Tenant) && _modules_selected.try(:any?)
           _modules_selected.each do |_mod|
             _module_file = "#{Rails.root}/#{Actors::App.app_actor_defaults_path(app.name)}/#{_mod}.yml"
-            if File.exist?(_module_file)
-              _selected = YAML.load_file(_module_file).dig(app.name).with_indifferent_access
-              _defaults[:children] = _defaults[:children] + _selected[:children] if _selected[:children].any?
-            end
+            next unless File.exist?(_module_file)
+
+            _selected = Actors::App.load_yaml_no_dupes(File.read(_module_file), path: _module_file)
+                                   .dig(app.name).with_indifferent_access
+            _defaults[:children] = _defaults[:children] + _selected[:children] if _selected[:children].any?
           end
         end
         _defaults
@@ -39,7 +40,9 @@ module Actors
     def app_defaults_import!
       raise "WRONG NODE! MUST BE ORGANIZATION BELOW AN APP" unless parent.is_a?(Actors::App)
       return unless File.exist?(app.app_actor_defaults_filepath)
-      _import_defaults = YAML.load_file("#{Rails.root}/#{app.app_actor_defaults_filepath}").dig(app.name).with_indifferent_access
+      _defaults_file = "#{Rails.root}/#{app.app_actor_defaults_filepath}"
+      _import_defaults = Actors::App.load_yaml_no_dupes(File.read(_defaults_file), path: _defaults_file)
+                                    .dig(app.name).with_indifferent_access
       if _import_defaults.dig(:children).any?
         self.ensure_defaults!(with_defaults: _import_defaults)
       else

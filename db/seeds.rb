@@ -67,7 +67,7 @@ Dir.glob('config/apps/*').each do |app_dir|
   app = apps[app_name]
   tenant_ymls = Dir.glob("config/apps/#{app_name}/tenants/*.yml")
   tenant_ymls.each do |filename|
-    attrs = YAML.load_file(filename).with_indifferent_access
+    attrs = Actors::App.load_yaml_no_dupes(File.read(filename), path: filename).with_indifferent_access
     tenant = begin
       if BSON::ObjectId.legal?(attrs[:id])
         Actors::Tenant.where(
