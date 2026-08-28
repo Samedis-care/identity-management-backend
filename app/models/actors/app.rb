@@ -332,6 +332,58 @@ module Actors
       Regexp.new("^#{self.name}/[a-z\-]+\.[a-z\-]+$")
     end
 
+    # Parses a candos/roles/actor_defaults/tenant YML source and raises if any
+    # mapping in it declares the same key twice. Psych allows duplicate
+    # mapping keys and silently keeps the last one, so a duplicate is
+    # otherwise invisible: the earlier declaration is discarded before
+    # JSON::Validator (or any other consumer) ever sees the parsed Hash, and
+    # both a schema check and a plain YAML.load succeed as if nothing were
+    # wrong (samedis-care-issues#2657, #2658).
+    #
+    # Walks the Psych parse tree instead of the loaded value, since a loaded
+    # Hash can no longer show that a key was ever repeated. Used in place of
+    # YAML.load / YAML.load_file wherever this app's config YAML (or an
+    # equivalent upload through AppAdminController) is parsed. Pass `path:`
+    # when the source is a real file, so a duplicate-key error names the file
+    # the way Psych.load_file's own syntax errors already do -- important
+    # here because several callers loop over Dir.glob(*.yml).
+    def self.load_yaml_no_dupes(yaml_source, path: nil)
+      dupes = []
+      find_duplicate_mapping_keys = lambda do |node|
+        case node
+        when Psych::Nodes::Mapping
+          seen = {}
+          node.children.each_slice(2) do |key_node, value_node|
+            # A mapping key is ordinarily a scalar, but YAML also allows an
+            # explicit complex key (`? [a, b]` / `? {a: b}`), which has no
+            # single #value to compare or report. Such a key can't usefully
+            # participate in this check either way, so skip past it rather
+            # than crash -- the schema validation each caller runs right
+            # after this will reject it on its own terms.
+            if key_node.is_a?(Psych::Nodes::Scalar)
+              key = key_node.value
+              if seen.key?(key)
+                dupes << "'#{key}' (line #{seen[key]}, again at line #{key_node.start_line + 1})"
+              else
+                seen[key] = key_node.start_line + 1
+              end
+            end
+            find_duplicate_mapping_keys.call(value_node)
+          end
+        when Psych::Nodes::Sequence, Psych::Nodes::Document, Psych::Nodes::Stream
+          node.children.each { |child| find_duplicate_mapping_keys.call(child) }
+        end
+      end
+      find_duplicate_mapping_keys.call(Psych.parse_stream(yaml_source, filename: path))
+
+      if dupes.any?
+        location = "#{path}: " if path
+        raise "#{location}Duplicate YAML mapping key(s) found, refusing to import: #{dupes.join(', ')}"
+      end
+
+      YAML.load(yaml_source, filename: path)
+    end
+
     # Getter for turning this app's roles to yaml
     def import_roles
       app_roles.available
@@ -341,7 +393,7 @@ module Actors
 
     # Setter to import YML formatted roles into the app
     def import_roles=(data)
-      _yaml_data = data.is_a?(Hash) ? data : YAML.load(data)
+      _yaml_data = data.is_a?(String) ? self.class.load_yaml_no_dupes(data) : data
       # this will throw an exception if the data isn't valid to the schema
       _yaml_data.each do |role|
         begin
@@ -388,7 +440,7 @@ module Actors
 
     # Setter to import YML formatted role locales into the app
     def locale_import_roles=(data)
-      _yaml_data = data.is_a?(String) ? YAML.load(data) : data
+      _yaml_data = data.is_a?(String) ? self.class.load_yaml_no_dupes(data) : data
 
       # this will throw an exception if the data isn't valid to the schema
       JSON::Validator.validate!(role_locale_schema, _yaml_data)
@@ -411,8 +463,9 @@ module Actors
       _file = "#{dump_path_roles}/roles.yml"
       return false unless File.exist? _file rescue debugger
       puts "Seeding Roles for: #{name}"
-      _yaml_data = File.read _file
-      self.import_roles=(_yaml_data)
+      # pre-parsed here (rather than handing the raw text to the setter)
+      # so a duplicate-key error names _file, same as its three siblings
+      self.import_roles = self.class.load_yaml_no_dupes(File.read(_file), path: _file)
       true
     end
 
@@ -460,7 +513,10 @@ module Actors
       Dir.glob("#{dump_path_role_locales}/*.yml").each do |yml_file|
         _locale = File.basename(yml_file, '.yml')
         puts "Seeding Role locales for (#{_locale}) app: #{name} from #{"#{dump_path_role_locales}/*.yml"}"
-        self.locale_import_roles= File.read(yml_file)
+        # pre-parsed here (rather than handing the raw text to the setter)
+        # so a duplicate-key error names yml_file -- the setter itself has
+        # no way to know which of the Dir.glob'd files it was given
+        self.locale_import_roles = self.class.load_yaml_no_dupes(File.read(yml_file), path: yml_file)
       end
     end
 
@@ -478,7 +534,7 @@ module Actors
 
     # Updates or creates app candos from a YML String or Hash
     def import_candos=(data)
-      _yaml_data = data.is_a?(String) ? YAML.load(data) : data
+      _yaml_data = data.is_a?(String) ? self.class.load_yaml_no_dupes(data) : data
 
       # this will throw an exception if the data isn't valid to the schema
       _yaml_data.each do |cando|
@@ -515,7 +571,7 @@ module Actors
 
     # Updates or creates app cando locales from a YML String or Hash
     def locale_import_candos=(data)
-      _yaml_data = data.is_a?(String) ? YAML.load(data) : data
+      _yaml_data = data.is_a?(String) ? self.class.load_yaml_no_dupes(data) : data
 
       # this will throw an exception if the data isn't valid to the schema
       JSON::Validator.validate!(cando_locale_schema, _yaml_data)
@@ -555,7 +611,10 @@ module Actors
       Dir.glob("#{dump_path_cando_locales}/*.yml").each do |yml_file|
         _locale = File.basename(yml_file, '.yml')
         puts "Seeding Cando locales (#{_locale}) for app: #{name}"
-        self.locale_import_candos= File.read(yml_file)
+        # pre-parsed here (rather than handing the raw text to the setter)
+        # so a duplicate-key error names yml_file -- the setter itself has
+        # no way to know which of the Dir.glob'd files it was given
+        self.locale_import_candos = self.class.load_yaml_no_dupes(File.read(yml_file), path: yml_file)
       end
     end
 
@@ -587,8 +646,13 @@ module Actors
       _file = "#{dump_path_candos}/candos.yml"
       return false unless File.exist? _file
 
-      _yaml_data = YAML.load_file _file
-      self.import_candos=(_yaml_data)
+      # the duplicate-key check happens right here, with _file in hand for
+      # the error message -- import_candos= receives an already-parsed,
+      # already-checked Array (its `: data` branch) and just assigns it.
+      # This used to run backwards: YAML.load_file parsed first with no
+      # check at all, and the pre-parsed value bypassed import_candos='s
+      # own check too, since that only fires on its String branch.
+      self.import_candos = self.class.load_yaml_no_dupes(File.read(_file), path: _file)
       true
     end
 
