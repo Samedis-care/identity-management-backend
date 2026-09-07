@@ -6,6 +6,26 @@ class Api::V1::App::Tenant::InvitationsController < Api::V1::JsonApiController
   SERIALIZER = InvitationSerializer
   OVERVIEW_SERIALIZER = InvitationSerializer
 
+  # Samedis-care/samedis-care-issues#2811: declaring this instead of
+  # overriding #params_create makes the request body's OpenAPI schema get generated from
+  # this list (JsonApiController#permitted_attributes_for_create ->
+  # InvitationSerializer::Schema#openapi_consumes_schema) instead of falling back to
+  # "does not support sending any attributes" - which was still true for valid_until after
+  # just exposing it in the response half. #params_create's base implementation
+  # (params.fetch(:data, {}).permit(*self.class::PERMIT_CREATE)) is behaviourally identical
+  # to the override this replaces.
+  PERMIT_CREATE = [
+    :email, :user_id, :invitable_type, :invitable_id, :auto_accept, :target_url, :valid_until,
+    {
+      actions: {
+        access_group_ids: [],
+        access_groups: [],
+        add_access_group_ids: [],
+        add_access_groups: []
+      }
+    }
+  ].freeze
+
   SWAGGER = { tag: 'Tenant Invitations', name: 'Invitation', header: 'Manage tenant invitations for an app' }
 
   undef_method :index
@@ -36,20 +56,6 @@ class Api::V1::App::Tenant::InvitationsController < Api::V1::JsonApiController
       create:  %w(~/invitations.writer ~/access-control.writer ~/tenant.admin ~/app-tenant.admin),
       destroy: %w(~/invitations.writer ~/tenant.admin ~/app-tenant.admin)
     })
-  end
-
-  def params_create
-    params.fetch(:data, {}).permit(
-      :email, :user_id, :invitable_type, :invitable_id, :auto_accept, :target_url, :valid_until,
-      {
-        actions: {
-          access_group_ids: [],
-          access_groups: [],
-          add_access_group_ids: [],
-          add_access_groups: []
-        }
-      }
-    )
   end
 
 end
