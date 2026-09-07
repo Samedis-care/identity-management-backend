@@ -34,7 +34,11 @@ RSpec.describe InvitationSerializer, type: :model do
   it 'exposes valid_until so a caller can read back the effective expiry' do
     attrs = described_class.new(invite).serializable_hash[:data][:attributes]
 
-    expect(Time.zone.parse(attrs[:valid_until]).to_i).to be_within(1.minute).of(1.year.from_now.to_i)
+    # serializable_hash hands back the demongoized DateTime attribute untouched - it's
+    # only #as_json (i.e. actually rendering the response) that stringifies it, same as
+    # created_at/accepted_at already do. The schema's `format: date-time` describes that
+    # wire shape correctly; this assertion just isn't reaching for a string too early.
+    expect(attrs[:valid_until].to_time.to_i).to be_within(1.minute).of(1.year.from_now.to_i)
   end
 
   it 'exposes target_url' do
