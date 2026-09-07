@@ -927,8 +927,17 @@ class User < ApplicationDocument
     cache_expire!
   end
 
+  # Samedis-care/samedis-care-issues#2810: filtered on created_at, so an invite accepted
+  # (by #auto_accept_invites! above, which always runs first - see
+  # Api::V1::App::Doorkeeper::TokensController#create) more than 24h after it was created
+  # dropped out of this list before the consuming app (e.g. samedis-care-backend's
+  # accept_recent_invites) ever learned its token was actionable - permanently, since a
+  # once-`done` invite never becomes "recent" again. updated_at covers both cases: it
+  # equals created_at for a freshly-created invite, and gets bumped by #accept!'s
+  # update_attributes(accepted_at:, done:) right before this method is called in the same
+  # request/response cycle.
   def recent_invites
-    Invite.where(user: self, :created_at.gte => 1.day.ago)
+    Invite.where(user: self, :updated_at.gte => 1.day.ago)
   end
 
   # Check if there are any content documents to accept (TOS)

@@ -38,7 +38,7 @@ class Invite < ApplicationDocument
 
   before_save do |record|
     record.email = record.email.to_s.downcase
-    record.valid_until ||= record.class.expire_time
+    record.valid_until = record.class.clamp_valid_until(record.valid_until)
   end
 
   before_validation do |record|
@@ -57,6 +57,23 @@ class Invite < ApplicationDocument
   # max age of token
   def self.expire_time
     30.days.from_now
+  end
+
+  # Upper bound on a caller-supplied valid_until. Samedis-care/samedis-care-issues#2810:
+  # Api::V1::App::Tenant::InvitationsController#params_create used to silently strip
+  # `valid_until` via strong params, so every invite created through it (e.g.
+  # samedis-care-backend's Staff auto-join flow, which sends 1.year.from_now) fell back
+  # to the 30-day expire_time default no matter what the caller intended. Now that
+  # `valid_until` is permitted, cap it server-side so a caller (buggy or malicious)
+  # can't mint an effectively-permanent invite.
+  MAX_VALID_UNTIL = 2.years
+
+  # Applies the default expiry when none is supplied, and caps whatever IS supplied.
+  # Idempotent: re-clamping an already-valid value on a later save (e.g. #accept!'s
+  # update_attributes) is a no-op.
+  def self.clamp_valid_until(value)
+    candidate = value.presence || expire_time
+    [candidate, MAX_VALID_UNTIL.from_now].min
   end
 
   def self.unclaimed

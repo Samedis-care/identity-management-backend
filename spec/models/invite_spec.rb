@@ -192,6 +192,41 @@ RSpec.describe Invite, type: :model do
     end
   end
 
+  # Samedis-care/samedis-care-issues#2810: Api::V1::App::Tenant::InvitationsController's
+  # params_create used to silently strip a caller-supplied valid_until, so every invite
+  # created through it fell back to the 30-day expire_time default no matter what the
+  # caller intended. valid_until is now permitted there, clamped through this class method.
+  describe '.clamp_valid_until' do
+    it 'applies the default expiry when none is supplied' do
+      expect(Invite.clamp_valid_until(nil)).to be_within(1.minute).of(Invite.expire_time)
+    end
+
+    it 'honors a supplied value within the allowed range, instead of silently discarding it' do
+      supplied = 1.year.from_now
+      expect(Invite.clamp_valid_until(supplied)).to eq(supplied)
+    end
+
+    it 'caps a supplied value beyond MAX_VALID_UNTIL so no caller can mint a near-permanent invite' do
+      far_future = 10.years.from_now
+      expect(Invite.clamp_valid_until(far_future)).to be_within(1.minute).of(Invite::MAX_VALID_UNTIL.from_now)
+    end
+  end
+
+  describe 'saving a caller-supplied valid_until' do
+    it 'persists it instead of overwriting it with the 30-day default' do
+      invite = Invite.create!(
+        email: email,
+        tenant: tenant,
+        invitable_type: 'tenant',
+        invitable_id: tenant.id.to_s,
+        auto_accept: true,
+        valid_until: 1.year.from_now
+      )
+
+      expect(invite.reload.valid_until.to_time.to_i).to be_within(1.minute).of(1.year.from_now.to_i)
+    end
+  end
+
   # #accept! only marks an invite done when the processor reports success, so cover
   # that the other processor still burns its invite
   describe "#accept! with invitable_type 'access_control'" do
