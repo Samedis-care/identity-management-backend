@@ -27,6 +27,19 @@ class Invite < ApplicationDocument
   field :has_account, type: Boolean
   field :target_url, type: String
 
+  # Samedis-care/samedis-care-issues#2810 review round 1: Mongoid's DateTime demongoize
+  # silently turns an unparseable string into nil (Time.zone.parse returns nil, no raise),
+  # indistinguishable by the time a validation runs from valid_until having been omitted
+  # entirely - before_save's clamp_valid_until would then fill in the 30-day default and
+  # the create would still return 200, exactly the silent-expiry-downgrade this issue was
+  # about, just moved from "params stripped it" to "the value didn't parse". Capturing the
+  # distinction requires hooking the setter, since that is the last point the raw value is
+  # still available.
+  def valid_until=(value)
+    super
+    @valid_until_unparseable = value.present? && valid_until.nil?
+  end
+
   index({ email: 1 }, { sparse: true, unique: false, name: 'invite_emails' })
   index({ user_id: 1, email: 1, auto_accept: 1 }, { sparse: true, unique: false, name: 'invite_for_user' })
   index({ token: 1 }, { unique: false, name: 'invite_tokens' })
@@ -52,6 +65,7 @@ class Invite < ApplicationDocument
 
   validates :invitable_type, :token, presence: true
   validates :invitable_id, presence: true, if: -> { %i(app).include?(self.invitable_type.to_sym) }
+  validate :reject_unparseable_valid_until
 
 
   # max age of token
@@ -96,6 +110,12 @@ class Invite < ApplicationDocument
 
   def token_generate
     Digest::SHA1.hexdigest([SecureRandom.uuid, Time.now, rand].join)
+  end
+
+  def reject_unparseable_valid_until
+    return unless @valid_until_unparseable
+
+    errors.add(:valid_until, 'is not a valid date/time')
   end
 
   def is_valid?

@@ -230,6 +230,27 @@ RSpec.describe Invite, type: :model do
     end
   end
 
+  # Review round 1 on Samedis-care/samedis-care-issues#2810: Mongoid's DateTime demongoize
+  # turns an unparseable string into nil silently (no raise), so without this check it was
+  # indistinguishable from valid_until being omitted - before_save would then fill in the
+  # 30-day default and the create would still succeed with a 200, the same silent-downgrade
+  # failure mode this issue is about, just moved to a different trigger.
+  describe 'saving an unparseable valid_until' do
+    it 'fails validation instead of silently downgrading to the 30-day default' do
+      invite = Invite.new(
+        email: email,
+        tenant: tenant,
+        invitable_type: 'tenant',
+        invitable_id: tenant.id.to_s,
+        auto_accept: true,
+        valid_until: 'not-a-date'
+      )
+
+      expect(invite).not_to be_valid
+      expect(invite.errors[:valid_until]).to be_present
+    end
+  end
+
   # #accept! only marks an invite done when the processor reports success, so cover
   # that the other processor still burns its invite
   describe "#accept! with invitable_type 'access_control'" do
