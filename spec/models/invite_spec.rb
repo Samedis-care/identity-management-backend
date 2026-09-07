@@ -212,8 +212,11 @@ RSpec.describe Invite, type: :model do
     end
   end
 
+  # Model-level: an explicit valid_until always reached the model even before this fix
+  # (the old `||=` only kicked in on nil) - the actual bug was the controller stripping it
+  # via strong params before it got this far. See the params_create spec for that.
   describe 'saving a caller-supplied valid_until' do
-    it 'persists it instead of overwriting it with the 30-day default' do
+    it 'persists it via .create!, unaffected by the clamp/default wiring' do
       invite = Invite.create!(
         email: email,
         tenant: tenant,
