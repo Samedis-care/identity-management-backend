@@ -4,8 +4,15 @@ module Actors
 
     before_validation :ensure_user_data
     before_validation :ensure_references
-    after_save :user_cache_expire!
+    # Order matters: cached_candos must be written onto this mapping BEFORE the
+    # user's caches are invalidated. Otherwise a concurrent User#candos recompute
+    # can land in the window between invalidation and this merge, aggregate over
+    # a still-blank cached_candos, and persist an empty result that nothing later
+    # repairs (see Samedis-care/samedis-care-issues#2675). Actor#merge_group_candos!
+    # and Role#update_group_candos! already do it in this order — this callback
+    # pair was the one place that had it backwards.
     after_save :merge_group_candos!
+    after_save :user_cache_expire!
     after_destroy :user_cache_expire!
 
     validates :map_actor_id, presence: true

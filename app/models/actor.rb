@@ -788,8 +788,17 @@ class Actor < ApplicationDocument
     else
       mapped_actor.ensure_user_data
       mapped_actor.ensure_references
-      mapped_actor.user_cache_expire!
+      # This branch is unreachable in practice: `mapped_actor` is always a new,
+      # unsaved record here (the `return … if mapped_actor.persisted?` guard
+      # above returns early once persisted), and a new Mongoid document always
+      # has at least `_id` in `changes` — so `mapped_actor.changed?` above is
+      # always true and `save!` always runs instead (firing Actors::Mapping's
+      # after_save chain, see its comment).
+      # Reordered to match that chain anyway for consistency, and because if
+      # this branch were ever reached, both calls here would be operating on a
+      # record that was never persisted in the first place.
       mapped_actor.merge_group_candos!
+      mapped_actor.user_cache_expire!
     end
 
     if cache_expire
