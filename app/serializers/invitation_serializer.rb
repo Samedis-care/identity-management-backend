@@ -26,7 +26,9 @@ class InvitationSerializer
     :done,
     :has_account,
     :created_at,
-    :updated_at
+    :updated_at,
+    :valid_until,
+    :target_url
   )
 
   class Schema < JsonApi::Schema
@@ -58,6 +60,8 @@ class InvitationSerializer
           boolean :has_account, description: 'true if the invited user already has an account'
           string :created_at, format:'date-time', description: 'timestamp when the invitation was created'
           string :updated_at, format:'date-time', description: 'timestamp when the invitation was updated'
+          string :valid_until, format: 'date-time', description: 'the effective expiry of this invitation (server-clamped; see Invite::MAX_VALID_UNTIL) - accepting it after this timestamp no longer works'
+          string :target_url, description: 'optional URL the invitee is redirected to after accepting; also used to derive redirect_url'
         end
       }
     end

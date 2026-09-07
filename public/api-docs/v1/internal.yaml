@@ -1379,6 +1379,16 @@ components:
           type: string
           format: date-time
           description: timestamp when the invitation was updated
+        valid_until:
+          type: string
+          format: date-time
+          description: the effective expiry of this invitation (server-clamped; see
+            Invite::MAX_VALID_UNTIL) - accepting it after this timestamp no longer
+            works
+        target_url:
+          type: string
+          description: optional URL the invitee is redirected to after accepting;
+            also used to derive redirect_url
     MappableUserOverviewSerializer:
       type: object
       description: the main attributes of this record
