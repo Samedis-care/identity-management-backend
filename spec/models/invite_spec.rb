@@ -251,6 +251,39 @@ RSpec.describe Invite, type: :model do
     end
   end
 
+  # Review round 2 on Samedis-care/samedis-care-issues#2810: a past valid_until used to
+  # persist fine (200) but produced an invite that is simultaneously "created successfully"
+  # and permanently outside Invite.valid - which both #accept! and the DELETE endpoint's
+  # MODEL_destroy key off, so it could never be accepted or removed again.
+  describe 'saving a valid_until in the past' do
+    it 'fails validation instead of creating an undeletable dead invite' do
+      invite = Invite.new(
+        email: email,
+        tenant: tenant,
+        invitable_type: 'tenant',
+        invitable_id: tenant.id.to_s,
+        auto_accept: true,
+        valid_until: 1.year.ago
+      )
+
+      expect(invite).not_to be_valid
+      expect(invite.errors[:valid_until]).to be_present
+    end
+
+    it 'still allows a future value, so the upper-bound clamp is unaffected' do
+      invite = Invite.new(
+        email: email,
+        tenant: tenant,
+        invitable_type: 'tenant',
+        invitable_id: tenant.id.to_s,
+        auto_accept: true,
+        valid_until: 1.year.from_now
+      )
+
+      expect(invite).to be_valid
+    end
+  end
+
   # #accept! only marks an invite done when the processor reports success, so cover
   # that the other processor still burns its invite
   describe "#accept! with invitable_type 'access_control'" do

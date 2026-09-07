@@ -66,6 +66,7 @@ class Invite < ApplicationDocument
   validates :invitable_type, :token, presence: true
   validates :invitable_id, presence: true, if: -> { %i(app).include?(self.invitable_type.to_sym) }
   validate :reject_unparseable_valid_until
+  validate :reject_past_valid_until
 
 
   # max age of token
@@ -116,6 +117,22 @@ class Invite < ApplicationDocument
     return unless @valid_until_unparseable
 
     errors.add(:valid_until, 'is not a valid date/time')
+  end
+
+  # Review round 2 on Samedis-care/samedis-care-issues#2810: the create-time upper bound
+  # (MAX_VALID_UNTIL, above) had no matching lower bound, and permitting the attribute made
+  # a past value reachable for the first time. A past valid_until produces an invite that is
+  # simultaneously `persisted? == true` (200, looks fine) and `Invite.valid` == false forever
+  # - which is also what both #accept! and MODEL_destroy (`Invite.valid`) key off, so it can
+  # never be auto-accepted AND the DELETE endpoint can never remove it either (an empty
+  # criteria still renders success). Reject outright rather than silently clamping forward
+  # to Time.now: a caller who actually meant "already expired" would get a live invite
+  # instead, which is its own silent-downgrade trap.
+  def reject_past_valid_until
+    return if valid_until.blank?
+    return if valid_until >= Time.now
+
+    errors.add(:valid_until, 'must not be in the past')
   end
 
   def is_valid?
