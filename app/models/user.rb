@@ -687,7 +687,17 @@ class User < ApplicationDocument
   # @return {Array} of cando strings
   def candos
     @candos ||= begin
-      _cache_invalid = self.tenant_candos_cached.nil? || self.tenant_candos_cached_at.nil?
+      # `!is_a?(Hash)` (not `.nil?`) so a legacy record poisoned by the old
+      # rescue [] (Samedis-care/samedis-care-issues#2806) is treated as
+      # invalid, not merely nil-checked -- a non-Hash value here is
+      # corruption, not a cache, and re-deriving it is what actually heals
+      # it. Otherwise the defensive guards in Actor.tenant_collection and
+      # #global_candos only degrade the symptom per-request: with the
+      # TypeError gone, User#tenants would happily persist that degraded []
+      # snapshot into tenants_cached with a fresh timestamp, extending the
+      # poisoning into the second cache instead of fixing the first one.
+      # nil.is_a?(Hash) is false, so this subsumes the old .nil? check.
+      _cache_invalid = !self.tenant_candos_cached.is_a?(Hash) || self.tenant_candos_cached_at.nil?
       unless _cache_invalid
         _cache_invalid = self.tenant_candos_cached_at < Time.now.beginning_of_day
       end
@@ -706,9 +716,16 @@ class User < ApplicationDocument
   end
 
   def get_tenant_candos
-    self.tenant_access_group_ids = begin
-      Actors::Mapping.where(user_id: self.id).get_tenant_candos.first.dig(:tenant_candos_cached) rescue []
-    end
+    # `tenant_candos_cached` is an untyped field that every consumer treats as
+    # a Hash of tenant_id => [candos] (see Actor.tenant_collection). A user
+    # with no Actors::Mapping at all is the one case with nothing to dig into
+    # -- `&.dig` handles that directly, returning the correctly-typed {}.
+    # Deliberately NOT rescuing anything else here: a genuine aggregation
+    # failure (Mongo hiccup, timeout) must raise and be retried, not be
+    # silently cached as "this user has zero candos" for the rest of the day
+    # (see Samedis-care/samedis-care-issues#2806).
+    self.tenant_access_group_ids =
+      Actors::Mapping.where(user_id: self.id).get_tenant_candos.first&.dig(:tenant_candos_cached) || {}
   end
 
   def update_tenant_candos!
@@ -736,7 +753,12 @@ class User < ApplicationDocument
 
   # simple array of cando string regardless of tenants
   def global_candos(app_name=nil)
-    @global_candos = self.candos.values.flatten.uniq.sort rescue []
+    # Same reasoning as get_tenant_candos/Actor.tenant_collection
+    # (Samedis-care/samedis-care-issues#2806): don't let a genuine failure
+    # here masquerade as "no candos", and don't blow up on a tenant_candos_cached
+    # that still holds a stray Array from before that fix shipped.
+    _candos = self.candos
+    @global_candos = _candos.is_a?(Hash) ? _candos.values.flatten.uniq.sort : []
     return @global_candos unless app_name.present?
     app_name = app_name.name if app_name.is_a?(Actors::App)
     @global_candos.select {|c| c.starts_with? app_name+'/' }

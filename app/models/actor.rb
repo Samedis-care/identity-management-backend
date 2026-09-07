@@ -508,6 +508,16 @@ class Actor < ApplicationDocument
 
   # @return {Array} of {Hash}es with id, name fields and candos for the given user
   def self.tenant_collection(user)
+    # Defensive: `user.candos` is expected to be a Hash of tenant_id => [candos]
+    # (see User#get_tenant_candos), but a record persisted before
+    # Samedis-care/samedis-care-issues#2806 was fixed can still hold a stray
+    # Array in `tenant_candos_cached` -- `Array#dig(String)` raises TypeError,
+    # turning this into a 500 on every request that serialises the user until
+    # the cache is invalidated. Degrade to "no candos" instead of raising, and
+    # normalize a missing/nil entry to [] rather than nil so callers that do
+    # `tenant_candos & something` (e.g. Api::V1::JsonApiController#cando_any?)
+    # don't have to guard against nil themselves.
+    _candos = user.candos
     criteria.collect do |t|
       {
         id: t.id.to_s,
@@ -516,7 +526,7 @@ class Actor < ApplicationDocument
         full_name: t.full_name,
         title: t.title,
         enterprises: t.enterprises,
-        candos: user.candos.dig(t.id.to_s),
+        candos: _candos.is_a?(Hash) ? (_candos.dig(t.id.to_s) || []) : [],
         image: {
           large: (t.image[:large].url rescue nil),
           medium: (t.image[:medium].url rescue nil),
