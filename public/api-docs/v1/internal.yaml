@@ -17717,18 +17717,171 @@ paths:
           application/json:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data:
+                  type: object
+                  description: the main attributes of this record
+                  properties:
+                    actions:
+                      type: object
+                      description: JSON Hash with key value pairs of one or more actions
+                        (key) to run on accept with arguments (value)
+                      properties:
+                        access_group_ids:
+                          type: array
+                          description: ids to the groups below a tenant organization
+                            to authorize the user acception invites (removes all previous)
+                        access_groups:
+                          type: array
+                          description: name identifiers in the form of `ou-name/group-name`
+                            to the groups below a tenant organization to authorize
+                            the user acception invites (removes all previous)
+                        add_access_group_ids:
+                          type: array
+                          description: ids to the groups below a tenant organization
+                            to authorize the user acception invites (adds to those
+                            the user already has)
+                        add_access_groups:
+                          type: array
+                          description: name identifiers in the form of `ou-name/group-name`
+                            to the groups below a tenant organization to authorize
+                            the user acception invites (adds to those the user already
+                            has)
+                    auto_accept:
+                      type: boolean
+                      default: true
+                      description: automatically performs the invitation as soon as
+                        the user is logging in
+                    email:
+                      type: string
+                      writeOnly: true
+                      description: e-mail of the user to invite
+                    invitable_id:
+                      type: string
+                      description: the id of the object this invitation refers to
+                    invitable_type:
+                      type: string
+                      default: tenant
+                      description: the object class this invitation refers to
+                    target_url:
+                      type: string
+                      description: optional URL the invitee is redirected to after
+                        accepting; also used to derive redirect_url
+                    user_id:
+                      type: string
+                      writeOnly: true
+                      description: Optionally the user id instead of email user to
+                        invite
+                    valid_until:
+                      type: string
+                      format: date-time
+                      description: the effective expiry of this invitation (server-clamped;
+                        see Invite::MAX_VALID_UNTIL) - accepting it after this timestamp
+                        no longer works
           application/x-www-form-urlencoded:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[actions][access_group_ids]:
+                  type: array
+                  description: ids to the groups below a tenant organization to authorize
+                    the user acception invites (removes all previous)
+                data[actions][access_groups]:
+                  type: array
+                  description: name identifiers in the form of `ou-name/group-name`
+                    to the groups below a tenant organization to authorize the user
+                    acception invites (removes all previous)
+                data[actions][add_access_group_ids]:
+                  type: array
+                  description: ids to the groups below a tenant organization to authorize
+                    the user acception invites (adds to those the user already has)
+                data[actions][add_access_groups]:
+                  type: array
+                  description: name identifiers in the form of `ou-name/group-name`
+                    to the groups below a tenant organization to authorize the user
+                    acception invites (adds to those the user already has)
+                data[auto_accept]:
+                  type: boolean
+                  default: true
+                  description: automatically performs the invitation as soon as the
+                    user is logging in
+                data[email]:
+                  type: string
+                  writeOnly: true
+                  description: e-mail of the user to invite
+                data[invitable_id]:
+                  type: string
+                  description: the id of the object this invitation refers to
+                data[invitable_type]:
+                  type: string
+                  default: tenant
+                  description: the object class this invitation refers to
+                data[target_url]:
+                  type: string
+                  description: optional URL the invitee is redirected to after accepting;
+                    also used to derive redirect_url
+                data[user_id]:
+                  type: string
+                  writeOnly: true
+                  description: Optionally the user id instead of email user to invite
+                data[valid_until]:
+                  type: string
+                  format: date-time
+                  description: the effective expiry of this invitation (server-clamped;
+                    see Invite::MAX_VALID_UNTIL) - accepting it after this timestamp
+                    no longer works
           multipart/form-data:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[actions][access_group_ids]:
+                  type: array
+                  description: ids to the groups below a tenant organization to authorize
+                    the user acception invites (removes all previous)
+                data[actions][access_groups]:
+                  type: array
+                  description: name identifiers in the form of `ou-name/group-name`
+                    to the groups below a tenant organization to authorize the user
+                    acception invites (removes all previous)
+                data[actions][add_access_group_ids]:
+                  type: array
+                  description: ids to the groups below a tenant organization to authorize
+                    the user acception invites (adds to those the user already has)
+                data[actions][add_access_groups]:
+                  type: array
+                  description: name identifiers in the form of `ou-name/group-name`
+                    to the groups below a tenant organization to authorize the user
+                    acception invites (adds to those the user already has)
+                data[auto_accept]:
+                  type: boolean
+                  default: true
+                  description: automatically performs the invitation as soon as the
+                    user is logging in
+                data[email]:
+                  type: string
+                  writeOnly: true
+                  description: e-mail of the user to invite
+                data[invitable_id]:
+                  type: string
+                  description: the id of the object this invitation refers to
+                data[invitable_type]:
+                  type: string
+                  default: tenant
+                  description: the object class this invitation refers to
+                data[target_url]:
+                  type: string
+                  description: optional URL the invitee is redirected to after accepting;
+                    also used to derive redirect_url
+                data[user_id]:
+                  type: string
+                  writeOnly: true
+                  description: Optionally the user id instead of email user to invite
+                data[valid_until]:
+                  type: string
+                  format: date-time
+                  description: the effective expiry of this invitation (server-clamped;
+                    see Invite::MAX_VALID_UNTIL) - accepting it after this timestamp
+                    no longer works
   "/api/v1/{app}/{tenant_id}/invitations/{id}":
     delete:
       summary: 'Invitation: Delete [DELETE]'

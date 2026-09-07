@@ -21,14 +21,14 @@ RSpec.describe InvitationSerializer, type: :model do
     )
   end
 
-  after { invite.destroy }
-
-  # The `url` attribute (unrelated to this spec) calls a route helper, which requires
-  # Devise.secret_key to be configured - stub it so this spec stays hermetic regardless
-  # of that local/CI config detail.
-  before do
-    allow(Rails.application.routes.url_helpers).to receive(:v1_user_invitation_accept_url)
-      .and_return('https://ident.example.test/accept')
+  # Bot review round 2 on #2811 (PR #290): Actors::Tenant.create! seeds an Organization
+  # and descendant tree (ensure_defaults!) - invite.destroy alone left those behind.
+  # Mirrors invite_spec.rb's cleanup: delete every actor under the tenant, then the
+  # tenant itself.
+  after do
+    invite.destroy
+    Actor.where(:parent_ids.in => [tenant.id]).delete_all
+    tenant.delete
   end
 
   it 'exposes valid_until so a caller can read back the effective expiry' do

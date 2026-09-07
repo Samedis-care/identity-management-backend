@@ -6,7 +6,7 @@ class Api::V1::App::Tenant::InvitationsController < Api::V1::JsonApiController
   SERIALIZER = InvitationSerializer
   OVERVIEW_SERIALIZER = InvitationSerializer
 
-  # Samedis-care/samedis-care-issues#2811 (bot review round 1): declaring this instead of
+  # Samedis-care/samedis-care-issues#2811: declaring this instead of
   # overriding #params_create makes the request body's OpenAPI schema get generated from
   # this list (JsonApiController#permitted_attributes_for_create ->
   # InvitationSerializer::Schema#openapi_consumes_schema) instead of falling back to
