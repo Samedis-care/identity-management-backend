@@ -192,6 +192,98 @@ RSpec.describe Invite, type: :model do
     end
   end
 
+  # Samedis-care/samedis-care-issues#2810: Api::V1::App::Tenant::InvitationsController's
+  # params_create used to silently strip a caller-supplied valid_until, so every invite
+  # created through it fell back to the 30-day expire_time default no matter what the
+  # caller intended. valid_until is now permitted there, clamped through this class method.
+  describe '.clamp_valid_until' do
+    it 'applies the default expiry when none is supplied' do
+      expect(Invite.clamp_valid_until(nil)).to be_within(1.minute).of(Invite.expire_time)
+    end
+
+    it 'honors a supplied value within the allowed range, instead of silently discarding it' do
+      supplied = 1.year.from_now
+      expect(Invite.clamp_valid_until(supplied)).to eq(supplied)
+    end
+
+    it 'caps a supplied value beyond MAX_VALID_UNTIL so no caller can mint a near-permanent invite' do
+      far_future = 10.years.from_now
+      expect(Invite.clamp_valid_until(far_future)).to be_within(1.minute).of(Invite::MAX_VALID_UNTIL.from_now)
+    end
+  end
+
+  # Model-level: an explicit valid_until always reached the model even before this fix
+  # (the old `||=` only kicked in on nil) - the actual bug was the controller stripping it
+  # via strong params before it got this far. See the params_create spec for that.
+  describe 'saving a caller-supplied valid_until' do
+    it 'persists it via .create!, unaffected by the clamp/default wiring' do
+      invite = Invite.create!(
+        email: email,
+        tenant: tenant,
+        invitable_type: 'tenant',
+        invitable_id: tenant.id.to_s,
+        auto_accept: true,
+        valid_until: 1.year.from_now
+      )
+
+      expect(invite.reload.valid_until.to_time.to_i).to be_within(1.minute).of(1.year.from_now.to_i)
+    end
+  end
+
+  # Review round 1 on Samedis-care/samedis-care-issues#2810: Mongoid's DateTime demongoize
+  # turns an unparseable string into nil silently (no raise), so without this check it was
+  # indistinguishable from valid_until being omitted - before_save would then fill in the
+  # 30-day default and the create would still succeed with a 200, the same silent-downgrade
+  # failure mode this issue is about, just moved to a different trigger.
+  describe 'saving an unparseable valid_until' do
+    it 'fails validation instead of silently downgrading to the 30-day default' do
+      invite = Invite.new(
+        email: email,
+        tenant: tenant,
+        invitable_type: 'tenant',
+        invitable_id: tenant.id.to_s,
+        auto_accept: true,
+        valid_until: 'not-a-date'
+      )
+
+      expect(invite).not_to be_valid
+      expect(invite.errors[:valid_until]).to be_present
+    end
+  end
+
+  # Review round 2 on Samedis-care/samedis-care-issues#2810: a past valid_until used to
+  # persist fine (200) but produced an invite that is simultaneously "created successfully"
+  # and permanently outside Invite.valid - which both #accept! and the DELETE endpoint's
+  # MODEL_destroy key off, so it could never be accepted or removed again.
+  describe 'saving a valid_until in the past' do
+    it 'fails validation instead of creating an undeletable dead invite' do
+      invite = Invite.new(
+        email: email,
+        tenant: tenant,
+        invitable_type: 'tenant',
+        invitable_id: tenant.id.to_s,
+        auto_accept: true,
+        valid_until: 1.year.ago
+      )
+
+      expect(invite).not_to be_valid
+      expect(invite.errors[:valid_until]).to be_present
+    end
+
+    it 'still allows a future value, so the upper-bound clamp is unaffected' do
+      invite = Invite.new(
+        email: email,
+        tenant: tenant,
+        invitable_type: 'tenant',
+        invitable_id: tenant.id.to_s,
+        auto_accept: true,
+        valid_until: 1.year.from_now
+      )
+
+      expect(invite).to be_valid
+    end
+  end
+
   # #accept! only marks an invite done when the processor reports success, so cover
   # that the other processor still burns its invite
   describe "#accept! with invitable_type 'access_control'" do

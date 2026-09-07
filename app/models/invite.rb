@@ -27,6 +27,19 @@ class Invite < ApplicationDocument
   field :has_account, type: Boolean
   field :target_url, type: String
 
+  # Samedis-care/samedis-care-issues#2810 review round 1: Mongoid's DateTime demongoize
+  # silently turns an unparseable string into nil (Time.zone.parse returns nil, no raise),
+  # indistinguishable by the time a validation runs from valid_until having been omitted
+  # entirely - before_save's clamp_valid_until would then fill in the 30-day default and
+  # the create would still return 200, exactly the silent-expiry-downgrade this issue was
+  # about, just moved from "params stripped it" to "the value didn't parse". Capturing the
+  # distinction requires hooking the setter, since that is the last point the raw value is
+  # still available.
+  def valid_until=(value)
+    super
+    @valid_until_unparseable = value.present? && valid_until.nil?
+  end
+
   index({ email: 1 }, { sparse: true, unique: false, name: 'invite_emails' })
   index({ user_id: 1, email: 1, auto_accept: 1 }, { sparse: true, unique: false, name: 'invite_for_user' })
   index({ token: 1 }, { unique: false, name: 'invite_tokens' })
@@ -38,7 +51,7 @@ class Invite < ApplicationDocument
 
   before_save do |record|
     record.email = record.email.to_s.downcase
-    record.valid_until ||= record.class.expire_time
+    record.valid_until = record.class.clamp_valid_until(record.valid_until)
   end
 
   before_validation do |record|
@@ -52,11 +65,30 @@ class Invite < ApplicationDocument
 
   validates :invitable_type, :token, presence: true
   validates :invitable_id, presence: true, if: -> { %i(app).include?(self.invitable_type.to_sym) }
+  validate :reject_unparseable_valid_until
+  validate :reject_past_valid_until
 
 
   # max age of token
   def self.expire_time
     30.days.from_now
+  end
+
+  # Upper bound on a caller-supplied valid_until. Samedis-care/samedis-care-issues#2810:
+  # Api::V1::App::Tenant::InvitationsController#params_create used to silently strip
+  # `valid_until` via strong params, so every invite created through it (e.g.
+  # samedis-care-backend's Staff auto-join flow, which sends 1.year.from_now) fell back
+  # to the 30-day expire_time default no matter what the caller intended. Now that
+  # `valid_until` is permitted, cap it server-side so a caller (buggy or malicious)
+  # can't mint an effectively-permanent invite.
+  MAX_VALID_UNTIL = 2.years
+
+  # Applies the default expiry when none is supplied, and caps whatever IS supplied.
+  # Idempotent: re-clamping an already-valid value on a later save (e.g. #accept!'s
+  # update_attributes) is a no-op.
+  def self.clamp_valid_until(value)
+    candidate = value.presence || expire_time
+    [candidate, MAX_VALID_UNTIL.from_now].min
   end
 
   def self.unclaimed
@@ -79,6 +111,28 @@ class Invite < ApplicationDocument
 
   def token_generate
     Digest::SHA1.hexdigest([SecureRandom.uuid, Time.now, rand].join)
+  end
+
+  def reject_unparseable_valid_until
+    return unless @valid_until_unparseable
+
+    errors.add(:valid_until, 'is not a valid date/time')
+  end
+
+  # Review round 2 on Samedis-care/samedis-care-issues#2810: the create-time upper bound
+  # (MAX_VALID_UNTIL, above) had no matching lower bound, and permitting the attribute made
+  # a past value reachable for the first time. A past valid_until produces an invite that is
+  # simultaneously `persisted? == true` (200, looks fine) and `Invite.valid` == false forever
+  # - which is also what both #accept! and MODEL_destroy (`Invite.valid`) key off, so it can
+  # never be auto-accepted AND the DELETE endpoint can never remove it either (an empty
+  # criteria still renders success). Reject outright rather than silently clamping forward
+  # to Time.now: a caller who actually meant "already expired" would get a live invite
+  # instead, which is its own silent-downgrade trap.
+  def reject_past_valid_until
+    return if valid_until.blank?
+    return if valid_until >= Time.now
+
+    errors.add(:valid_until, 'must not be in the past')
   end
 
   def is_valid?

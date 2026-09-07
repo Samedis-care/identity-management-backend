@@ -40,7 +40,7 @@ class Api::V1::App::Tenant::InvitationsController < Api::V1::JsonApiController
 
   def params_create
     params.fetch(:data, {}).permit(
-      :email, :user_id, :invitable_type, :invitable_id, :auto_accept, :target_url,
+      :email, :user_id, :invitable_type, :invitable_id, :auto_accept, :target_url, :valid_until,
       {
         actions: {
           access_group_ids: [],
