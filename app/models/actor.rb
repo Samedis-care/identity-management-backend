@@ -788,8 +788,11 @@ class Actor < ApplicationDocument
     else
       mapped_actor.ensure_user_data
       mapped_actor.ensure_references
-      mapped_actor.user_cache_expire!
+      # Order matters here too — see the comment on Actors::Mapping's after_save
+      # callbacks (Samedis-care/samedis-care-issues#2675). This branch hand-rolls
+      # the same two steps the callbacks perform and had them backwards as well.
       mapped_actor.merge_group_candos!
+      mapped_actor.user_cache_expire!
     end
 
     if cache_expire
