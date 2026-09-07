@@ -21,9 +21,9 @@ RSpec.describe InvitationSerializer, type: :model do
     )
   end
 
-  # Bot review round 2 on #2811 (PR #290): Actors::Tenant.create! seeds an Organization
-  # and descendant tree (ensure_defaults!) - invite.destroy alone left those behind.
-  # Mirrors invite_spec.rb's cleanup: delete every actor under the tenant, then the
+  # Actors::Tenant.create! seeds an Organization and descendant tree
+  # (ensure_defaults!) - invite.destroy alone leaves those behind. Mirrors
+  # invite_spec.rb's cleanup: delete every actor under the tenant, then the
   # tenant itself.
   after do
     invite.destroy
