@@ -101,6 +101,9 @@ RSpec.describe User do
       expect(user.active_logins.pluck(:_id)).not_to include(other.id)
     ensure
       other&.delete
+      # other_user.delete skips callbacks, so the before_create-created Actors::User
+      # would otherwise strand itself in the shared user_container (PR #291 review)
+      other_user&.actor&.delete
       other_user&.delete
     end
   end

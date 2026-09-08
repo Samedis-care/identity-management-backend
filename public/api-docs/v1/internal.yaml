@@ -87,6 +87,11 @@ components:
         current:
           type: boolean
           description: true if this is the currently used token
+        active:
+          type: boolean
+          description: 'false once this session''s own access-token window has closed
+            (logout writes expires_in: -1, or natural expiry); its refresh token may
+            still be valid and usable to sign back in without password/MFA'
         location:
           type: string
           description: approximated geographic location by ip address that created
