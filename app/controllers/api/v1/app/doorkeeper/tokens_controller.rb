@@ -31,7 +31,12 @@ class Api::V1::App::Doorkeeper::TokensController < Doorkeeper::TokensController
 
     _im_otp_provided = grant_type.eql?('refresh_token')
     # revoke used refresh_token
-    if grant_type.eql?('refresh_token')
+    if grant_type.eql?('refresh_token') && params[:refresh_token].present?
+      # .present? guard: find_by(refresh_token: nil) matches ANY document missing the
+      # field, which invalidate_previous_token's still-live branch now produces as a
+      # matter of course (unset, not a random value -- see below) -- so a request
+      # with grant_type=refresh_token and no refresh_token param would otherwise land
+      # on an arbitrary unrelated token and invalidate/revoke it (PR #293 review).
       _previous_token = Doorkeeper::AccessToken.find_by(refresh_token: params[:refresh_token])
       if _previous_token
         _im_otp_provided = !!_previous_token.im_otp_provided
@@ -133,15 +138,19 @@ class Api::V1::App::Doorkeeper::TokensController < Doorkeeper::TokensController
   # previous token document itself gets one of two treatments depending on whether
   # its access token is already dead:
   #
-  # - Still within its own expires_in: clear refresh_token (nil, not a fresh random
-  #   value -- the sparse unique index on refresh_token tolerates any number of nil
-  #   documents, and a freshly loaded document's use_refresh_token? is false so the
-  #   uniqueness validation is skipped) and otherwise leave the document alone. This
-  #   is what keeps the just-superseded bearer token usable until it naturally
-  #   expires, instead of revoking it outright -- and once it does age out, an
-  #   expired document with refresh_token: nil is unambiguously a dead rotated
-  #   record, distinct from a genuinely live remembered-account session (which still
-  #   holds one), so a future sweeper has something to key off going forward.
+  # - Still within its own expires_in: unset refresh_token (remove the field, not a
+  #   fresh random value, and not a plain nil assignment either -- Mongoid persists
+  #   a nil assignment as an explicit stored null, and the sparse unique index on
+  #   refresh_token only skips documents where the field is MISSING, not ones storing
+  #   null, so a second nil-assigned document raises a duplicate-key error; #unset
+  #   performs an atomic $unset instead, which the sparse index does skip) and
+  #   otherwise leave the document alone. This is what keeps the just-superseded
+  #   bearer token usable until it naturally expires, instead of revoking it outright
+  #   -- and once it does age out, an expired document with no refresh_token field is
+  #   unambiguously a dead rotated record, distinct from a genuinely live
+  #   remembered-account session (which still holds one: Mongo's {field: nil} query
+  #   matches missing-or-null either way, so this stays queryable the same way), so a
+  #   future sweeper has something to key off going forward.
   # - Already expired (soft-killed by logout, or simply aged out): there is nothing
   #   left to keep alive, so revoke it outright. Before this, rotating an
   #   already-dead token's refresh_token left it revoked_at: nil forever -- every
@@ -155,8 +164,7 @@ class Api::V1::App::Doorkeeper::TokensController < Doorkeeper::TokensController
     if previous_token.expired?
       previous_token.revoke
     else
-      previous_token.refresh_token = nil
-      previous_token.save!
+      previous_token.unset(:refresh_token)
     end
   end
 

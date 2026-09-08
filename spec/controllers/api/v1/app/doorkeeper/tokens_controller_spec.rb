@@ -59,16 +59,43 @@ RSpec.describe Api::V1::App::Doorkeeper::TokensController do
       end
       let(:fresh_live) { Doorkeeper::AccessToken.find_by(refresh_token: live.refresh_token) }
 
-      it 'clears refresh_token so the consumed value can never be presented again' do
+      it 'removes the refresh_token field entirely, not just sets it to nil' do
         controller_instance.send(:invalidate_previous_token, fresh_live)
 
-        expect(live.reload.refresh_token).to be_nil
+        raw = Doorkeeper::AccessToken.collection.find(_id: live.id).first
+        expect(raw.key?('refresh_token')).to be false
       end
 
       it 'does not revoke it' do
         controller_instance.send(:invalidate_previous_token, fresh_live)
 
         expect(live.reload.revoked_at).to be_nil
+      end
+
+      # A plain nil assignment (previous_token.refresh_token = nil; save!) also reads
+      # back as refresh_token: nil, but Mongoid persists that as a stored null rather
+      # than removing the key -- and the sparse unique index on refresh_token only
+      # skips documents where the field is MISSING, not ones storing null. A second
+      # such document then raises a duplicate-key error in production (not caught
+      # here, since im_test never runs create_indexes) -- confirmed by reproducing it
+      # against a temporary copy of that exact index (PR #293 round 2 review).
+      it 'does not collide with the sparse unique index on refresh_token when a second live token is rotated' do
+        index_name = 'spec_2845_refresh_token_unique'
+        Doorkeeper::AccessToken.collection.indexes.create_one(
+          { refresh_token: 1 }, unique: true, sparse: true, name: index_name
+        )
+
+        other_live = Doorkeeper::AccessToken.create!(
+          resource_owner_id: user.id, expires_in: full_lifetime, use_refresh_token: true
+        )
+        fresh_other_live = Doorkeeper::AccessToken.find_by(refresh_token: other_live.refresh_token)
+
+        expect do
+          controller_instance.send(:invalidate_previous_token, fresh_live)
+          controller_instance.send(:invalidate_previous_token, fresh_other_live)
+        end.not_to raise_error
+      ensure
+        Doorkeeper::AccessToken.collection.indexes.drop_one(index_name)
       end
     end
 
