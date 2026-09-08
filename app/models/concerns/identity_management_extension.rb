@@ -65,11 +65,13 @@ module IdentityManagementExtension
         # token is dead and must STAY dead -- checking only "was expires_in changed
         # in THIS save" is not enough: Api::V1::App::Doorkeeper::TokensController#create
         # (the refresh_token grant) finds this same token by its still-live
-        # refresh_token, rotates that field, and calls save! on it -- an unrelated
-        # save that doesn't touch expires_in at all, so expires_in_changed? is false
-        # and this branch would otherwise revive a soft-killed token straight back to
-        # the full 30-day lifetime the moment its surviving refresh token is next
-        # used, resurrecting exactly the bug this fix exists to close (#2422).
+        # refresh_token and calls invalidate_previous_token on it -- either #revoke
+        # (also via save(validate: false), same as this callback chain) or unsetting
+        # refresh_token (samedis-care-issues#2845), neither of which touches
+        # expires_in, so expires_in_changed? is false and this branch would otherwise
+        # revive a soft-killed token straight back to the full 30-day lifetime the
+        # moment its surviving refresh token is next used, resurrecting exactly the
+        # bug this fix exists to close (#2422).
         #
         # `nil` is not "dead" -- every real token-creation path sets expires_in
         # explicitly, but a bare create without it must still default to a real

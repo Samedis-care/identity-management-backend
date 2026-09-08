@@ -81,9 +81,17 @@ RSpec.describe Api::V1::App::Doorkeeper::TokensController do
       # against a temporary copy of that exact index (PR #293 round 2 review).
       it 'does not collide with the sparse unique index on refresh_token when a second live token is rotated' do
         index_name = 'spec_2845_refresh_token_unique'
+        created = false
+        # doorkeeper-mongodb declares this same index (unique, sparse, same keys)
+        # under its own name, refresh_token_1 -- if anyone has run
+        # rails db:mongoid:create_indexes against their test database, a second
+        # index on the same keys under a different name raises IndexOptionsConflict
+        # here. Only drop what this example actually created, so that failure isn't
+        # replaced with a misleading IndexNotFound (PR #293 round 3 review).
         Doorkeeper::AccessToken.collection.indexes.create_one(
           { refresh_token: 1 }, unique: true, sparse: true, name: index_name
         )
+        created = true
 
         other_live = Doorkeeper::AccessToken.create!(
           resource_owner_id: user.id, expires_in: full_lifetime, use_refresh_token: true
@@ -95,7 +103,7 @@ RSpec.describe Api::V1::App::Doorkeeper::TokensController do
           controller_instance.send(:invalidate_previous_token, fresh_other_live)
         end.not_to raise_error
       ensure
-        Doorkeeper::AccessToken.collection.indexes.drop_one(index_name)
+        Doorkeeper::AccessToken.collection.indexes.drop_one(index_name) if created
       end
     end
 
