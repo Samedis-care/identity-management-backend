@@ -133,10 +133,15 @@ class Api::V1::App::Doorkeeper::TokensController < Doorkeeper::TokensController
   # previous token document itself gets one of two treatments depending on whether
   # its access token is already dead:
   #
-  # - Still within its own expires_in: rotate refresh_token to a fresh random value
-  #   nobody holds, but otherwise leave the document alone. This is what keeps the
-  #   just-superseded bearer token usable until it naturally expires, instead of
-  #   revoking it outright.
+  # - Still within its own expires_in: clear refresh_token (nil, not a fresh random
+  #   value -- the sparse unique index on refresh_token tolerates any number of nil
+  #   documents, and a freshly loaded document's use_refresh_token? is false so the
+  #   uniqueness validation is skipped) and otherwise leave the document alone. This
+  #   is what keeps the just-superseded bearer token usable until it naturally
+  #   expires, instead of revoking it outright -- and once it does age out, an
+  #   expired document with refresh_token: nil is unambiguously a dead rotated
+  #   record, distinct from a genuinely live remembered-account session (which still
+  #   holds one), so a future sweeper has something to key off going forward.
   # - Already expired (soft-killed by logout, or simply aged out): there is nothing
   #   left to keep alive, so revoke it outright. Before this, rotating an
   #   already-dead token's refresh_token left it revoked_at: nil forever -- every
@@ -150,7 +155,7 @@ class Api::V1::App::Doorkeeper::TokensController < Doorkeeper::TokensController
     if previous_token.expired?
       previous_token.revoke
     else
-      previous_token.refresh_token = Doorkeeper::OAuth::Helpers::UniqueToken.generate
+      previous_token.refresh_token = nil
       previous_token.save!
     end
   end

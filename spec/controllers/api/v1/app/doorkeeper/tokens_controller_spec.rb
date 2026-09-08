@@ -29,30 +29,44 @@ RSpec.describe Api::V1::App::Doorkeeper::TokensController do
   let(:user) { build_user }
   let(:full_lifetime) { Doorkeeper.configuration.access_token_expires_in }
 
-  before do
-    # The test env has no Devise secret configured, so the first lazy route load
-    # (devise_for :users) would raise. Set one so the controller can be exercised.
-    Devise.secret_key ||= 'test-suite-secret'
-  end
-
   after do
     Doorkeeper::AccessToken.where(resource_owner_id: user.id).delete_all
+    # user.delete skips dependent: :destroy, so the before_create-created Actors::User
+    # would otherwise strand itself in the shared user_container (PR #293 review).
+    # user.destroy is not the fix -- it raises SystemStackError on this model
+    # (samedis-care-issues#2849, a mutual dependent: :destroy between User and
+    # Actors::User) -- so delete the actor directly instead.
+    Actor.where(_id: user.actor_id).delete_all
     user.delete
   end
 
   describe '#invalidate_previous_token' do
     context 'when the previous token is still within its own expires_in' do
-      let!(:live) { Doorkeeper::AccessToken.create!(resource_owner_id: user.id, expires_in: full_lifetime) }
-      let!(:original_refresh_token) { live.refresh_token }
+      # use_refresh_token: true, so refresh_token is actually populated -- without it
+      # Doorkeeper::AccessToken.create! stores refresh_token: nil, and asserting
+      # "changed" against nil would pass for any write, proving nothing (PR #293 review).
+      #
+      # invalidate_previous_token always receives a document freshly loaded via
+      # Doorkeeper::AccessToken.find_by (see #create), never the just-created
+      # in-memory object -- that distinction matters because use_refresh_token? lives
+      # on an in-memory ivar, never persisted: the just-created object still has it
+      # set to true, which makes clearing refresh_token re-trigger the uniqueness
+      # validation (validates_uniqueness_of :refresh_token, if: :use_refresh_token?)
+      # against itself. A fresh find_by load has that ivar unset (false), matching
+      # production. Reproduce that here instead of passing `live` directly.
+      let!(:live) do
+        Doorkeeper::AccessToken.create!(resource_owner_id: user.id, expires_in: full_lifetime, use_refresh_token: true)
+      end
+      let(:fresh_live) { Doorkeeper::AccessToken.find_by(refresh_token: live.refresh_token) }
 
-      it 'rotates refresh_token to a value nobody holds' do
-        controller_instance.send(:invalidate_previous_token, live)
+      it 'clears refresh_token so the consumed value can never be presented again' do
+        controller_instance.send(:invalidate_previous_token, fresh_live)
 
-        expect(live.reload.refresh_token).not_to eq(original_refresh_token)
+        expect(live.reload.refresh_token).to be_nil
       end
 
       it 'does not revoke it' do
-        controller_instance.send(:invalidate_previous_token, live)
+        controller_instance.send(:invalidate_previous_token, fresh_live)
 
         expect(live.reload.revoked_at).to be_nil
       end
@@ -84,17 +98,20 @@ RSpec.describe Api::V1::App::Doorkeeper::TokensController do
     end
 
     context 'when the previous token has no expires_in (Doorkeeper treats nil as never expiring)' do
-      let!(:never_expires) { Doorkeeper::AccessToken.create!(resource_owner_id: user.id, expires_in: nil) }
-      let!(:original_refresh_token) { never_expires.refresh_token }
+      # see the comment on fresh_live above -- same reason this needs a fresh reload
+      let!(:never_expires) do
+        Doorkeeper::AccessToken.create!(resource_owner_id: user.id, expires_in: nil, use_refresh_token: true)
+      end
+      let(:fresh_never_expires) { Doorkeeper::AccessToken.find_by(refresh_token: never_expires.refresh_token) }
 
-      it 'rotates refresh_token' do
-        controller_instance.send(:invalidate_previous_token, never_expires)
+      it 'clears refresh_token' do
+        controller_instance.send(:invalidate_previous_token, fresh_never_expires)
 
-        expect(never_expires.reload.refresh_token).not_to eq(original_refresh_token)
+        expect(never_expires.reload.refresh_token).to be_nil
       end
 
       it 'does not revoke it' do
-        controller_instance.send(:invalidate_previous_token, never_expires)
+        controller_instance.send(:invalidate_previous_token, fresh_never_expires)
 
         expect(never_expires.reload.revoked_at).to be_nil
       end
