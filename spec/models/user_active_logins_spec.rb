@@ -74,6 +74,35 @@ RSpec.describe User do
     it 'excludes a hard-revoked token' do
       expect(user.active_logins.pluck(:_id)).not_to include(hard_revoked.id)
     end
+
+    # #active_logins delegates to doorkeeper-mongodb's `not_expired`, which builds its
+    # condition with Mongoid's `.or` -- the one combinator that treats the receiver's
+    # existing criteria as a branch rather than a conjunct. If a gem upgrade reshaped
+    # that scope so the has_many's resource_owner_id landed inside a branch instead of
+    # above it, every caller of #active_logins (Api::V1::User::AccountActivityController
+    # #model_index, Api::V1::User::AuthenticateOtpController#model_index) would quietly
+    # start mixing in another user's sessions. Moved here (was previously pinned in
+    # account_logins_controller_spec.rb, before #2495 stopped routing that endpoint's
+    # #index through #active_logins) since this is the one spec every remaining caller
+    # still depends on.
+    it 'stays scoped to the caller, so it never lists another user\'s session' do
+      other_user = described_class.new(
+        email: "user-active-logins-spec-other-#{SecureRandom.hex(4)}@test.local",
+        first_name: 'Spec',
+        last_name: 'Probe',
+        password: 'Sup3rSecret!123',
+        password_confirmation: 'Sup3rSecret!123'
+      )
+      other_user.email_confirmation = other_user.email
+      other_user.skip_confirmation!
+      other_user.save!
+      other = Doorkeeper::AccessToken.create!(resource_owner_id: other_user.id, expires_in: full_lifetime)
+
+      expect(user.active_logins.pluck(:_id)).not_to include(other.id)
+    ensure
+      other&.delete
+      other_user&.delete
+    end
   end
 
   describe '#expired_logins' do

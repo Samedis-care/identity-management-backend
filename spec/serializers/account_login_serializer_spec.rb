@@ -25,6 +25,8 @@ RSpec.describe AccountLoginSerializer, type: :model do
     _user
   end
 
+  let!(:user_actor) { user.actor }
+
   let!(:live) { Doorkeeper::AccessToken.create!(resource_owner_id: user.id, expires_in: full_lifetime) }
   # what Api::V1::Doorkeeper::TokensController#revoke writes for the soft logout branch
   let!(:soft_killed) { Doorkeeper::AccessToken.create!(resource_owner_id: user.id, expires_in: -1) }
@@ -32,6 +34,9 @@ RSpec.describe AccountLoginSerializer, type: :model do
   after do
     live.delete
     soft_killed.delete
+    # user.delete skips callbacks, so the before_create-created Actors::User would
+    # otherwise strand itself in the shared user_container (spotted in PR #291 review)
+    user_actor&.delete
     user.delete
   end
 

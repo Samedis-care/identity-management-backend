@@ -53,8 +53,8 @@ class AccountLoginSerializer
         object :attributes, description: 'the main attributes of this record' do
           string :id, description: 'unique record id'
           boolean :current, description: 'true if this is the currently used token'
-          boolean :active, description: 'false if this session was logged out; its refresh token ' \
-            'may still be valid and usable to sign back in without password/MFA'
+          boolean :active, description: 'true unless this session was logged out; when false its ' \
+            'refresh token may still be valid and usable to sign back in without password/MFA'
           string :location, description: 'approximated geographic location by ip address that created the token'
           string :device, description: 'user agent that created the token'
           string :app, description: 'app this token belongs to'
