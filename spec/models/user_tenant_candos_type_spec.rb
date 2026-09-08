@@ -67,6 +67,59 @@ RSpec.describe 'tenant_candos_cached type safety' do
         expect(user.reload.tenant_candos_cached).to eq({})
       end
     end
+
+    # Regression cover for Samedis-care/samedis-care-issues#2808:
+    # get_tenant_candos used to assign its own return value -- a
+    # tenant_id => [cando strings] Hash -- into tenant_access_group_ids, a
+    # field that must hold tenant_id => [group actor ids]. That assignment
+    # was pure side effect (only the return value is used by #candos), and
+    # since the tenant_access_group_ids reader only re-derives when the hash
+    # has zero keys, a poisoned value never self-healed.
+    context 'when the candos cache is recomputed' do
+      let!(:tenant) { Actors::Tenant.create!(name: "candos-808-tenant-#{sfx}") }
+      let!(:organization) { Actors::Organization.create!(name: "org-808-#{sfx}", parent: tenant) }
+      let!(:tenant_profiles) { Actors::Ou.create!(name: 'tenant_profiles', parent: organization) }
+      let!(:group) { Actors::Group.create!(name: "group-808-#{sfx}", parent: tenant_profiles, system: true) }
+
+      before do
+        group.map_into!(user_actor)
+        user.tenant_context = tenant.id
+        # Simulate a tenant with real cached candos, matching the shape
+        # Actors::Mapping.get_tenant_candos returns: an array of hashes
+        # keyed by the aggregation's projected field name.
+        allow(Actors::Mapping).to receive(:get_tenant_candos).and_return(
+          [{ tenant_candos_cached: { tenant.id.to_s => ['samedis-care/devices.reader'] } }]
+        )
+      end
+
+      after do
+        Actor.where(:parent_ids.in => [tenant.id]).delete_all
+        tenant.delete
+      end
+
+      it 'does not write cando strings into tenant_access_group_ids' do
+        user.candos
+
+        # in-memory: the assignment this issue removes would have left this
+        # dirty with cando strings under the tenant key
+        expect(user.tenant_access_group_ids.values.flatten).not_to include('samedis-care/devices.reader')
+      end
+
+      it 'still resolves access_group_ids to the real mapped group id, not cando strings' do
+        user.candos
+
+        expect(user.access_group_ids.to_a).to eq([group.id.to_s])
+      end
+
+      it 'does not persist cando strings into tenant_access_group_ids on a later save' do
+        user.candos
+        user.save!(validate: false)
+
+        persisted = user.reload.tenant_access_group_ids
+        expect(persisted.values.flatten).not_to include('samedis-care/devices.reader')
+        expect(persisted[tenant.id.to_s]).to eq([group.id.to_s])
+      end
+    end
   end
 
   describe 'Actor.tenant_collection' do

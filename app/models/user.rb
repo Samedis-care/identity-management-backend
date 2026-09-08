@@ -724,8 +724,15 @@ class User < ApplicationDocument
     # failure (Mongo hiccup, timeout) must raise and be retried, not be
     # silently cached as "this user has zero candos" for the rest of the day
     # (see Samedis-care/samedis-care-issues#2806).
-    self.tenant_access_group_ids =
-      Actors::Mapping.where(user_id: self.id).get_tenant_candos.first&.dig(:tenant_candos_cached) || {}
+    #
+    # Deliberately NOT assigning into tenant_access_group_ids: that field
+    # holds tenant_id => [group actor ids], not tenant_id => [cando strings]
+    # -- this method's only caller (#candos) uses just the return value, so
+    # the old assignment was a copy-paste leftover from
+    # determine_tenant_access_group_ids that corrupted the field the moment
+    # a cache-miss recompute was followed by an ordinary save
+    # (Samedis-care/samedis-care-issues#2808).
+    Actors::Mapping.where(user_id: self.id).get_tenant_candos.first&.dig(:tenant_candos_cached) || {}
   end
 
   def update_tenant_candos!
