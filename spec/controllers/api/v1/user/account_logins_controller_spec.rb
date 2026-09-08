@@ -1,14 +1,16 @@
 require 'rails_helper'
 
 # Regression coverage for https://github.com/Samedis-care/samedis-care-issues/issues/2422
+# and https://github.com/Samedis-care/samedis-care-issues/issues/2495
 #
-# Narrowing User#active_logins to the token's own expiry (so a logged-out session
-# stops showing as active) must NOT also narrow what #destroy can reach. A token
-# soft-killed by logout keeps a live refresh_token on purpose -- that is what powers
-# the remembered-account fast path on the login page -- and deleting the record here
-# is the only way to revoke that leftover credential from a DIFFERENT device. So
-# MODEL (which #destroy resolves through) stays wider than MODEL_OVERVIEW (which
-# #index resolves through).
+# A token soft-killed by logout keeps a live refresh_token on purpose -- that is what
+# powers the remembered-account fast path on the login page -- and deleting the
+# record here is the only way to revoke that leftover credential from a DIFFERENT
+# device ("forget account" only reaches the browser holding it). #2422 first kept
+# that id reachable via #destroy (MODEL) while hiding it from #index (MODEL_OVERVIEW)
+# so it wouldn't misread as an active session; #2495 needs it visible again from
+# another device, so MODEL_OVERVIEW now matches MODEL and the serializer's `active`
+# attribute is what keeps it from misreading as active.
 #
 # Follows the in-repo convention for controller scoping specs (see
 # spec/controllers/api/v1/user/tenants_controller_spec.rb): instantiate the
@@ -57,16 +59,10 @@ RSpec.describe Api::V1::User::AccountLoginsController do
       expect(controller_instance.send(:model_index).pluck(:_id)).to include(live.id)
     end
 
-    it 'does not list a session that was logged out' do
-      expect(controller_instance.send(:model_index).pluck(:_id)).not_to include(soft_killed.id)
+    it 'also lists a session that was logged out, so its surviving refresh_token stays reachable' do
+      expect(controller_instance.send(:model_index).pluck(:_id)).to include(soft_killed.id)
     end
 
-    # User#active_logins delegates to doorkeeper-mongodb's `not_expired`, which builds
-    # its condition with Mongoid's `.or` -- the one combinator that treats the
-    # receiver's existing criteria as a branch rather than a conjunct. If a gem
-    # upgrade reshaped that scope so the has_many's resource_owner_id landed inside a
-    # branch instead of above it, this endpoint would quietly list every user's
-    # sessions. Verified by hand once; pinned here so it cannot regress silently.
     it 'stays scoped to the caller, so it never lists another user\'s session' do
       other_user = build_user
       other = Doorkeeper::AccessToken.create!(resource_owner_id: other_user.id, expires_in: full_lifetime)
