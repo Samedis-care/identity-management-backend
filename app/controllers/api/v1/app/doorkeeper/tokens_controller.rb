@@ -35,10 +35,7 @@ class Api::V1::App::Doorkeeper::TokensController < Doorkeeper::TokensController
       _previous_token = Doorkeeper::AccessToken.find_by(refresh_token: params[:refresh_token])
       if _previous_token
         _im_otp_provided = !!_previous_token.im_otp_provided
-        # instead of revoking, keep the initial bearer token until it expires
-        # set refresh token to random value to invalidate it
-        _previous_token.refresh_token = Doorkeeper::OAuth::Helpers::UniqueToken.generate
-        _previous_token.save!
+        invalidate_previous_token(_previous_token)
       end
     end
 
@@ -127,6 +124,34 @@ class Api::V1::App::Doorkeeper::TokensController < Doorkeeper::TokensController
         refresh_token: opts.dig(:meta, :refresh_token),
         expires_in: opts.dig(:meta, :expires_in)
       )
+    end
+  end
+
+  private
+
+  # A refresh grant always invalidates the refresh_token it consumed, but the
+  # previous token document itself gets one of two treatments depending on whether
+  # its access token is already dead:
+  #
+  # - Still within its own expires_in: rotate refresh_token to a fresh random value
+  #   nobody holds, but otherwise leave the document alone. This is what keeps the
+  #   just-superseded bearer token usable until it naturally expires, instead of
+  #   revoking it outright.
+  # - Already expired (soft-killed by logout, or simply aged out): there is nothing
+  #   left to keep alive, so revoke it outright. Before this, rotating an
+  #   already-dead token's refresh_token left it revoked_at: nil forever -- every
+  #   remembered-account login (identity-management-frontend's AccountSelection.tsx,
+  #   grant_type=refresh_token after logout) permanently added one unrevoked,
+  #   unusable oauth_access_tokens document with no cleanup path
+  #   (Samedis-care/samedis-care-issues#2845). Revoking hands it to the existing
+  #   7-day revoked_at TTL index (app/models/concerns/doorkeeper/access_token.rb)
+  #   instead.
+  def invalidate_previous_token(previous_token)
+    if previous_token.expired?
+      previous_token.revoke
+    else
+      previous_token.refresh_token = Doorkeeper::OAuth::Helpers::UniqueToken.generate
+      previous_token.save!
     end
   end
 
