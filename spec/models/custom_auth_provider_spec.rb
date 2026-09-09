@@ -99,6 +99,22 @@ RSpec.describe CustomAuthProvider, type: :model do
           'userinfo' => { 'given_name' => { 'essential' => true }, 'email' => { 'essential' => true } }
         )
       end
+
+      it 'passes an already-String claims value through unchanged, without double-encoding it' do
+        provider.claims = '{"userinfo":{"email":{"essential":true}}}'
+        captured_body = nil
+        fake_request = double('Faraday::Request', headers: {})
+        allow(fake_request).to receive(:body=) { |body| captured_body = body }
+        allow(Faraday).to receive(:post) do |_uri, &block|
+          block.call(fake_request)
+          faraday_response(status: 200, body: success_body)
+        end
+
+        provider.access_token(code, code_verifier:)
+
+        form = URI.decode_www_form(captured_body).to_h
+        expect(JSON.parse(form['claims'])).to eq('userinfo' => { 'email' => { 'essential' => true } })
+      end
     end
   end
 

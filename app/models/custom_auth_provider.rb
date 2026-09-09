@@ -277,7 +277,12 @@ class CustomAuthProvider < ApplicationDocument
       # which ignores it) rejects the token request outright for any CustomAuthProvider
       # relying on the non-empty default claims (#claims below), i.e. whenever the
       # provider's own `claims` field is nil.
-      claims: claims.to_json
+      #
+      # `field :claims` (below) is untyped -- nothing stops it from already holding a
+      # String (e.g. pasted as pre-encoded JSON via rails console). Only #to_json a Hash;
+      # a String is passed through as-is so it isn't double-encoded into an unparseable
+      # quoted-and-escaped value.
+      claims: claims.is_a?(String) ? claims : claims.to_json
     }
 
     _authorization = "Basic #{Base64.strict_encode64([client_id, client_secret].join(':'))}"
