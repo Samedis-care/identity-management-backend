@@ -247,6 +247,30 @@ class CustomAuthProvider < ApplicationDocument
     }
   end
 
+  # `field :claims` is untyped, so nothing stops it from already holding something other
+  # than the Hash #claims otherwise returns: a pre-encoded JSON String (e.g. pasted via
+  # rails console), or -- just as reachable, since the console can assign any Ruby value
+  # -- an Array, a bare scalar, a Symbol, etc. Both callers need a genuine Hash for their
+  # own encoding to stay correct, so every shape funnels through the same two checks
+  # instead of only the String one: a String goes through JSON.parse first; whatever
+  # results (String input or not) that isn't a Hash degrades to {} (logged) instead of
+  # being handed back unnormalized -- otherwise a directly-assigned Array/scalar would
+  # skip the check entirely and reach a caller as the same malformed shape a String would
+  # have produced. Logged rather than silent, same as #discovery_config's rescue.
+  def claims_hash
+    _claims = claims
+    return _claims if _claims.is_a?(Hash)
+
+    _claims = JSON.parse(_claims) if _claims.is_a?(String)
+    return _claims if _claims.is_a?(Hash)
+
+    Rails.logger.warn("CustomAuthProvider#claims_hash for #{domain}: claims field is a #{_claims.class}, not a Hash -- sending {}")
+    {}
+  rescue JSON::ParserError
+    Rails.logger.warn("CustomAuthProvider#claims_hash for #{domain}: unparseable claims field, sending {}")
+    {}
+  end
+
   def passthru_uri(code_verifier: nil, state: nil, login_hint: nil)
     _query_params = self.query_params
     _query_params = _query_params.merge(login_hint:) if login_hint.present?
@@ -270,7 +294,16 @@ class CustomAuthProvider < ApplicationDocument
       redirect_uri:,
       grant_type: 'authorization_code',
       scope:,
-      claims:
+      # The OIDC `claims` request parameter is defined as a JSON string, not a raw
+      # form-encoded value. Passing the Hash straight to URI.encode_www_form serialized
+      # it via Ruby's Hash#to_s (e.g. `{userinfo: {email: {essential: true}}}`) -- valid
+      # Ruby, not valid JSON. A spec-compliant IdP that parses `claims` (unlike Microsoft,
+      # which ignores it) rejects the token request outright for any CustomAuthProvider
+      # relying on the non-empty default claims (#claims above), i.e. whenever the
+      # provider's own `claims` field is nil. #claims_hash (above) also normalizes an
+      # already-String field value back to a Hash first, so this #to_json can't produce
+      # a double-encoded string either.
+      claims: claims_hash.to_json
     }
 
     _authorization = "Basic #{Base64.strict_encode64([client_id, client_secret].join(':'))}"
@@ -283,6 +316,11 @@ class CustomAuthProvider < ApplicationDocument
     end
 
     unless response.status.eql?(200)
+      # Sentry.add_breadcrumb has previously not surfaced response.body in the captured
+      # event for this error (possibly dropped as oversized) -- log directly too so the
+      # IdP's actual rejection reason (e.g. an invalid_grant/invalid_request from a
+      # malformed parameter) is visible in the application log without relying on Sentry.
+      Rails.logger.error("CustomAuthProvider#access_token for #{domain} got HTTP #{response.status} from #{uri}: #{response.body}")
       c = Sentry::Breadcrumb.new(
         category: 'access_token',
         message: "Fetching access_token for #{domain} failed with HTTP status #{response.status}.",
@@ -320,7 +358,12 @@ class CustomAuthProvider < ApplicationDocument
     response = Faraday.get(uri) do |req|
       req.headers['Content-Type'] = 'application/json'
       req.headers['Authorization'] = _authorization
-      req.body = { claims: }.to_json unless is_microsoft?
+      # claims_hash, not the raw #claims field, so a String field value (see
+      # #claims_hash) nests here as a real JSON object instead of a stringified,
+      # double-escaped value -- the same class of bug #access_token's claims_hash.to_json
+      # exists to avoid, one call site over (found in review on
+      # Samedis-care/samedis-care-issues#2858).
+      req.body = { claims: claims_hash }.to_json unless is_microsoft?
     end
 
     unless response.status == 200

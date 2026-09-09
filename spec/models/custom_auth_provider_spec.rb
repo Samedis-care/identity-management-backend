@@ -75,6 +75,47 @@ RSpec.describe CustomAuthProvider, type: :model do
         expect(result['expires_in']).to eq(3600)
       end
     end
+
+    # Regression cover: the `claims` OIDC request parameter must be a JSON string, not
+    # Ruby's Hash#to_s (`{userinfo: {email: {essential: true}}}` -- valid Ruby, not valid
+    # JSON). A spec-compliant IdP that parses `claims` rejects the token request outright
+    # for a provider relying on the non-empty default (CustomAuthProvider#claims, used
+    # whenever the provider's own `claims` field is nil).
+    context 'when the request body is built' do
+      it 'encodes the default (non-empty) claims parameter as valid JSON' do
+        captured_body = nil
+        fake_request = double('Faraday::Request', headers: {})
+        allow(fake_request).to receive(:body=) { |body| captured_body = body }
+        allow(Faraday).to receive(:post) do |_uri, &block|
+          block.call(fake_request)
+          faraday_response(status: 200, body: success_body)
+        end
+
+        provider.access_token(code, code_verifier:)
+
+        form = URI.decode_www_form(captured_body).to_h
+        expect { JSON.parse(form['claims']) }.not_to raise_error
+        expect(JSON.parse(form['claims'])).to eq(
+          'userinfo' => { 'given_name' => { 'essential' => true }, 'email' => { 'essential' => true } }
+        )
+      end
+
+      it 'round-trips an already-String claims value through JSON without double-encoding it' do
+        provider.claims = '{"userinfo":{"email":{"essential":true}}}'
+        captured_body = nil
+        fake_request = double('Faraday::Request', headers: {})
+        allow(fake_request).to receive(:body=) { |body| captured_body = body }
+        allow(Faraday).to receive(:post) do |_uri, &block|
+          block.call(fake_request)
+          faraday_response(status: 200, body: success_body)
+        end
+
+        provider.access_token(code, code_verifier:)
+
+        form = URI.decode_www_form(captured_body).to_h
+        expect(JSON.parse(form['claims'])).to eq('userinfo' => { 'email' => { 'essential' => true } })
+      end
+    end
   end
 
   # ──────────────────────────────────────────────
@@ -120,6 +161,97 @@ RSpec.describe CustomAuthProvider, type: :model do
       it 'returns the parsed userinfo hash' do
         result = provider.user_info(access_token)
         expect(result['email']).to eq('alice@example.com')
+      end
+    end
+
+    # Regression cover found in review on #access_token's claims fix (Samedis-care/
+    # samedis-care-issues#2858, round 1): this request body is itself JSON, so an
+    # already-String claims field must be embedded as a nested object, not re-encoded
+    # as a string-within-a-string.
+    context 'when the request body is built' do
+      it 'embeds a Hash claims value (the default) as a nested JSON object' do
+        captured_body = nil
+        fake_request = double('Faraday::Request', headers: {})
+        allow(fake_request).to receive(:body=) { |body| captured_body = body }
+        allow(Faraday).to receive(:get) do |_uri, &block|
+          block.call(fake_request)
+          faraday_response(status: 200, body: userinfo_body)
+        end
+
+        provider.user_info(access_token)
+
+        expect(JSON.parse(captured_body)['claims']).to eq(
+          'userinfo' => { 'given_name' => { 'essential' => true }, 'email' => { 'essential' => true } }
+        )
+      end
+
+      it 'embeds an already-String claims value as a nested object, not a re-encoded string' do
+        provider.claims = '{"userinfo":{"email":{"essential":true}}}'
+        captured_body = nil
+        fake_request = double('Faraday::Request', headers: {})
+        allow(fake_request).to receive(:body=) { |body| captured_body = body }
+        allow(Faraday).to receive(:get) do |_uri, &block|
+          block.call(fake_request)
+          faraday_response(status: 200, body: userinfo_body)
+        end
+
+        provider.user_info(access_token)
+
+        expect(JSON.parse(captured_body)['claims']).to eq('userinfo' => { 'email' => { 'essential' => true } })
+      end
+    end
+  end
+
+  # ──────────────────────────────────────────────
+  # claims_hash
+  # ──────────────────────────────────────────────
+  describe '#claims_hash' do
+    it 'returns the Hash unchanged (same symbol keys as #claims) when claims is already a Hash' do
+      expect(provider.claims_hash).to eq(
+        userinfo: { given_name: { essential: true }, email: { essential: true } }
+      )
+    end
+
+    it 'parses an already-String claims value back into a Hash' do
+      provider.claims = '{"userinfo":{"email":{"essential":true}}}'
+      expect(provider.claims_hash).to eq('userinfo' => { 'email' => { 'essential' => true } })
+    end
+
+    it 'degrades to {} instead of raising on unparseable String claims' do
+      provider.claims = 'not-json}}}'
+      expect(provider.claims_hash).to eq({})
+    end
+
+    it 'logs a warning on unparseable String claims instead of failing silently' do
+      provider.claims = 'not-json}}}'
+      expect(Rails.logger).to receive(:warn).with(/unparseable claims field/)
+      provider.claims_hash
+    end
+
+    # Regression cover: JSON.parse accepts valid-but-non-object JSON (null, arrays,
+    # bare scalars). Passing one through unchanged would reintroduce the double-encoding
+    # (or a malformed `claims=null`) claims_hash exists to prevent.
+    ['null', '[1,2]', '123', '"already-a-string"'].each do |non_hash_json|
+      it "degrades to {} for valid but non-Hash JSON claims (#{non_hash_json.inspect})" do
+        provider.claims = non_hash_json
+        expect(provider.claims_hash).to eq({})
+      end
+    end
+
+    it 'logs a warning when claims parses to valid JSON that is not a Hash' do
+      provider.claims = '[1,2]'
+      expect(Rails.logger).to receive(:warn).with(/not a Hash/)
+      provider.claims_hash
+    end
+
+    # Regression cover: a directly-assigned non-Hash, non-String value (the untyped field
+    # accepts any Ruby value the console assigns, not only a pre-encoded String) used to
+    # skip both checks and come back unnormalized -- the same malformed shape a String
+    # claims value would have produced, just reached a different way.
+    [[1, 2], 42, true, :sym].each do |non_hash_value|
+      it "degrades to {} for a directly-assigned non-Hash value (#{non_hash_value.inspect})" do
+        provider.claims = non_hash_value
+        expect(provider.claims_hash).to eq({})
       end
     end
   end
