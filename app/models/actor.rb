@@ -266,7 +266,27 @@ class Actor < ApplicationDocument
         _settings[:bearer_token] = !!self.config.bearer_token
         _settings[:mailer] ||= self.config.mailer.attributes.except(:_id)
         _settings[:redirects] ||= self.class.default_settings.deep_symbolize_keys.dig(:default_redirects)
-        _settings[:redirects][:authenticated].gsub!(/\/authenticated#/, '/authenticated?') unless _settings[:bearer_token].eql?(true)
+        # `default_settings` memoizes the parsed YAML in a class variable and hands back
+        # the same leaf string objects on every call (`deep_symbolize_keys` rebuilds the
+        # Hash structure but doesn't duplicate values) -- so `gsub!` here used to mutate
+        # that shared, process-wide cached string in place. The first App on a given
+        # worker with `uses_bearer_token: false` permanently rewrote the default
+        # `authenticated` template from a `#`-fragment to a `?`-query form for the rest of
+        # that worker's lifetime, for every OTHER App that falls back to the same
+        # default -- including ones with `uses_bearer_token: true` that need to keep the
+        # fragment form so their SPA's bearer-token landing route can read the token from
+        # `location.hash`. Reassigning the result of the non-destructive `gsub` leaves the
+        # cached default untouched.
+        unless _settings[:bearer_token].eql?(true)
+          # Pre-existing, unchanged by this fix: an App whose own actor_settings.redirects
+          # overrides `login` but not `authenticated` (the `||=` above only fills in the
+          # default when the key is missing entirely) leaves _authenticated nil here. Old
+          # code raised the identical NoMethodError on `nil.gsub!`; &. keeps that
+          # operator-set (console/seeds only -- no controller permits actor_settings)
+          # edge case from raising while this line is being touched anyway.
+          _authenticated = _settings[:redirects][:authenticated]
+          _settings[:redirects][:authenticated] = _authenticated&.gsub(/\/authenticated#/, '/authenticated?')
+        end
         _settings
       end
     end
