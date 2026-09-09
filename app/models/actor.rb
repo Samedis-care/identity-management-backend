@@ -278,8 +278,13 @@ class Actor < ApplicationDocument
         # `location.hash`. Reassigning the result of the non-destructive `gsub` leaves the
         # cached default untouched.
         unless _settings[:bearer_token].eql?(true)
+          # Pre-existing, unchanged by this fix: an App whose own actor_settings.redirects
+          # overrides `login` but not `authenticated` (the `||=` above only fills in the
+          # default when the key is missing entirely) leaves _authenticated nil here. Old
+          # code raised the identical NoMethodError on `nil.gsub!`; &. keeps that admin-
+          # reachable edge case from raising while this line is being touched anyway.
           _authenticated = _settings[:redirects][:authenticated]
-          _settings[:redirects][:authenticated] = _authenticated.gsub(/\/authenticated#/, '/authenticated?')
+          _settings[:redirects][:authenticated] = _authenticated&.gsub(/\/authenticated#/, '/authenticated?')
         end
         _settings
       end

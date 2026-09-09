@@ -28,13 +28,11 @@ RSpec.describe Actor, '#settings' do
   # examples already triggered.
   around do |example|
     if Actor.class_variables(false).include?(:@@default_settings)
-      Actor.send(:remove_class_variable, 
-                 :@@default_settings)
+      Actor.send(:remove_class_variable, :@@default_settings)
     end
     example.run
     if Actor.class_variables(false).include?(:@@default_settings)
-      Actor.send(:remove_class_variable, 
-                 :@@default_settings)
+      Actor.send(:remove_class_variable, :@@default_settings)
     end
   end
 
@@ -70,5 +68,25 @@ RSpec.describe Actor, '#settings' do
     raw_default = Actor.default_settings.dig('default_redirects', 'authenticated')
     expect(raw_default).to include('/authenticated#')
     expect(raw_default).not_to include('/authenticated?')
+  end
+
+  # Found in bot review on PR #294 (round 1): actor_settings.redirects is a free-form,
+  # app-admin-writable Hash. Overriding one key (e.g. `login`) without `authenticated`
+  # leaves `_settings[:redirects][:authenticated]` nil -- the `||=` on the line above
+  # only fills in the whole default hash when the key is missing entirely, not when
+  # it's partially present. Pre-existing on both sides of this PR (old code raised the
+  # identical NoMethodError on `nil.gsub!`) -- covered because the line is being
+  # touched anyway.
+  it 'does not raise when actor_settings.redirects overrides one key but omits authenticated' do
+    partial_override_app = Actors::App.create!(
+      name: "partial-redirects-app-#{sfx}",
+      config: { uses_bearer_token: false },
+      actor_settings: { 'redirects' => { 'login' => 'https://example.test/login' } }
+    )
+
+    expect { partial_override_app.settings }.not_to raise_error
+    expect(partial_override_app.settings[:redirects][:authenticated]).to be_nil
+  ensure
+    partial_override_app&.delete
   end
 end
