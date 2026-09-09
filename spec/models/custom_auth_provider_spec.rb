@@ -100,7 +100,7 @@ RSpec.describe CustomAuthProvider, type: :model do
         )
       end
 
-      it 'passes an already-String claims value through unchanged, without double-encoding it' do
+      it 'round-trips an already-String claims value through JSON without double-encoding it' do
         provider.claims = '{"userinfo":{"email":{"essential":true}}}'
         captured_body = nil
         fake_request = double('Faraday::Request', headers: {})
@@ -162,6 +162,64 @@ RSpec.describe CustomAuthProvider, type: :model do
         result = provider.user_info(access_token)
         expect(result['email']).to eq('alice@example.com')
       end
+    end
+
+    # Regression cover found in review on #access_token's claims fix (Samedis-care/
+    # samedis-care-issues#2858, round 1): this request body is itself JSON, so an
+    # already-String claims field must be embedded as a nested object, not re-encoded
+    # as a string-within-a-string.
+    context 'when the request body is built' do
+      it 'embeds a Hash claims value (the default) as a nested JSON object' do
+        captured_body = nil
+        fake_request = double('Faraday::Request', headers: {})
+        allow(fake_request).to receive(:body=) { |body| captured_body = body }
+        allow(Faraday).to receive(:get) do |_uri, &block|
+          block.call(fake_request)
+          faraday_response(status: 200, body: userinfo_body)
+        end
+
+        provider.user_info(access_token)
+
+        expect(JSON.parse(captured_body)['claims']).to eq(
+          'userinfo' => { 'given_name' => { 'essential' => true }, 'email' => { 'essential' => true } }
+        )
+      end
+
+      it 'embeds an already-String claims value as a nested object, not a re-encoded string' do
+        provider.claims = '{"userinfo":{"email":{"essential":true}}}'
+        captured_body = nil
+        fake_request = double('Faraday::Request', headers: {})
+        allow(fake_request).to receive(:body=) { |body| captured_body = body }
+        allow(Faraday).to receive(:get) do |_uri, &block|
+          block.call(fake_request)
+          faraday_response(status: 200, body: userinfo_body)
+        end
+
+        provider.user_info(access_token)
+
+        expect(JSON.parse(captured_body)['claims']).to eq('userinfo' => { 'email' => { 'essential' => true } })
+      end
+    end
+  end
+
+  # ──────────────────────────────────────────────
+  # claims_hash
+  # ──────────────────────────────────────────────
+  describe '#claims_hash' do
+    it 'returns the Hash unchanged (same symbol keys as #claims) when claims is already a Hash' do
+      expect(provider.claims_hash).to eq(
+        userinfo: { given_name: { essential: true }, email: { essential: true } }
+      )
+    end
+
+    it 'parses an already-String claims value back into a Hash' do
+      provider.claims = '{"userinfo":{"email":{"essential":true}}}'
+      expect(provider.claims_hash).to eq('userinfo' => { 'email' => { 'essential' => true } })
+    end
+
+    it 'degrades to {} instead of raising on unparseable String claims' do
+      provider.claims = 'not-json}}}'
+      expect(provider.claims_hash).to eq({})
     end
   end
 

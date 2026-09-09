@@ -247,6 +247,21 @@ class CustomAuthProvider < ApplicationDocument
     }
   end
 
+  # `field :claims` is untyped, so nothing stops it from already holding a String (e.g.
+  # pasted as pre-encoded JSON via rails console) instead of the Hash #claims otherwise
+  # returns. Both callers need a Hash for their own encoding to stay correct -- an
+  # already-String value goes back through JSON.parse here rather than each caller
+  # deciding how to handle it. Falls back to {} on unparseable input instead of raising,
+  # same spirit as #discovery_config's rescue.
+  def claims_hash
+    _claims = claims
+    return _claims unless _claims.is_a?(String)
+
+    JSON.parse(_claims)
+  rescue JSON::ParserError
+    {}
+  end
+
   def passthru_uri(code_verifier: nil, state: nil, login_hint: nil)
     _query_params = self.query_params
     _query_params = _query_params.merge(login_hint:) if login_hint.present?
@@ -276,13 +291,10 @@ class CustomAuthProvider < ApplicationDocument
       # Ruby, not valid JSON. A spec-compliant IdP that parses `claims` (unlike Microsoft,
       # which ignores it) rejects the token request outright for any CustomAuthProvider
       # relying on the non-empty default claims (#claims below), i.e. whenever the
-      # provider's own `claims` field is nil.
-      #
-      # `field :claims` (below) is untyped -- nothing stops it from already holding a
-      # String (e.g. pasted as pre-encoded JSON via rails console). Only #to_json a Hash;
-      # a String is passed through as-is so it isn't double-encoded into an unparseable
-      # quoted-and-escaped value.
-      claims: claims.is_a?(String) ? claims : claims.to_json
+      # provider's own `claims` field is nil. #claims_hash (below) also normalizes an
+      # already-String field value back to a Hash first, so this #to_json can't produce
+      # a double-encoded string either.
+      claims: claims_hash.to_json
     }
 
     _authorization = "Basic #{Base64.strict_encode64([client_id, client_secret].join(':'))}"
@@ -337,7 +349,12 @@ class CustomAuthProvider < ApplicationDocument
     response = Faraday.get(uri) do |req|
       req.headers['Content-Type'] = 'application/json'
       req.headers['Authorization'] = _authorization
-      req.body = { claims: }.to_json unless is_microsoft?
+      # claims_hash, not the raw #claims field, so a String field value (see
+      # #claims_hash) nests here as a real JSON object instead of a stringified,
+      # double-escaped value -- the same class of bug #access_token's claims_hash.to_json
+      # exists to avoid, one call site over (found in review on
+      # Samedis-care/samedis-care-issues#2858).
+      req.body = { claims: claims_hash }.to_json unless is_microsoft?
     end
 
     unless response.status == 200
