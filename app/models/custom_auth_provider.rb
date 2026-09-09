@@ -251,14 +251,22 @@ class CustomAuthProvider < ApplicationDocument
   # pasted as pre-encoded JSON via rails console) instead of the Hash #claims otherwise
   # returns. Both callers need a Hash for their own encoding to stay correct -- an
   # already-String value goes back through JSON.parse here rather than each caller
-  # deciding how to handle it. Falls back to {} on unparseable input instead of raising,
-  # same spirit as #discovery_config's rescue.
+  # deciding how to handle it. Falls back to {} on unparseable input, or on a String
+  # that parses to valid-but-non-object JSON (e.g. 'null', '[1,2]', a bare number or
+  # string) -- JSON.parse accepts all of those, and passing one through unchanged would
+  # send exactly the malformed/double-encoded claims value this method exists to avoid.
+  # Logged rather than silent, same as #discovery_config's rescue.
   def claims_hash
     _claims = claims
     return _claims unless _claims.is_a?(String)
 
-    JSON.parse(_claims)
+    _parsed = JSON.parse(_claims)
+    return _parsed if _parsed.is_a?(Hash)
+
+    Rails.logger.warn("CustomAuthProvider#claims_hash for #{domain}: claims field parses to a #{_parsed.class}, not a Hash -- sending {}")
+    {}
   rescue JSON::ParserError
+    Rails.logger.warn("CustomAuthProvider#claims_hash for #{domain}: unparseable claims field, sending {}")
     {}
   end
 
@@ -290,8 +298,8 @@ class CustomAuthProvider < ApplicationDocument
       # it via Ruby's Hash#to_s (e.g. `{userinfo: {email: {essential: true}}}`) -- valid
       # Ruby, not valid JSON. A spec-compliant IdP that parses `claims` (unlike Microsoft,
       # which ignores it) rejects the token request outright for any CustomAuthProvider
-      # relying on the non-empty default claims (#claims below), i.e. whenever the
-      # provider's own `claims` field is nil. #claims_hash (below) also normalizes an
+      # relying on the non-empty default claims (#claims above), i.e. whenever the
+      # provider's own `claims` field is nil. #claims_hash (above) also normalizes an
       # already-String field value back to a Hash first, so this #to_json can't produce
       # a double-encoded string either.
       claims: claims_hash.to_json

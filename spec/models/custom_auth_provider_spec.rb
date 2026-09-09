@@ -221,6 +221,28 @@ RSpec.describe CustomAuthProvider, type: :model do
       provider.claims = 'not-json}}}'
       expect(provider.claims_hash).to eq({})
     end
+
+    it 'logs a warning on unparseable String claims instead of failing silently' do
+      provider.claims = 'not-json}}}'
+      expect(Rails.logger).to receive(:warn).with(/unparseable claims field/)
+      provider.claims_hash
+    end
+
+    # Regression cover: JSON.parse accepts valid-but-non-object JSON (null, arrays,
+    # bare scalars). Passing one through unchanged would reintroduce the double-encoding
+    # (or a malformed `claims=null`) claims_hash exists to prevent.
+    %w[null [1,2] 123 "already-a-string"].each do |non_hash_json|
+      it "degrades to {} for valid but non-Hash JSON claims (#{non_hash_json.inspect})" do
+        provider.claims = non_hash_json
+        expect(provider.claims_hash).to eq({})
+      end
+    end
+
+    it 'logs a warning when claims parses to valid JSON that is not a Hash' do
+      provider.claims = '[1,2]'
+      expect(Rails.logger).to receive(:warn).with(/not a Hash/)
+      provider.claims_hash
+    end
   end
 
   # ──────────────────────────────────────────────
