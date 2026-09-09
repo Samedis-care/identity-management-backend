@@ -270,7 +270,14 @@ class CustomAuthProvider < ApplicationDocument
       redirect_uri:,
       grant_type: 'authorization_code',
       scope:,
-      claims:
+      # The OIDC `claims` request parameter is defined as a JSON string, not a raw
+      # form-encoded value. Passing the Hash straight to URI.encode_www_form serialized
+      # it via Ruby's Hash#to_s (e.g. `{userinfo: {email: {essential: true}}}`) -- valid
+      # Ruby, not valid JSON. A spec-compliant IdP that parses `claims` (unlike Microsoft,
+      # which ignores it) rejects the token request outright for any CustomAuthProvider
+      # relying on the non-empty default claims (#claims below), i.e. whenever the
+      # provider's own `claims` field is nil.
+      claims: claims.to_json
     }
 
     _authorization = "Basic #{Base64.strict_encode64([client_id, client_secret].join(':'))}"
@@ -283,6 +290,11 @@ class CustomAuthProvider < ApplicationDocument
     end
 
     unless response.status.eql?(200)
+      # Sentry.add_breadcrumb has previously not surfaced response.body in the captured
+      # event for this error (possibly dropped as oversized) -- log directly too so the
+      # IdP's actual rejection reason (e.g. an invalid_grant/invalid_request from a
+      # malformed parameter) is visible in the application log without relying on Sentry.
+      Rails.logger.error("CustomAuthProvider#access_token for #{domain} got HTTP #{response.status} from #{uri}: #{response.body}")
       c = Sentry::Breadcrumb.new(
         category: 'access_token',
         message: "Fetching access_token for #{domain} failed with HTTP status #{response.status}.",

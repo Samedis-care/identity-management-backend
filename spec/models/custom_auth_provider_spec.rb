@@ -75,6 +75,31 @@ RSpec.describe CustomAuthProvider, type: :model do
         expect(result['expires_in']).to eq(3600)
       end
     end
+
+    # Regression cover: the `claims` OIDC request parameter must be a JSON string, not
+    # Ruby's Hash#to_s (`{userinfo: {email: {essential: true}}}` -- valid Ruby, not valid
+    # JSON). A spec-compliant IdP that parses `claims` rejects the token request outright
+    # for a provider relying on the non-empty default (CustomAuthProvider#claims, used
+    # whenever the provider's own `claims` field is nil).
+    context 'when the request body is built' do
+      it 'encodes the default (non-empty) claims parameter as valid JSON' do
+        captured_body = nil
+        fake_request = double('Faraday::Request', headers: {})
+        allow(fake_request).to receive(:body=) { |body| captured_body = body }
+        allow(Faraday).to receive(:post) do |_uri, &block|
+          block.call(fake_request)
+          faraday_response(status: 200, body: success_body)
+        end
+
+        provider.access_token(code, code_verifier:)
+
+        form = URI.decode_www_form(captured_body).to_h
+        expect { JSON.parse(form['claims']) }.not_to raise_error
+        expect(JSON.parse(form['claims'])).to eq(
+          'userinfo' => { 'given_name' => { 'essential' => true }, 'email' => { 'essential' => true } }
+        )
+      end
+    end
   end
 
   # ──────────────────────────────────────────────
