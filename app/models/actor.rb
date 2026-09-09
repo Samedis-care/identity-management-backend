@@ -281,8 +281,9 @@ class Actor < ApplicationDocument
           # Pre-existing, unchanged by this fix: an App whose own actor_settings.redirects
           # overrides `login` but not `authenticated` (the `||=` above only fills in the
           # default when the key is missing entirely) leaves _authenticated nil here. Old
-          # code raised the identical NoMethodError on `nil.gsub!`; &. keeps that admin-
-          # reachable edge case from raising while this line is being touched anyway.
+          # code raised the identical NoMethodError on `nil.gsub!`; &. keeps that
+          # operator-set (console/seeds only -- no controller permits actor_settings)
+          # edge case from raising while this line is being touched anyway.
           _authenticated = _settings[:redirects][:authenticated]
           _settings[:redirects][:authenticated] = _authenticated&.gsub(/\/authenticated#/, '/authenticated?')
         end

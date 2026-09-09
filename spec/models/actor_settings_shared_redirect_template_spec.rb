@@ -70,8 +70,9 @@ RSpec.describe Actor, '#settings' do
     expect(raw_default).not_to include('/authenticated?')
   end
 
-  # Found in bot review on PR #294 (round 1): actor_settings.redirects is a free-form,
-  # app-admin-writable Hash. Overriding one key (e.g. `login`) without `authenticated`
+  # Found in bot review on PR #294 (round 1): actor_settings.redirects is a free-form
+  # Hash, operator-set (console/seeds only -- no controller permits actor_settings).
+  # Overriding one key (e.g. `login`) without `authenticated`
   # leaves `_settings[:redirects][:authenticated]` nil -- the `||=` on the line above
   # only fills in the whole default hash when the key is missing entirely, not when
   # it's partially present. Pre-existing on both sides of this PR (old code raised the
