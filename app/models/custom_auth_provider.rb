@@ -247,23 +247,24 @@ class CustomAuthProvider < ApplicationDocument
     }
   end
 
-  # `field :claims` is untyped, so nothing stops it from already holding a String (e.g.
-  # pasted as pre-encoded JSON via rails console) instead of the Hash #claims otherwise
-  # returns. Both callers need a Hash for their own encoding to stay correct -- an
-  # already-String value goes back through JSON.parse here rather than each caller
-  # deciding how to handle it. Falls back to {} on unparseable input, or on a String
-  # that parses to valid-but-non-object JSON (e.g. 'null', '[1,2]', a bare number or
-  # string) -- JSON.parse accepts all of those, and passing one through unchanged would
-  # send exactly the malformed/double-encoded claims value this method exists to avoid.
-  # Logged rather than silent, same as #discovery_config's rescue.
+  # `field :claims` is untyped, so nothing stops it from already holding something other
+  # than the Hash #claims otherwise returns: a pre-encoded JSON String (e.g. pasted via
+  # rails console), or -- just as reachable, since the console can assign any Ruby value
+  # -- an Array, a bare scalar, a Symbol, etc. Both callers need a genuine Hash for their
+  # own encoding to stay correct, so every shape funnels through the same two checks
+  # instead of only the String one: a String goes through JSON.parse first; whatever
+  # results (String input or not) that isn't a Hash degrades to {} (logged) instead of
+  # being handed back unnormalized -- otherwise a directly-assigned Array/scalar would
+  # skip the check entirely and reach a caller as the same malformed shape a String would
+  # have produced. Logged rather than silent, same as #discovery_config's rescue.
   def claims_hash
     _claims = claims
-    return _claims unless _claims.is_a?(String)
+    return _claims if _claims.is_a?(Hash)
 
-    _parsed = JSON.parse(_claims)
-    return _parsed if _parsed.is_a?(Hash)
+    _claims = JSON.parse(_claims) if _claims.is_a?(String)
+    return _claims if _claims.is_a?(Hash)
 
-    Rails.logger.warn("CustomAuthProvider#claims_hash for #{domain}: claims field parses to a #{_parsed.class}, not a Hash -- sending {}")
+    Rails.logger.warn("CustomAuthProvider#claims_hash for #{domain}: claims field is a #{_claims.class}, not a Hash -- sending {}")
     {}
   rescue JSON::ParserError
     Rails.logger.warn("CustomAuthProvider#claims_hash for #{domain}: unparseable claims field, sending {}")

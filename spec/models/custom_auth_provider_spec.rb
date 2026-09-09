@@ -231,7 +231,7 @@ RSpec.describe CustomAuthProvider, type: :model do
     # Regression cover: JSON.parse accepts valid-but-non-object JSON (null, arrays,
     # bare scalars). Passing one through unchanged would reintroduce the double-encoding
     # (or a malformed `claims=null`) claims_hash exists to prevent.
-    %w[null [1,2] 123 "already-a-string"].each do |non_hash_json|
+    ['null', '[1,2]', '123', '"already-a-string"'].each do |non_hash_json|
       it "degrades to {} for valid but non-Hash JSON claims (#{non_hash_json.inspect})" do
         provider.claims = non_hash_json
         expect(provider.claims_hash).to eq({})
@@ -242,6 +242,17 @@ RSpec.describe CustomAuthProvider, type: :model do
       provider.claims = '[1,2]'
       expect(Rails.logger).to receive(:warn).with(/not a Hash/)
       provider.claims_hash
+    end
+
+    # Regression cover: a directly-assigned non-Hash, non-String value (the untyped field
+    # accepts any Ruby value the console assigns, not only a pre-encoded String) used to
+    # skip both checks and come back unnormalized -- the same malformed shape a String
+    # claims value would have produced, just reached a different way.
+    [[1, 2], 42, true, :sym].each do |non_hash_value|
+      it "degrades to {} for a directly-assigned non-Hash value (#{non_hash_value.inspect})" do
+        provider.claims = non_hash_value
+        expect(provider.claims_hash).to eq({})
+      end
     end
   end
 
