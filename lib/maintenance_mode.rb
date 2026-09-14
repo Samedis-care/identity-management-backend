@@ -147,16 +147,24 @@ class MaintenanceMode
       }
     end
   end
+
+  # Puma fires its shutdown hooks from inside its own SIGTERM handler, so stop runs in a
+  # trap context, where ruby forbids Mutex#synchronize outright (ThreadError). A freshly
+  # spawned thread is not in a trap context; joining it - which trap context does allow -
+  # keeps stop synchronous, so the update thread is still guaranteed to be gone when it
+  # returns. See Samedis-care/samedis-care-issues#2916.
   def self.stop
-    @run_mutex.synchronize do
-      @running = false
-      unless @run_thread.nil?
-        @thread_stop_signal_mutex.synchronize do
-          @thread_stop_signal.broadcast # wake up all threads waiting
+    Thread.new do
+      @run_mutex.synchronize do
+        @running = false
+        unless @run_thread.nil?
+          @thread_stop_signal_mutex.synchronize do
+            @thread_stop_signal.broadcast # wake up all threads waiting
+          end
+          @run_thread.join
         end
-        @run_thread.join
       end
-    end
+    end.join
   end
 
   def self.fetch_info

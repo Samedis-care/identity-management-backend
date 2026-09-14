@@ -71,17 +71,22 @@ class HeapDumper
     end
   end
 
+  # Same trap context problem as MaintenanceMode.stop: puma fires its shutdown hooks from
+  # inside its own SIGTERM handler, and ruby forbids Mutex#synchronize there. Do the work
+  # on a plain thread and join it. See Samedis-care/samedis-care-issues#2916.
   def self.stop
-    @run_mutex.synchronize do
-      @running = false
-      unless @run_thread.nil?
-        @thread_stop_signal_mutex.synchronize do
-          @thread_stop_signal.broadcast # wake up all threads waiting
+    Thread.new do
+      @run_mutex.synchronize do
+        @running = false
+        unless @run_thread.nil?
+          @thread_stop_signal_mutex.synchronize do
+            @thread_stop_signal.broadcast # wake up all threads waiting
+          end
+          @run_thread.join
+          @run_thread = nil
         end
-        @run_thread.join
-        @run_thread = nil
       end
-    end
+    end.join
     ObjectSpace.trace_object_allocations_stop
   end
 
