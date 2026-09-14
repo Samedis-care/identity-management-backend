@@ -52,7 +52,10 @@ class HeapDumper
       end
 
       @thread_stop_signal_mutex.synchronize do
-        @thread_stop_signal.wait(@thread_stop_signal_mutex, @dump_interval)
+        # re-check under the same mutex stop publishes @running under: a broadcast sent
+        # while we were dumping would be lost on a thread that is not waiting yet, and
+        # ten minutes of interval would then elapse before we noticed the stop request
+        @thread_stop_signal.wait(@thread_stop_signal_mutex, @dump_interval) if @running
       end
     end
   end
@@ -71,16 +74,34 @@ class HeapDumper
     end
   end
 
+  # How long stop waits for the dumping thread. Bounded for the same reason as
+  # MaintenanceMode::STOP_TIMEOUT, and here it also caps the wait on a dump that is
+  # mid-ObjectSpace.dump_all or mid-upload when the shutdown arrives - that dump is lost
+  # either way once the process exits, so shutting down beats waiting for it.
+  STOP_TIMEOUT = 5 # seconds
+
+  # Same trap context problem as MaintenanceMode.stop: puma fires its shutdown hooks from
+  # inside its own SIGTERM handler, and ruby forbids Mutex#synchronize there. Do the work
+  # on a plain thread and join it. See Samedis-care/samedis-care-issues#2916.
   def self.stop
-    @run_mutex.synchronize do
-      @running = false
-      unless @run_thread.nil?
+    worker = Thread.new do
+      @run_mutex.synchronize do
+        # published under the signal mutex so a broadcast cannot be lost on a dumping
+        # thread that has not reached its wait yet - see MaintenanceMode.stop
         @thread_stop_signal_mutex.synchronize do
+          @running = false
           @thread_stop_signal.broadcast # wake up all threads waiting
         end
-        @run_thread.join
-        @run_thread = nil
+        unless @run_thread.nil?
+          @run_thread.join
+          @run_thread = nil
+        end
       end
+    rescue Exception => e # rubocop:disable Lint/RescueException -- stop must never take the shutdown hook down, whatever the dumping thread died of
+      warn "HeapDumper.stop: #{e.class}: #{e.message}"
+    end
+    unless worker.join(STOP_TIMEOUT)
+      warn "HeapDumper.stop: dumping thread still running after #{STOP_TIMEOUT}s, leaving it behind"
     end
     ObjectSpace.trace_object_allocations_stop
   end
