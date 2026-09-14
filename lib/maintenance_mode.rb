@@ -133,7 +133,10 @@ class MaintenanceMode
         @info_signal.broadcast
       end
       @thread_stop_signal_mutex.synchronize do
-        @thread_stop_signal.wait(@thread_stop_signal_mutex, @fetch_interval)
+        # re-check under the same mutex stop publishes @running under: a broadcast sent
+        # while we were still fetching would be lost on a thread that is not waiting yet,
+        # and we would sit out the full interval before noticing we were asked to stop
+        @thread_stop_signal.wait(@thread_stop_signal_mutex, @fetch_interval) if @running
       end
     end
   end
@@ -148,23 +151,41 @@ class MaintenanceMode
     end
   end
 
+  # How long stop waits for the update thread before it gives up and returns anyway. A
+  # trap handler interrupts the main thread mid-statement, so a signal arriving inside
+  # start leaves @run_mutex held by a thread that is not running any more - an unbounded
+  # join would wedge the process until SIGKILL instead of shutting it down. The orphaned
+  # thread that a timeout leaves behind is harmless: every caller of stop is a process on
+  # its way out.
+  STOP_TIMEOUT = 5 # seconds
+
   # Puma fires its shutdown hooks from inside its own SIGTERM handler, so stop runs in a
   # trap context, where ruby forbids Mutex#synchronize outright (ThreadError). A freshly
   # spawned thread is not in a trap context; joining it - which trap context does allow -
   # keeps stop synchronous, so the update thread is still guaranteed to be gone when it
   # returns. See Samedis-care/samedis-care-issues#2916.
+  #
+  # Nothing may escape from here: this is the last thing that runs before the process
+  # exits, and an exception - join re-raises whatever the update thread died of - would
+  # abort the rest of puma's shutdown hook exactly the way the ThreadError used to.
   def self.stop
-    Thread.new do
+    worker = Thread.new do
       @run_mutex.synchronize do
-        @running = false
-        unless @run_thread.nil?
-          @thread_stop_signal_mutex.synchronize do
-            @thread_stop_signal.broadcast # wake up all threads waiting
-          end
-          @run_thread.join
+        # @running is published under the signal mutex so the update thread cannot miss
+        # it: holding it here means that thread is either not waiting yet (and will see
+        # @running false instead of waiting) or already waiting (and gets the broadcast)
+        @thread_stop_signal_mutex.synchronize do
+          @running = false
+          @thread_stop_signal.broadcast # wake up all threads waiting
         end
+        @run_thread&.join
       end
-    end.join
+    rescue Exception => e # rubocop:disable Lint/RescueException -- stop must never take the shutdown hook down, whatever the update thread died of
+      warn "MaintenanceMode.stop: #{e.class}: #{e.message}"
+    end
+    return if worker.join(STOP_TIMEOUT)
+
+    warn "MaintenanceMode.stop: update thread still running after #{STOP_TIMEOUT}s, leaving it behind"
   end
 
   def self.fetch_info
