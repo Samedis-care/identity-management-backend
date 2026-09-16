@@ -62,24 +62,41 @@ class MaintenanceMode
     info[:planned].map { |elem| MaintenanceMode.new(elem) }
   end
 
+  # The fallback state used whenever there's no maintenance info to report: the update
+  # thread was never started, has no source URL configured, or - see .info below - hasn't
+  # produced anything yet.
+  def self.no_maintenance_info
+    {
+      :current => nil,
+      :planned => [],
+    }.with_indifferent_access
+  end
+
+  # How long .info waits for the update thread to produce a first result before it gives
+  # up and degrades to "no maintenance" instead of blocking the caller forever. If the
+  # update thread dies before ever setting @info (e.g. URI.parse raising on a malformed
+  # MAINTENANCE_STATE_URL, which escapes fetch_info's own rescue), nothing is left to
+  # broadcast @info_signal and every request/write piles up behind this wait indefinitely.
+  # See Samedis-care/samedis-care-issues#2928. fetch_info's own HTTP call is capped at 1s,
+  # so this comfortably covers a real fetch while still failing open well before it would
+  # be noticeable as a hung request.
+  INFO_WAIT_TIMEOUT = 5 # seconds
+
   def self.info
-    unless @running
-      return {
-        :current => nil,
-        :planned => [],
-      }.with_indifferent_access
-    end
+    return no_maintenance_info unless @running
 
     ret = nil
     @info_mutex.synchronize do
       ret = @info
       if ret.nil?
-        @info_signal.wait(@info_mutex)
+        @info_signal.wait(@info_mutex, INFO_WAIT_TIMEOUT)
         ret = @info
       end
     end
-    raise "No info available" if ret.nil? # should never happen
-    ret
+
+    # A dead or slow update thread degrades to "no maintenance" here, same as update_thread's
+    # own ensure block does when it has no maintenance state source configured at all.
+    ret || no_maintenance_info
   end
 
   def self.url
@@ -104,7 +121,7 @@ class MaintenanceMode
       info = @info
       begin
         info = fetch_info
-      rescue FetchError => e
+      rescue StandardError => e
         puts e
         if info.nil?
           # polyfill info as we have no previous info

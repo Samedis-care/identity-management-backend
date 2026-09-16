@@ -89,11 +89,14 @@ RSpec.describe MaintenanceMode do
       described_class.instance_variable_set(:@fetch_interval, 30.seconds)
     end
 
-    # fetch_info calls URI.parse outside its own rescue, so a malformed
-    # MAINTENANCE_STATE_URL kills the update thread - and Thread#join re-raises whatever
-    # killed it, which would abort puma's shutdown hook exactly the way the ThreadError did.
+    # update_thread rescues StandardError around its whole fetch cycle (see
+    # Samedis-care/samedis-care-issues#2928), so killing it from a spec needs something
+    # that isn't one - NoMemoryError stands in for whatever residual, truly unexpected
+    # failure .stop's own `rescue Exception` still needs to guard against. Thread#join
+    # would otherwise re-raise whatever killed the thread, aborting puma's shutdown hook
+    # exactly the way the pre-#2916 ThreadError did.
     it 'swallows an exception the update thread died of instead of raising it at the hook' do
-      allow(described_class).to receive(:fetch_info).and_raise(URI::InvalidURIError, 'bad MAINTENANCE_STATE_URL')
+      allow(described_class).to receive(:fetch_info).and_raise(NoMemoryError, 'simulated fatal error')
       report_on_exception = Thread.report_on_exception
       Thread.report_on_exception = false
 
@@ -103,11 +106,57 @@ RSpec.describe MaintenanceMode do
       expect(run_thread).not_to be_alive
 
       error = nil
-      expect { error = in_trap_context { described_class.stop } }.to output(/URI::InvalidURIError/).to_stderr
+      expect { error = in_trap_context { described_class.stop } }.to output(/NoMemoryError/).to_stderr
       expect(error).to be_nil
     ensure
       Thread.report_on_exception = report_on_exception
       described_class.instance_variable_set(:@run_thread, nil) # the after hook would join the dead thread again
+    end
+  end
+
+  describe '.update_thread' do
+    # Before this fix, update_thread only rescued FetchError. fetch_info's URI.parse call
+    # sits outside its own rescue, so a malformed MAINTENANCE_STATE_URL raised
+    # URI::InvalidURIError straight out of the loop body and killed the update thread on
+    # its first iteration - see Samedis-care/samedis-care-issues#2928.
+    it 'keeps looping instead of dying when fetch_info raises an unexpected StandardError' do
+      call_count = 0
+      allow(described_class).to receive(:fetch_info) do
+        call_count += 1
+        raise URI::InvalidURIError, 'bad MAINTENANCE_STATE_URL' if call_count == 1
+
+        nil
+      end
+      described_class.instance_variable_set(:@fetch_interval, 0.1)
+
+      described_class.start
+      50.times { call_count >= 2 ? break : sleep(0.05) }
+
+      expect(call_count).to be >= 2
+      expect(described_class.instance_variable_get(:@run_thread)).to be_alive
+    ensure
+      described_class.instance_variable_set(:@fetch_interval, 30.seconds)
+    end
+  end
+
+  describe '.info' do
+    # Before this fix, .info waited on @info_signal with no timeout. If the update thread
+    # died (or was simply never started with real data) before ever setting @info, nothing
+    # was left to broadcast the signal and the wait blocked forever - hanging every request
+    # and every Mongoid write in the process. See Samedis-care/samedis-care-issues#2928.
+    it 'degrades to no-maintenance instead of blocking forever when @info is never populated' do
+      stub_const('MaintenanceMode::INFO_WAIT_TIMEOUT', 0.2)
+      described_class.instance_variable_set(:@info, nil)
+      described_class.instance_variable_set(:@running, true) # simulate a dead/stalled update thread
+
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      result = described_class.info
+      elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+
+      expect(result).to eq('current' => nil, 'planned' => [])
+      expect(elapsed).to be < 1
+    ensure
+      described_class.instance_variable_set(:@running, false)
     end
   end
 end
