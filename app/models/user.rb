@@ -681,7 +681,8 @@ class User < ApplicationDocument
       log_candos_trace('tenants-snapshot') do
         {
           snapshot_sizes: _tenants.map { |t| [t[:id].to_s, t[:candos]&.size] }.to_h,
-          candos_oid: @candos&.object_id
+          candos_shape: @candos.is_a?(Hash) ? @candos.transform_values { |v| v&.size } : @candos.class.name,
+          candos_cached_at: tenant_candos_cached_at&.to_f
         }
       end
       self.set(tenants_cached_at: Time.now, tenants_cached: _tenants)
@@ -715,15 +716,20 @@ class User < ApplicationDocument
       if _cache_invalid
         @tenant_access_group_ids = nil
         @tenants = nil
-        _mappings = Actors::Mapping.where(user_id: id).pluck(:cached_candos)
         _result = get_tenant_candos
         # Temporary trace for Samedis-care/samedis-care-issues#2675: records
-        # the raw mapping rows visible to THIS read alongside the aggregated
-        # result, so an empty _result can be told apart from "no mappings
-        # were visible yet" (a Mongo read-visibility question) vs "mappings
-        # were visible but cached_candos was still blank on one of them" (the
-        # window #2675's earlier comments describe). Remove once resolved.
+        # the raw mapping rows visible AFTER this read alongside the
+        # aggregated result. Reading them after (not before) get_tenant_candos
+        # matters: cached_candos only ever gets populated, never cleared back
+        # to blank, so a row still blank at this point is evidence the
+        # aggregation -- which ran earlier -- saw it blank too. Reading before
+        # would only show what was true at an earlier, less relevant instant.
+        # Lets an empty _result be told apart from "no mappings were visible
+        # yet" (a Mongo read-visibility question) vs "mappings were visible
+        # but cached_candos was still blank on one of them" (the window
+        # #2675's earlier comments describe). Remove once resolved.
         log_candos_trace('candos-recompute') do
+          _mappings = Actors::Mapping.where(user_id: id).pluck(:cached_candos)
           {
             mapping_count: _mappings.size,
             mapping_blank_candos: _mappings.count(&:blank?),
