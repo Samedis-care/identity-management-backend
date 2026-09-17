@@ -751,7 +751,15 @@ class User < ApplicationDocument
   # the two call sites in #candos and #tenants. Single greppable line per
   # event so a divergent snapshot can be correlated back to what the
   # recompute that fed it actually saw, across processes/threads.
+  #
+  # Opt-in via CANDOS_TRACE so this doesn't warn-log on every cache miss in
+  # every environment once deployed (production's log_level is :info, so a
+  # bare Rails.logger.warn here would be live everywhere with no way to turn
+  # it off short of a redeploy). Set CANDOS_TRACE=1 in whichever environment
+  # the E2E suite targets for the next baseline to actually pick this up.
   def log_candos_trace(event)
+    return unless ENV['CANDOS_TRACE']
+
     extra = yield
     # `::Rails` (not `Rails`) -- unqualified resolves to `Doorkeeper::Rails`
     # from this class's ancestor chain and raises NoMethodError on `.logger`.
