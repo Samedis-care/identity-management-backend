@@ -758,7 +758,7 @@ class User < ApplicationDocument
   # it off short of a redeploy). Set CANDOS_TRACE=1 in whichever environment
   # the E2E suite targets for the next baseline to actually pick this up.
   def log_candos_trace(event)
-    return unless ENV['CANDOS_TRACE']
+    return unless ENV['CANDOS_TRACE'].to_s.to_boolean
 
     extra = yield
     # `::Rails` (not `Rails`) -- unqualified resolves to `Doorkeeper::Rails`
