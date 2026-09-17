@@ -673,6 +673,18 @@ class User < ApplicationDocument
                      self.tenants_cached_at < Time.now.beginning_of_day)
       _tenant_ids = Actors::Mapping.where(user_id: self.id).distinct(:tenant_id).compact
       _tenants = Actors::Tenant.available.where(:id.in => _tenant_ids).limit(MAX_TENANTS).tenant_collection(self)
+      # Temporary trace for Samedis-care/samedis-care-issues#2675: pins down
+      # whether the snapshot written here ever disagrees with the @candos
+      # memo that produced it, and what @candos held at that instant. Remove
+      # once the interleaving is caught or the structural fix (compute
+      # tenants[].candos at read time instead of snapshotting it) lands.
+      log_candos_trace('tenants-snapshot') do
+        {
+          snapshot_sizes: _tenants.map { |t| [t[:id].to_s, t[:candos]&.size] }.to_h,
+          candos_shape: @candos.is_a?(Hash) ? @candos.transform_values { |v| v&.size } : @candos.class.name,
+          candos_cached_at: tenant_candos_cached_at&.to_f
+        }
+      end
       self.set(tenants_cached_at: Time.now, tenants_cached: _tenants)
       _tenants
     else
@@ -704,15 +716,61 @@ class User < ApplicationDocument
       if _cache_invalid
         @tenant_access_group_ids = nil
         @tenants = nil
+        _result = get_tenant_candos
+        # Temporary trace for Samedis-care/samedis-care-issues#2675: records
+        # the raw mapping rows visible AFTER this read alongside the
+        # aggregated result. Reading them after (not before) get_tenant_candos
+        # matters: cached_candos only ever gets populated, never cleared back
+        # to blank, so a row still blank at this point is evidence the
+        # aggregation -- which ran earlier -- saw it blank too. Reading before
+        # would only show what was true at an earlier, less relevant instant.
+        # Lets an empty _result be told apart from "no mappings were visible
+        # yet" (a Mongo read-visibility question) vs "mappings were visible
+        # but cached_candos was still blank on one of them" (the window
+        # #2675's earlier comments describe). Remove once resolved.
+        log_candos_trace('candos-recompute') do
+          _mappings = Actors::Mapping.where(user_id: id).pluck(:cached_candos)
+          {
+            mapping_count: _mappings.size,
+            mapping_blank_candos: _mappings.count(&:blank?),
+            result_sizes: _result.transform_values { |v| v&.size }
+          }
+        end
         self.set(
           tenants_cached: nil,
           tenants_cached_at: nil,
           tenant_candos_cached_at: Time.now,
-          tenant_candos_cached: get_tenant_candos
+          tenant_candos_cached: _result
         )
       end
       tenant_candos_cached
     end
+  end
+
+  # Temporary trace helper for Samedis-care/samedis-care-issues#2675 — see
+  # the two call sites in #candos and #tenants. Single greppable line per
+  # event so a divergent snapshot can be correlated back to what the
+  # recompute that fed it actually saw, across processes/threads.
+  #
+  # Opt-in via CANDOS_TRACE so this doesn't warn-log on every cache miss in
+  # every environment once deployed (production's log_level is :info, so a
+  # bare Rails.logger.warn here would be live everywhere with no way to turn
+  # it off short of a redeploy). Set CANDOS_TRACE=1 in whichever environment
+  # the E2E suite targets for the next baseline to actually pick this up.
+  def log_candos_trace(event)
+    return unless ENV['CANDOS_TRACE'].to_s.to_boolean
+
+    extra = yield
+    # `::Rails` (not `Rails`) -- unqualified resolves to `Doorkeeper::Rails`
+    # from this class's ancestor chain and raises NoMethodError on `.logger`.
+    ::Rails.logger.warn(
+      "CANDOS-TRACE event=#{event} user=#{id} self_oid=#{object_id} " \
+      "pid=#{Process.pid} tid=#{Thread.current.object_id} at=#{Time.now.to_f} " \
+      "#{extra.map { |k, v| "#{k}=#{v.inspect}" }.join(' ')}"
+    )
+  rescue StandardError => e
+    # Must never surface: this is add-on tracing for #2675, not app behavior.
+    ::Rails.logger.warn("CANDOS-TRACE event=#{event} user=#{id} trace_error=#{e.class}: #{e.message}")
   end
 
   def get_tenant_candos
