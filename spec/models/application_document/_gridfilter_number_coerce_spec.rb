@@ -37,16 +37,53 @@ RSpec.describe ApplicationDocument, '._gridfilter_number_coerce' do
   # overflows BSON's 64-bit int/long serializer ("9"*100 -> RangeError: bignum
   # too big to convert into 'long long') at query send time - unrescued, an
   # HTTP 500. Not a regression (main has the identical crash via Mongoid's own
-  # String-to-Integer evolution), but this line is now the one place that
-  # decides what a numeric filter value may be, so it's the place to bound it.
+  # String-to-Integer evolution), but a numeric filter value has to be one the
+  # database can actually be asked about.
+  #
+  # The message changed with samedis-care-issues#2979, which moved the range
+  # half of the check out of `_gridfilter_numeric_string?` and behind the
+  # coercion: out of range is now reported as out of range, not as
+  # not-a-number.
   it 'raises GridfilterError for a digit string too large for a 64-bit int' do
     expect { User._gridfilter_number_coerce('9' * 30, field: :sign_in_count) }
-      .to raise_error(ApplicationDocument::GridfilterError, /invalid numeric filter value/)
+      .to raise_error(ApplicationDocument::GridfilterError, /numeric filter value out of range/)
+  end
+
+  # samedis-care-issues#2979, the case the old placement could not see:
+  # `self.gridfilter` JSON.parses the filter param, so an unquoted number
+  # arrives as a Ruby Integer and skipped the String-gated range check
+  # entirely, reaching BSON as a Bignum.
+  it 'raises GridfilterError for a bare (unquoted) JSON number beyond int64' do
+    expect { User._gridfilter_number_coerce(10**30, field: :sign_in_count) }
+      .to raise_error(ApplicationDocument::GridfilterError, /numeric filter value out of range/)
+  end
+
+  # `Float::INFINITY.to_i` raises FloatDomainError rather than yielding a
+  # Bignum the range check could see, and FloatDomainError < RangeError, so it
+  # reached the same `Exception` catch-all as a 500. Arrives from a bare JSON
+  # number that overflows Float: `JSON.parse('[1e400]') == [Infinity]`.
+  it 'raises GridfilterError for Float::INFINITY rather than FloatDomainError' do
+    expect { User._gridfilter_number_coerce(Float::INFINITY, field: :sign_in_count) }
+      .to raise_error(ApplicationDocument::GridfilterError, /numeric filter value out of range/)
+  end
+
+  it 'raises GridfilterError for NaN, which to_i also refuses' do
+    expect { User._gridfilter_number_coerce(Float::NAN, field: :sign_in_count) }
+      .to raise_error(ApplicationDocument::GridfilterError, /numeric filter value out of range/)
   end
 
   it 'still accepts the largest valid 64-bit int' do
     max_int64 = (2**63 - 1).to_s
     expect(User._gridfilter_number_coerce(max_int64, field: :sign_in_count)).to eq(2**63 - 1)
+  end
+
+  # The old check was `value.strip.to_i.abs <= 2**63 - 1`, and `(-2**63).abs`
+  # is 2**63 - one past that bound - so the most negative int64 was rejected
+  # even though BSON serializes it fine. Checking the coerced value against
+  # the real range fixes that asymmetry as a side effect.
+  it 'accepts the smallest valid 64-bit int, which the old .abs bound rejected' do
+    min_int64 = (-2**63).to_s
+    expect(User._gridfilter_number_coerce(min_int64, field: :sign_in_count)).to eq(-2**63)
   end
 
   describe '._gridfilter_number_coerce_set_element' do
@@ -71,9 +108,42 @@ RSpec.describe ApplicationDocument, '._gridfilter_number_coerce' do
       expect(User._gridfilter_number_coerce_set_element('abc', field: :sign_in_count)).to eq('abc')
     end
 
-    it 'passes a too-large digit string through unchanged too, rather than crashing at BSON serialization' do
-      too_big = '9' * 30
-      expect(User._gridfilter_number_coerce_set_element(too_big, field: :sign_in_count)).to eq(too_big)
+    # BEHAVIOR CHANGE, samedis-care-issues#2979. This used to pass through
+    # unchanged, to be dropped downstream like 'abc' above - not as a decision
+    # about out-of-range numbers, but because the old
+    # `_gridfilter_numeric_string?` answered false for BOTH "not shaped like a
+    # number" and "too big", so they landed in the same bucket. Splitting the
+    # two checks separates them, and out of range now raises the same way the
+    # scalar coercion already raised for this exact value.
+    #
+    # Raising is the right side of that split: 'abc' carries no filter intent
+    # to honour, so leaving it out is a narrower answer. A 20-digit number is
+    # a well-formed value this database cannot represent - dropping it answers
+    # with the other elements' rows and gives no hint that half the filter was
+    # discarded, which is a wrong answer, not a narrow one.
+    it 'raises GridfilterError for a too-large digit string element' do
+      expect { User._gridfilter_number_coerce_set_element('9' * 30, field: :sign_in_count) }
+        .to raise_error(ApplicationDocument::GridfilterError, /numeric filter value out of range/)
+    end
+
+    # The same value unquoted, which is what the issue is actually about: an
+    # already-Numeric element returned here untouched, so it never reached any
+    # check and took the request down in BSON serialization instead.
+    it 'raises GridfilterError for a bare (unquoted) JSON number beyond int64' do
+      expect { User._gridfilter_number_coerce_set_element(10**30, field: :sign_in_count) }
+        .to raise_error(ApplicationDocument::GridfilterError, /numeric filter value out of range/)
+    end
+
+    # An in-range Numeric element still comes back as ITSELF, not as what the
+    # coercion would have made of it - the coercion runs for its range check
+    # only. A bare 5.5 against an Integer field stays 5.5 here, exactly as
+    # before this change; narrowing that is a separate question from #2979.
+    it 'passes an in-range Float element through unchanged, uncoerced' do
+      expect(User._gridfilter_number_coerce_set_element(5.5, field: :sign_in_count)).to eq(5.5)
+    end
+
+    it 'passes an in-range Integer element through unchanged' do
+      expect(User._gridfilter_number_coerce_set_element(5, field: :sign_in_count)).to eq(5)
     end
   end
 end

@@ -628,13 +628,53 @@ class ApplicationDocument
     end
   end
 
-  # A digit string long enough to overflow BSON's 64-bit int/long serializer
-  # (RangeError: bignum too big to convert into 'long long') isn't usable as
-  # a number here regardless of how it arrived - checked once, shared by
-  # `_gridfilter_number_coerce` and `_gridfilter_number_coerce_set_element`.
+  # The range BSON can represent as a 64-bit integer. An Integer outside it
+  # cannot be serialized into a Mongo command at all - `to_bson` raises
+  # `RangeError: bignum too big to convert into 'long long'` while building
+  # the wire message. See `_gridfilter_int64!`.
+  BSON_INT64_RANGE = (-2**63)..(2**63 - 1)
+
+  # Whether `value` is a String SHAPED like a number. Shape only: the range
+  # half of this check used to live here too, and that was the bug in
+  # samedis-care-issues#2979 - it sits behind `value.is_a?(String)`, so an
+  # already-Numeric value skipped it. `self.gridfilter` JSON.parses the
+  # filter param, so a bare (unquoted) JSON number never is a String and the
+  # range check never saw it. It now lives in `_gridfilter_int64!`, after the
+  # coercion, where both kinds of input pass through.
+  #
+  # The shape half has to stay here and stay ahead of any coercion:
+  # `.to_i`/`.to_f` turn a non-numeric String into 0 silently (`"abc".to_i`
+  # => 0), which would build a valid-looking comparison against 0 instead of
+  # raising. On a field with a numeric default (e.g. `children_count,
+  # default: 0`) the nil-fold makes that worse: "greater than 'abc'" would
+  # return every row that never set the field, not an error.
   def self._gridfilter_numeric_string?(value)
-    return false unless value.is_a?(String) && /\A-?\d+(\.\d+)?\z/.match?(value.strip)
-    value.strip.to_i.abs <= 2**63 - 1
+    value.is_a?(String) && /\A-?\d+(\.\d+)?\z/.match?(value.strip)
+  end
+
+  # Coerces `value` to the Integer it will be compared as, and raises unless
+  # BSON can actually put that Integer on the wire. Reached only from the
+  # non-Float/BigDecimal branch: on a Float-typed field an over-long value
+  # becomes `Float::INFINITY`, which serializes as an ordinary double and
+  # matches no document, so there is nothing to reject there.
+  def self._gridfilter_int64!(value)
+    # A non-finite Float has to be caught BEFORE `.to_i`, which raises
+    # `FloatDomainError` on one rather than yielding a Bignum the range check
+    # could see - and `FloatDomainError < RangeError`, so it reached the
+    # `Exception` catch-all as a 500 just like the Bignum did. It gets here
+    # from a bare JSON number that overflows Float: `JSON.parse('[1e400]')`
+    # is `[Infinity]`. A finite-but-huge one needs no special case,
+    # `1e30.to_i` is a Bignum the range check below has.
+    if value.is_a?(Float) && !value.finite?
+      raise GridfilterError.new("numeric filter value out of range #{value.inspect}")
+    end
+
+    coerced = value.to_i
+    unless BSON_INT64_RANGE.cover?(coerced)
+      raise GridfilterError.new("numeric filter value out of range #{value.inspect}")
+    end
+
+    coerced
   end
 
   # Coerces a single `number` gridfilter scalar value for `field` to the
@@ -643,20 +683,16 @@ class ApplicationDocument
   # of whether it arrived as a String or a bare JSON number.
   def self._gridfilter_number_coerce(value, field: nil)
     return value if value.nil?
-    # A String has to actually look like a number (and fit a 64-bit int) -
-    # `.to_i`/`.to_f` turn any non-numeric String into 0 silently
-    # (`"abc".to_i` => 0), which would otherwise build a valid-looking
-    # comparison against 0 instead of raising. On a field with a numeric
-    # default (e.g. `children_count, default: 0`) the nil-fold above makes
-    # that worse: "greater than 'abc'" would return every row that never set
-    # the field, not an error. A too-long digit string ("9"*100) would
-    # instead reach BSON serialization and raise an unrescued RangeError.
+    # See `_gridfilter_numeric_string?` for why a String is shape-checked
+    # here, before anything coerces it.
     unless value.is_a?(Numeric) || _gridfilter_numeric_string?(value)
       raise GridfilterError.new("invalid numeric filter value #{value.inspect}")
     end
 
     field_type = field.present? ? fields[field.to_s]&.type : nil
-    [Float, BigDecimal].include?(field_type) ? value.to_f : value.to_i
+    return value.to_f if [Float, BigDecimal].include?(field_type)
+
+    _gridfilter_int64!(value)
   end
 
   # Same coercion as `_gridfilter_number_coerce`, but for one element of an
@@ -667,11 +703,25 @@ class ApplicationDocument
   # no single required value to fail on here, so excluding one bad element
   # from an otherwise-valid set is more useful than rejecting the whole
   # request over it.
+  #
+  # A number BSON cannot serialize is the one case that still raises, and
+  # deliberately so (samedis-care-issues#2979): the drop-it rule above is for
+  # an element with no usable filter intent, where the whitelist downstream
+  # can simply leave it out. A 20-digit number is a well-formed value this
+  # database cannot represent - dropping it would answer with the other
+  # elements' rows and no hint that part of the filter was discarded, which
+  # is a wrong result rather than a narrower one. Before this it was not
+  # dropped either: an already-Numeric element returned here untouched and
+  # took the whole request down in BSON serialization.
   def self._gridfilter_number_coerce_set_element(value, field: nil)
-    return value if value.nil? || value.is_a?(Numeric)
-    return value unless _gridfilter_numeric_string?(value)
+    return value if value.nil?
+    return value unless value.is_a?(Numeric) || _gridfilter_numeric_string?(value)
 
-    _gridfilter_number_coerce(value, field: field)
+    coerced = _gridfilter_number_coerce(value, field: field)
+    # An already-Numeric element keeps its own value, exactly as before - the
+    # coercion above ran for its range check, not to convert it. Only a
+    # String element is replaced by what it parsed to.
+    value.is_a?(Numeric) ? value : coerced
   end
 
   # Raises when `condition` carries any key not in `allowed_options`.
