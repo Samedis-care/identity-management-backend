@@ -205,10 +205,23 @@ RSpec.describe ApplicationDocument, '._gridfilter_condition_to_criterion' do
     # int/long serializer ("9"*100) raised an unrescued RangeError at query send
     # time, on both main and this PR before this fix - not a regression, but the
     # same "value must actually be usable, not just numeric-looking" fix applies.
+    # The message changed with samedis-care-issues#2979: the range check moved
+    # out of the shape predicate and behind the coercion, so an out-of-range
+    # value is now reported as out of range rather than as not-a-number.
     it 'raises GridfilterError for a too-large digit string, rather than crashing at BSON serialization' do
       condition = { filterType: 'number', type: 'equals', filter: '9' * 30 }
       expect { Actor._gridfilter_condition_to_criterion(:children_count, condition) }
-        .to raise_error(ApplicationDocument::GridfilterError, /invalid numeric filter value/)
+        .to raise_error(ApplicationDocument::GridfilterError, /numeric filter value out of range/)
+    end
+
+    # samedis-care-issues#2979: the same value unquoted. `self.gridfilter`
+    # JSON.parses the filter param, so this arrives as a Ruby Integer and
+    # never passes through the String shape check at all - which is how it
+    # used to reach BSON and 500.
+    it 'raises GridfilterError for a bare (unquoted) JSON number beyond int64' do
+      condition = { filterType: 'number', type: 'equals', filter: 10**30 }
+      expect { Actor._gridfilter_condition_to_criterion(:children_count, condition) }
+        .to raise_error(ApplicationDocument::GridfilterError, /numeric filter value out of range/)
     end
   end
 
