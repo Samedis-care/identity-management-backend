@@ -40,6 +40,15 @@ before_fork do
   # if we fork we're in cluster mode
   puma_in_cluster_mode = true
 
+  # preload_app! can leave a Mongo client open in the master (any class body that
+  # touches Model.collection during eager load creates one). Its SDAM monitor
+  # threads do not survive the fork: the driver rebuilds the connections on the
+  # PID change, but the worker's topology stays frozen and never finds a new
+  # primary after a failover. That took samedis-care-backend down on 2026-09-28;
+  # this app escaped only because it opens no client before the fork. Close it
+  # here and let every worker build its own in before_worker_boot.
+  Mongoid.disconnect_clients
+
   # clean up memory before forking to maximize copy on write efficiency
   3.times { GC.start(full_mark: true, immediate_sweep: true) }
   GC.compact
@@ -47,6 +56,8 @@ end
 
 before_worker_boot do
   # runs in worker context
+  # fresh cluster with its own monitor threads, see before_fork
+  Mongoid.reconnect_clients
 
   MaintenanceMode.start
   puts "[#{Process.pid}] Maintenance mode started."
