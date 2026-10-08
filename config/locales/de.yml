@@ -5,6 +5,7 @@ de:
     gridfilter_error: Gridfilter Fehler
     general_error: Allgemeiner Fehler
     database_error: Datenbankfehler
+    path_collision_error: Die Pfade der Einrichtung konnten nicht aktualisiert werden, weil Einträge doppelt vorhanden sind. Bitte den Support kontaktieren.
     authorization_error: Berechtigungsfehler
     object_id_invalid_error: Es wurde eine ungültige Objekt-ID angegeben
     malformed_csv_error: >-

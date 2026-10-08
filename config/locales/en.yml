@@ -5,6 +5,7 @@ en:
     gridfilter_error: Grid filter error
     general_error: General error
     database_error: Database error
+    path_collision_error: The paths could not be updated because of duplicate entries. Please contact support.
     authorization_error: Authorization error
     oauth_error: The remote authentication server didn't return the minimum required
       information for logging in (trusted email, first name and last name).

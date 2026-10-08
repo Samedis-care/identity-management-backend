@@ -14,6 +14,7 @@ module BaseControllerMethods
     rescue_from Mongoid::Errors::DocumentNotFound, with: :record_not_found_error
     rescue_from Mongoid::Errors::InvalidFind, with: :record_not_found_error
     rescue_from Mongo::Error::OperationFailure, with: :database_error
+    rescue_from Actor::PathCollisionError, with: :path_collision_error
     rescue_from CSV::MalformedCSVError, with: :malformed_csv_error
     rescue_from Net::SMTPSyntaxError, with: :smtp_syntax_error
     rescue_from Net::SMTPFatalError, with: :smtp_syntax_error
@@ -181,6 +182,14 @@ module BaseControllerMethods
     return if performed?
     message = Rails.env.production? ? I18n.t('json_api.database_error') : e.message
     render_jsonapi_error(message, "database_error", 500, exception: e) and return
+  end
+
+  def path_collision_error(e)
+    raise e unless silence_errors?
+    return if performed?
+    Sentry.capture_exception(e, extra: { collisions: e.collisions.first(20) })
+    message = Rails.env.production? ? I18n.t('json_api.path_collision_error') : e.message
+    render_jsonapi_error(message, 'path_collision_error', 409, exception: e) and return
   end
 
   def authorization_error(e)
