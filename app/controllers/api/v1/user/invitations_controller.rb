@@ -14,8 +14,8 @@ class Api::V1::User::InvitationsController < Api::V1::JsonApiController
     header: 'Pending invitations for the current user'
   }
 
-  PERMIT_CREATE = %i[tenant_id invitable_id invitable_type auto_accept user_id].freeze
-
+  # no routable create (only the noswagger accept PUT exists)
+  undef_method :create
   undef_method :index
   undef_method :show
 

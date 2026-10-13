@@ -9,16 +9,7 @@ require 'rails_helper'
 # sending any attributes" -- 14 endpoints were documented that way while accepting
 # real attributes.
 RSpec.describe Api::V1::JsonApiController do
-  # Loading config/routes.rb (triggered by eager loading the controllers) needs a Devise
-  # secret key, which comes from ENV['DEVISE_SECRET_KEY'] and is not always defined in a
-  # plain test run.
-  before(:all) do
-    @devise_secret_key = Devise.secret_key
-    Devise.secret_key ||= 'x' * 64
-    Rails.application.eager_load!
-  end
-
-  after(:all) { Devise.secret_key = @devise_secret_key }
+  before(:all) { Rails.application.eager_load! }
 
   # [action, permit constant, params method]
   {
@@ -45,9 +36,6 @@ RSpec.describe Api::V1::JsonApiController do
       Api::V1::User::TenantsController => {
         create: %i[full_name image image_b64 short_name],
         update: %i[full_name image image_b64 short_name]
-      },
-      Api::V1::User::InvitationsController => {
-        create: %i[auto_accept invitable_id invitable_type tenant_id user_id]
       },
       Api::V1::AccessControl::Tenant::UsersController => { update: %i[access_group_ids] },
       Api::V1::AccessControl::Apps::Tenant::UsersController => { update: %i[access_group_ids] },
