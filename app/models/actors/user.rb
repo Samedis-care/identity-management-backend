@@ -2,7 +2,8 @@ module Actors
 
   class User < Actor
 
-    has_one :user, class_name: '::User', inverse_of: :actor, dependent: :destroy
+    # See Actor#user: the destroy cascade lives on User#actor only.
+    has_one :user, class_name: '::User', inverse_of: :actor
 
     def self.global_admin
       where(name: :global_admin).first_or_create(
