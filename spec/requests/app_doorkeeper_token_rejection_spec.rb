@@ -28,12 +28,10 @@ RSpec.describe 'POST /api/v1/:app/oauth/token rejections' do
          params: { grant_type: 'password', username: user.email, password: password, app: app }
   end
 
-  # Devise.secret_key comes from ENV['DEVISE_SECRET_KEY'], which a plain local/CI test
-  # run does not necessarily define; Devise raises on first token generation without it.
-  before { allow(Devise).to receive(:secret_key).and_return('x' * 64) }
-
   after do
     Doorkeeper::AccessToken.where(resource_owner_id: user.id).delete_all
+    # every granted token's after_save first_or_creates an AccountActivity
+    AccountActivity.where(user_id: user.id).delete_all
     # user.destroy would be the natural teardown, but it only works once #2849 is merged.
     Actor.where(_id: user.actor_id).delete_all
     user.delete
