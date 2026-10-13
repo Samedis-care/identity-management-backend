@@ -50,7 +50,6 @@ RSpec.describe RepairMissingStandardUserMappings do
   ensure
     Mongoid::Migration.verbose = was_verbose
     ENV.delete('TENANT_ID')
-    ENV.delete('APPLY')
     ENV.delete('LIMIT')
     ENV.delete('SINCE')
   end
@@ -67,19 +66,7 @@ RSpec.describe RepairMissingStandardUserMappings do
     Actors::Mapping.where(parent: standard_group, map_actor: user_actor)
   end
 
-  describe 'without APPLY' do
-    it 'writes nothing' do
-      expect { described_class.up rescue nil }.not_to change { mappings.count }.from(0)
-    end
-
-    it 'raises so the migration is not recorded as run' do
-      expect { described_class.up }.to raise_error(/DRY RUN/)
-    end
-  end
-
-  describe 'with APPLY' do
-    before { ENV['APPLY'] = 'true' }
-
+  describe '.up' do
     it 'maps the user into standard_user' do
       expect { described_class.up }.to change { mappings.count }.from(0).to(1)
     end
@@ -130,7 +117,7 @@ RSpec.describe RepairMissingStandardUserMappings do
       end
 
       it 'still counts it as affected in the report' do
-        expect(described_class).to receive(:report) do |stats, _months, _apply, since|
+        expect(described_class).to receive(:report) do |stats, _months, since|
           expect(stats[:affected]).to eq(1)
           expect(stats[:skip_before_since]).to eq(1)
           expect(stats[:in_repair_scope]).to eq(0)
@@ -181,13 +168,10 @@ RSpec.describe RepairMissingStandardUserMappings do
   end
 
   describe 'LIMIT and the printed audit list' do
-    before do
-      ENV['APPLY'] = 'true'
-      ENV['LIMIT'] = '0'
-    end
+    before { ENV['LIMIT'] = '0' }
 
     it 'does not list rows it did not repair' do
-      expect(described_class).to receive(:report) do |stats, _months, _apply, _since, in_scope|
+      expect(described_class).to receive(:report) do |stats, _months, _since, in_scope|
         expect(stats[:in_repair_scope]).to eq(1)
         expect(stats[:over_limit]).to eq(1)
         expect(in_scope).to be_empty
