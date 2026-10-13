@@ -61,9 +61,14 @@ RSpec.describe User do
         expect { user.destroy }.to change { memberships.count }.from(1).to(0)
       end
 
+      # system_override is needed: the group is system: true, and Actor#before_destroy
+      # aborts such a destroy before destroy_mappings runs, which would make this
+      # example pass with or without the fix.
       it 'lets the group be destroyed afterwards instead of raising from the stale mapping' do
         user.destroy
-        expect { group.reload.destroy }.not_to raise_error
+        doomed = group.reload.tap { |g| g.system_override = true }
+
+        expect(doomed.destroy).to be(true)
       end
     end
   end

@@ -10,7 +10,7 @@ module Actors
     # UNDER this actor (parent_id). Left behind, they make a later destroy of the group
     # raise from Actors::Mapping#user_cache_expire! (map_actor.user on a deleted actor).
     # delete_all, not destroy_all: destroying would fire after_destroy :user_cache_expire!
-    # per mapping, the reentrancy warned about in User#drop_tenants!.
+    # per mapping, the reentrancy warned about above User#unmap_orphaned_group_memberships!.
     before_destroy { Actors::Mapping.where(map_actor_id: id).delete_all }
 
     def self.global_admin
