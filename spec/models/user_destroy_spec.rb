@@ -20,9 +20,26 @@ RSpec.describe User do
     _user
   end
 
-  describe '#destroy' do
-    let!(:actor_id) { user.actor_id }
+  let(:sfx) { SecureRandom.hex(4) }
+  let!(:tenant) { Actors::Tenant.create!(name: "t#{sfx}") }
+  let!(:organization) { Actors::Organization.create!(name: "org#{sfx}", parent: tenant) }
+  let!(:tenant_profiles) { Actors::Ou.create!(name: 'tenant_profiles', parent: organization) }
+  let!(:group) { Actors::Group.create!(name: "group-#{sfx}", parent: tenant_profiles, system: true) }
+  let!(:actor_id) { user.actor_id }
 
+  after do
+    Actor.where(:parent_ids.in => [tenant.id]).delete_all
+    Actor.where(map_actor_id: actor_id).delete_all
+    Actor.where(id: actor_id).delete_all
+    user.delete
+    tenant.delete
+  end
+
+  def memberships
+    Actors::Mapping.where(map_actor_id: actor_id)
+  end
+
+  describe '#destroy' do
     it 'does not recurse between User and Actors::User' do
       expect { user.destroy }.not_to raise_error
     end
@@ -35,6 +52,36 @@ RSpec.describe User do
     it 'removes the linked Actors::User document' do
       user.destroy
       expect(Actor.where(id: actor_id)).to be_none
+    end
+
+    context 'when the user is a member of a group' do
+      before { group.map_into!(user.actor) }
+
+      it 'removes the membership mappings that point at the user actor' do
+        expect { user.destroy }.to change { memberships.count }.from(1).to(0)
+      end
+
+      it 'lets the group be destroyed afterwards instead of raising from the stale mapping' do
+        user.destroy
+        expect { group.reload.destroy }.not_to raise_error
+      end
+    end
+  end
+
+  # Actors::Mapping used to inherit Actor's `has_one :user, dependent: :destroy`, which
+  # resolves through Mapping's own belongs_to :user to the real account, so destroying
+  # a membership raised the same SystemStackError (and would have taken the account
+  # with it). Actor#destroy_mappings / #destroy_children call it on every group destroy.
+  describe 'destroying a membership mapping' do
+    before { group.map_into!(user.actor) }
+
+    it 'does not raise' do
+      expect { memberships.first.destroy }.not_to raise_error
+    end
+
+    it 'leaves the user intact' do
+      memberships.first.destroy
+      expect(described_class.where(id: user.id)).to exist
     end
   end
 end
