@@ -59,18 +59,23 @@ class Api::V1::App::Doorkeeper::TokensController < Doorkeeper::TokensController
       }
       response.token.update_attributes(**_token_attrs)
 
-      user = User.login_allowed.find(response.token.resource_owner_id)
+      # where().first, not find: find raises DocumentNotFound for an inactive or
+      # deleted user instead of returning nil, which made the 401 branch below dead.
+      user = User.login_allowed.where(id: response.token.resource_owner_id).first
       if user.nil? # handle inactive or deleted
-        render_jsonapi_error(I18n.t('auth.error.login_incorrect'), 'login_incorrect', 401) and return
+        reject_grant(response.token, I18n.t('auth.error.login_incorrect'), 'login_incorrect', 401)
+        return
       end
 
       unless user.confirmed? # require user to be confirmed
-        render_jsonapi_error(I18n.t('devise.user.unverified'), 'user_unverified', 403) and return
+        reject_grant(response.token, I18n.t('devise.user.unverified'), 'user_unverified', 403)
+        return
       end
 
       app_context = current_app(response.token)
       unless User.per_app_settings[app_context.to_sym] # check app settings
-        render_jsonapi_error(I18n.t('errors.invalid_app'), 'invalid_app', 400) and return
+        reject_grant(response.token, I18n.t('errors.invalid_app'), 'invalid_app', 400)
+        return
       end
 
       user.update_tracked_fields!(request)
@@ -133,6 +138,17 @@ class Api::V1::App::Doorkeeper::TokensController < Doorkeeper::TokensController
   end
 
   private
+
+  # `authorize_response` has already persisted the token (and #create promoted it to
+  # the full lifetime) by the time these rejection checks run. Revoke it before
+  # answering with the error, otherwise every rejected attempt leaves a live
+  # 30-day token behind that User#active_logins lists as an active session
+  # (Samedis-care/samedis-care-issues#2850). Revoking hands it to the 7-day
+  # revoked_at TTL index (app/models/concerns/doorkeeper/access_token.rb).
+  def reject_grant(token, message, code, status)
+    token.revoke
+    render_jsonapi_error(message, code, status)
+  end
 
   # A refresh grant always invalidates the refresh_token it consumed, but the
   # previous token document itself gets one of two treatments depending on whether
