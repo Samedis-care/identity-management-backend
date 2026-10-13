@@ -107,18 +107,80 @@ paths:
           application/json:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data:
+                  type: object
+                  description: the main attributes of this record
+                  properties:
+                    full_name:
+                      type: string
+                      default: full name of an organizational unit or group
+                      description: full name of this actor
+                    image:
+                      type: object
+                      description: image with different styles
+                      properties:
+                        large:
+                          type: string
+                        medium:
+                          type: string
+                        small:
+                          type: string
+                    image_b64:
+                      type: string
+                      writeOnly: true
+                      description: BASE64 encoded image (JPEG or PNG) to be used as
+                        the user`s avatar
+                    short_name:
+                      type: string
+                      default: short name of an organizational unit or group
+                      description: short name of this actor
           application/x-www-form-urlencoded:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[full_name]:
+                  type: string
+                  default: full name of an organizational unit or group
+                  description: full name of this actor
+                data[image][large]:
+                  type: string
+                data[image][medium]:
+                  type: string
+                data[image][small]:
+                  type: string
+                data[image_b64]:
+                  type: string
+                  writeOnly: true
+                  description: BASE64 encoded image (JPEG or PNG) to be used as the
+                    user`s avatar
+                data[short_name]:
+                  type: string
+                  default: short name of an organizational unit or group
+                  description: short name of this actor
           multipart/form-data:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[full_name]:
+                  type: string
+                  default: full name of an organizational unit or group
+                  description: full name of this actor
+                data[image][large]:
+                  type: string
+                data[image][medium]:
+                  type: string
+                data[image][small]:
+                  type: string
+                data[image_b64]:
+                  type: string
+                  writeOnly: true
+                  description: BASE64 encoded image (JPEG or PNG) to be used as the
+                    user`s avatar
+                data[short_name]:
+                  type: string
+                  default: short name of an organizational unit or group
+                  description: short name of this actor
     get:
       summary: 'My Tenant: List [GET] of the current user'
       tags:
@@ -153,6 +215,7 @@ paths:
       - parent_ids
       - path
       - path_ids
+      - region
       - role_ids
       - short_name
       - system
@@ -633,16 +696,78 @@ paths:
           application/json:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data:
+                  type: object
+                  description: the main attributes of this record
+                  properties:
+                    full_name:
+                      type: string
+                      default: full name of an organizational unit or group
+                      description: full name of this actor
+                    image:
+                      type: object
+                      description: image with different styles
+                      properties:
+                        large:
+                          type: string
+                        medium:
+                          type: string
+                        small:
+                          type: string
+                    image_b64:
+                      type: string
+                      writeOnly: true
+                      description: BASE64 encoded image (JPEG or PNG) to be used as
+                        the user`s avatar
+                    short_name:
+                      type: string
+                      default: short name of an organizational unit or group
+                      description: short name of this actor
           application/x-www-form-urlencoded:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[full_name]:
+                  type: string
+                  default: full name of an organizational unit or group
+                  description: full name of this actor
+                data[image][large]:
+                  type: string
+                data[image][medium]:
+                  type: string
+                data[image][small]:
+                  type: string
+                data[image_b64]:
+                  type: string
+                  writeOnly: true
+                  description: BASE64 encoded image (JPEG or PNG) to be used as the
+                    user`s avatar
+                data[short_name]:
+                  type: string
+                  default: short name of an organizational unit or group
+                  description: short name of this actor
           multipart/form-data:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[full_name]:
+                  type: string
+                  default: full name of an organizational unit or group
+                  description: full name of this actor
+                data[image][large]:
+                  type: string
+                data[image][medium]:
+                  type: string
+                data[image][small]:
+                  type: string
+                data[image_b64]:
+                  type: string
+                  writeOnly: true
+                  description: BASE64 encoded image (JPEG or PNG) to be used as the
+                    user`s avatar
+                data[short_name]:
+                  type: string
+                  default: short name of an organizational unit or group
+                  description: short name of this actor
 

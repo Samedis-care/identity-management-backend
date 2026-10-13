@@ -115,18 +115,37 @@ paths:
           application/json:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data:
+                  type: object
+                  description: the main attributes of this record
+                  properties:
+                    active:
+                      type: string
+                      description: controls if the domain name is actively being blacklisted
+                    domain:
+                      type: string
+                      description: blacklisted domain name
           application/x-www-form-urlencoded:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[active]:
+                  type: string
+                  description: controls if the domain name is actively being blacklisted
+                data[domain]:
+                  type: string
+                  description: blacklisted domain name
           multipart/form-data:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[active]:
+                  type: string
+                  description: controls if the domain name is actively being blacklisted
+                data[domain]:
+                  type: string
+                  description: blacklisted domain name
     get:
       summary: 'Email Blacklist: List [GET]'
       tags:
@@ -627,16 +646,35 @@ paths:
           application/json:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data:
+                  type: object
+                  description: the main attributes of this record
+                  properties:
+                    active:
+                      type: string
+                      description: controls if the domain name is actively being blacklisted
+                    domain:
+                      type: string
+                      description: blacklisted domain name
           application/x-www-form-urlencoded:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[active]:
+                  type: string
+                  description: controls if the domain name is actively being blacklisted
+                data[domain]:
+                  type: string
+                  description: blacklisted domain name
           multipart/form-data:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[active]:
+                  type: string
+                  description: controls if the domain name is actively being blacklisted
+                data[domain]:
+                  type: string
+                  description: blacklisted domain name
 

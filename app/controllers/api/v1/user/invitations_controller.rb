@@ -14,6 +14,8 @@ class Api::V1::User::InvitationsController < Api::V1::JsonApiController
     header: 'Pending invitations for the current user'
   }
 
+  PERMIT_CREATE = %i[tenant_id invitable_id invitable_type auto_accept user_id].freeze
+
   undef_method :index
   undef_method :show
 
@@ -48,12 +50,6 @@ class Api::V1::User::InvitationsController < Api::V1::JsonApiController
       destroy: %w(~/invites.deleter),
       update: %w(public)
     })
-  end
-
-  def params_create
-    params.fetch(:data, {}).permit(
-      :tenant_id, :invitable_id, :invitable_type, :auto_accept, :user_id
-    )
   end
 
 end

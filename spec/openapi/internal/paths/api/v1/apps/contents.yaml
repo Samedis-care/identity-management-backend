@@ -121,18 +121,104 @@ paths:
           application/json:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data:
+                  type: object
+                  description: the main attributes of this record
+                  properties:
+                    acceptance_required:
+                      type: boolean
+                      default: false
+                      description: when true the user is required to accept every
+                        new version of this content
+                    active:
+                      type: boolean
+                      default: false
+                      description: only active flagged will be used, leave inactive
+                        during draft
+                    content_translations:
+                      type: object
+                      description: Hash of locale-languages with translated content
+                      properties:
+                        de:
+                          type: string
+                          default: Deutsche Übersetzung
+                          description: German content
+                        en:
+                          type: string
+                          default: English translation
+                          description: English content
+                    name:
+                      type: string
+                      default: app-info
+                      enum:
+                      - tos
+                      - privacy
+                      - tos-privacy
+                      - app-info
+                      description: name of the content (like "tos", "app-info")
           application/x-www-form-urlencoded:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[acceptance_required]:
+                  type: boolean
+                  default: false
+                  description: when true the user is required to accept every new
+                    version of this content
+                data[active]:
+                  type: boolean
+                  default: false
+                  description: only active flagged will be used, leave inactive during
+                    draft
+                data[content_translations][de]:
+                  type: string
+                  default: Deutsche Übersetzung
+                  description: German content
+                data[content_translations][en]:
+                  type: string
+                  default: English translation
+                  description: English content
+                data[name]:
+                  type: string
+                  default: app-info
+                  enum:
+                  - tos
+                  - privacy
+                  - tos-privacy
+                  - app-info
+                  description: name of the content (like "tos", "app-info")
           multipart/form-data:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[acceptance_required]:
+                  type: boolean
+                  default: false
+                  description: when true the user is required to accept every new
+                    version of this content
+                data[active]:
+                  type: boolean
+                  default: false
+                  description: only active flagged will be used, leave inactive during
+                    draft
+                data[content_translations][de]:
+                  type: string
+                  default: Deutsche Übersetzung
+                  description: German content
+                data[content_translations][en]:
+                  type: string
+                  default: English translation
+                  description: English content
+                data[name]:
+                  type: string
+                  default: app-info
+                  enum:
+                  - tos
+                  - privacy
+                  - tos-privacy
+                  - app-info
+                  description: name of the content (like "tos", "app-info")
     get:
       summary: 'Content: List [GET]'
       tags:
@@ -656,16 +742,102 @@ paths:
           application/json:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data:
+                  type: object
+                  description: the main attributes of this record
+                  properties:
+                    acceptance_required:
+                      type: boolean
+                      default: false
+                      description: when true the user is required to accept every
+                        new version of this content
+                    active:
+                      type: boolean
+                      default: false
+                      description: only active flagged will be used, leave inactive
+                        during draft
+                    content_translations:
+                      type: object
+                      description: Hash of locale-languages with translated content
+                      properties:
+                        de:
+                          type: string
+                          default: Deutsche Übersetzung
+                          description: German content
+                        en:
+                          type: string
+                          default: English translation
+                          description: English content
+                    name:
+                      type: string
+                      default: app-info
+                      enum:
+                      - tos
+                      - privacy
+                      - tos-privacy
+                      - app-info
+                      description: name of the content (like "tos", "app-info")
           application/x-www-form-urlencoded:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[acceptance_required]:
+                  type: boolean
+                  default: false
+                  description: when true the user is required to accept every new
+                    version of this content
+                data[active]:
+                  type: boolean
+                  default: false
+                  description: only active flagged will be used, leave inactive during
+                    draft
+                data[content_translations][de]:
+                  type: string
+                  default: Deutsche Übersetzung
+                  description: German content
+                data[content_translations][en]:
+                  type: string
+                  default: English translation
+                  description: English content
+                data[name]:
+                  type: string
+                  default: app-info
+                  enum:
+                  - tos
+                  - privacy
+                  - tos-privacy
+                  - app-info
+                  description: name of the content (like "tos", "app-info")
           multipart/form-data:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[acceptance_required]:
+                  type: boolean
+                  default: false
+                  description: when true the user is required to accept every new
+                    version of this content
+                data[active]:
+                  type: boolean
+                  default: false
+                  description: only active flagged will be used, leave inactive during
+                    draft
+                data[content_translations][de]:
+                  type: string
+                  default: Deutsche Übersetzung
+                  description: German content
+                data[content_translations][en]:
+                  type: string
+                  default: English translation
+                  description: English content
+                data[name]:
+                  type: string
+                  default: app-info
+                  enum:
+                  - tos
+                  - privacy
+                  - tos-privacy
+                  - app-info
+                  description: name of the content (like "tos", "app-info")
 

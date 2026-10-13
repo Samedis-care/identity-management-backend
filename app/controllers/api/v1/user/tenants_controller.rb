@@ -14,6 +14,10 @@ class Api::V1::User::TenantsController < Api::V1::JsonApiController
     action_suffix: 'of the current user'
   }
 
+  # client-supplied attributes only; parent/owner are server-set in #params_create
+  PERMIT_UPDATE = %i[image_b64 image short_name full_name].freeze
+  PERMIT_CREATE = PERMIT_UPDATE
+
   private
   # restrict to the current_user's tenant(s): only a genuine app-wide admin
   # (holding app-tenant.admin in one of their tenants) may see all tenants;
@@ -54,11 +58,8 @@ class Api::V1::User::TenantsController < Api::V1::JsonApiController
     model_destroy.find(params_json_api[:id])
   end
 
-  def params_update
-    params.fetch(:data, {}).permit(:image_b64, :image, :short_name, :full_name)
-  end
   def params_create
-    params_update.merge(parent: current_app_container_tenants, owner: current_user.actor)
+    super.merge(parent: current_app_container_tenants, owner: current_user.actor)
   end
 
   def cando

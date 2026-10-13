@@ -4162,18 +4162,34 @@ paths:
           application/json:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data:
+                  type: object
+                  description: the main attributes of this record
+                  properties:
+                    access_group_ids:
+                      type: array
+                      description: id of an access group
+                      items:
+                        type: string
           application/x-www-form-urlencoded:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[access_group_ids]:
+                  type: array
+                  description: id of an access group
+                  items:
+                    type: string
           multipart/form-data:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[access_group_ids]:
+                  type: array
+                  description: id of an access group
+                  items:
+                    type: string
   "/api/v1/access_control/tenant/{tenant_id}/users/{id}":
     delete:
       summary: 'Tenant User: Delete [DELETE] authorized groups'
@@ -4515,18 +4531,34 @@ paths:
           application/json:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data:
+                  type: object
+                  description: the main attributes of this record
+                  properties:
+                    access_group_ids:
+                      type: array
+                      description: id of an access group
+                      items:
+                        type: string
           application/x-www-form-urlencoded:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[access_group_ids]:
+                  type: array
+                  description: id of an access group
+                  items:
+                    type: string
           multipart/form-data:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[access_group_ids]:
+                  type: array
+                  description: id of an access group
+                  items:
+                    type: string
   "/api/v1/access_control/tenant/{tenant_id}/users":
     get:
       summary: 'Tenant User: List [GET] authorized groups'
@@ -6766,18 +6798,104 @@ paths:
           application/json:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data:
+                  type: object
+                  description: the main attributes of this record
+                  properties:
+                    acceptance_required:
+                      type: boolean
+                      default: false
+                      description: when true the user is required to accept every
+                        new version of this content
+                    active:
+                      type: boolean
+                      default: false
+                      description: only active flagged will be used, leave inactive
+                        during draft
+                    content_translations:
+                      type: object
+                      description: Hash of locale-languages with translated content
+                      properties:
+                        de:
+                          type: string
+                          default: Deutsche Übersetzung
+                          description: German content
+                        en:
+                          type: string
+                          default: English translation
+                          description: English content
+                    name:
+                      type: string
+                      default: app-info
+                      enum:
+                      - tos
+                      - privacy
+                      - tos-privacy
+                      - app-info
+                      description: name of the content (like "tos", "app-info")
           application/x-www-form-urlencoded:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[acceptance_required]:
+                  type: boolean
+                  default: false
+                  description: when true the user is required to accept every new
+                    version of this content
+                data[active]:
+                  type: boolean
+                  default: false
+                  description: only active flagged will be used, leave inactive during
+                    draft
+                data[content_translations][de]:
+                  type: string
+                  default: Deutsche Übersetzung
+                  description: German content
+                data[content_translations][en]:
+                  type: string
+                  default: English translation
+                  description: English content
+                data[name]:
+                  type: string
+                  default: app-info
+                  enum:
+                  - tos
+                  - privacy
+                  - tos-privacy
+                  - app-info
+                  description: name of the content (like "tos", "app-info")
           multipart/form-data:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[acceptance_required]:
+                  type: boolean
+                  default: false
+                  description: when true the user is required to accept every new
+                    version of this content
+                data[active]:
+                  type: boolean
+                  default: false
+                  description: only active flagged will be used, leave inactive during
+                    draft
+                data[content_translations][de]:
+                  type: string
+                  default: Deutsche Übersetzung
+                  description: German content
+                data[content_translations][en]:
+                  type: string
+                  default: English translation
+                  description: English content
+                data[name]:
+                  type: string
+                  default: app-info
+                  enum:
+                  - tos
+                  - privacy
+                  - tos-privacy
+                  - app-info
+                  description: name of the content (like "tos", "app-info")
     get:
       summary: 'Content: List [GET]'
       tags:
@@ -7301,18 +7419,104 @@ paths:
           application/json:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data:
+                  type: object
+                  description: the main attributes of this record
+                  properties:
+                    acceptance_required:
+                      type: boolean
+                      default: false
+                      description: when true the user is required to accept every
+                        new version of this content
+                    active:
+                      type: boolean
+                      default: false
+                      description: only active flagged will be used, leave inactive
+                        during draft
+                    content_translations:
+                      type: object
+                      description: Hash of locale-languages with translated content
+                      properties:
+                        de:
+                          type: string
+                          default: Deutsche Übersetzung
+                          description: German content
+                        en:
+                          type: string
+                          default: English translation
+                          description: English content
+                    name:
+                      type: string
+                      default: app-info
+                      enum:
+                      - tos
+                      - privacy
+                      - tos-privacy
+                      - app-info
+                      description: name of the content (like "tos", "app-info")
           application/x-www-form-urlencoded:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[acceptance_required]:
+                  type: boolean
+                  default: false
+                  description: when true the user is required to accept every new
+                    version of this content
+                data[active]:
+                  type: boolean
+                  default: false
+                  description: only active flagged will be used, leave inactive during
+                    draft
+                data[content_translations][de]:
+                  type: string
+                  default: Deutsche Übersetzung
+                  description: German content
+                data[content_translations][en]:
+                  type: string
+                  default: English translation
+                  description: English content
+                data[name]:
+                  type: string
+                  default: app-info
+                  enum:
+                  - tos
+                  - privacy
+                  - tos-privacy
+                  - app-info
+                  description: name of the content (like "tos", "app-info")
           multipart/form-data:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[acceptance_required]:
+                  type: boolean
+                  default: false
+                  description: when true the user is required to accept every new
+                    version of this content
+                data[active]:
+                  type: boolean
+                  default: false
+                  description: only active flagged will be used, leave inactive during
+                    draft
+                data[content_translations][de]:
+                  type: string
+                  default: Deutsche Übersetzung
+                  description: German content
+                data[content_translations][en]:
+                  type: string
+                  default: English translation
+                  description: English content
+                data[name]:
+                  type: string
+                  default: app-info
+                  enum:
+                  - tos
+                  - privacy
+                  - tos-privacy
+                  - app-info
+                  description: name of the content (like "tos", "app-info")
   "/api/v1/user/account_activity":
     get:
       summary: 'Account Activity: List [GET]'
@@ -8318,18 +8522,37 @@ paths:
           application/json:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data:
+                  type: object
+                  description: the main attributes of this record
+                  properties:
+                    active:
+                      type: string
+                      description: controls if the domain name is actively being blacklisted
+                    domain:
+                      type: string
+                      description: blacklisted domain name
           application/x-www-form-urlencoded:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[active]:
+                  type: string
+                  description: controls if the domain name is actively being blacklisted
+                data[domain]:
+                  type: string
+                  description: blacklisted domain name
           multipart/form-data:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[active]:
+                  type: string
+                  description: controls if the domain name is actively being blacklisted
+                data[domain]:
+                  type: string
+                  description: blacklisted domain name
     get:
       summary: 'Email Blacklist: List [GET]'
       tags:
@@ -8830,18 +9053,37 @@ paths:
           application/json:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data:
+                  type: object
+                  description: the main attributes of this record
+                  properties:
+                    active:
+                      type: string
+                      description: controls if the domain name is actively being blacklisted
+                    domain:
+                      type: string
+                      description: blacklisted domain name
           application/x-www-form-urlencoded:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[active]:
+                  type: string
+                  description: controls if the domain name is actively being blacklisted
+                data[domain]:
+                  type: string
+                  description: blacklisted domain name
           multipart/form-data:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[active]:
+                  type: string
+                  description: controls if the domain name is actively being blacklisted
+                data[domain]:
+                  type: string
+                  description: blacklisted domain name
   "/api/v1/apps/{app_id}/functionalities":
     post:
       summary: 'Functionality: Create [POST]'
@@ -10715,18 +10957,80 @@ paths:
           application/json:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data:
+                  type: object
+                  description: the main attributes of this record
+                  properties:
+                    full_name:
+                      type: string
+                      default: full name of an organizational unit or group
+                      description: full name of this actor
+                    image:
+                      type: object
+                      description: image with different styles
+                      properties:
+                        large:
+                          type: string
+                        medium:
+                          type: string
+                        small:
+                          type: string
+                    image_b64:
+                      type: string
+                      writeOnly: true
+                      description: BASE64 encoded image (JPEG or PNG) to be used as
+                        the user`s avatar
+                    short_name:
+                      type: string
+                      default: short name of an organizational unit or group
+                      description: short name of this actor
           application/x-www-form-urlencoded:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[full_name]:
+                  type: string
+                  default: full name of an organizational unit or group
+                  description: full name of this actor
+                data[image][large]:
+                  type: string
+                data[image][medium]:
+                  type: string
+                data[image][small]:
+                  type: string
+                data[image_b64]:
+                  type: string
+                  writeOnly: true
+                  description: BASE64 encoded image (JPEG or PNG) to be used as the
+                    user`s avatar
+                data[short_name]:
+                  type: string
+                  default: short name of an organizational unit or group
+                  description: short name of this actor
           multipart/form-data:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[full_name]:
+                  type: string
+                  default: full name of an organizational unit or group
+                  description: full name of this actor
+                data[image][large]:
+                  type: string
+                data[image][medium]:
+                  type: string
+                data[image][small]:
+                  type: string
+                data[image_b64]:
+                  type: string
+                  writeOnly: true
+                  description: BASE64 encoded image (JPEG or PNG) to be used as the
+                    user`s avatar
+                data[short_name]:
+                  type: string
+                  default: short name of an organizational unit or group
+                  description: short name of this actor
     get:
       summary: 'My Tenant: List [GET] of the current user'
       tags:
@@ -11241,18 +11545,80 @@ paths:
           application/json:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data:
+                  type: object
+                  description: the main attributes of this record
+                  properties:
+                    full_name:
+                      type: string
+                      default: full name of an organizational unit or group
+                      description: full name of this actor
+                    image:
+                      type: object
+                      description: image with different styles
+                      properties:
+                        large:
+                          type: string
+                        medium:
+                          type: string
+                        small:
+                          type: string
+                    image_b64:
+                      type: string
+                      writeOnly: true
+                      description: BASE64 encoded image (JPEG or PNG) to be used as
+                        the user`s avatar
+                    short_name:
+                      type: string
+                      default: short name of an organizational unit or group
+                      description: short name of this actor
           application/x-www-form-urlencoded:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[full_name]:
+                  type: string
+                  default: full name of an organizational unit or group
+                  description: full name of this actor
+                data[image][large]:
+                  type: string
+                data[image][medium]:
+                  type: string
+                data[image][small]:
+                  type: string
+                data[image_b64]:
+                  type: string
+                  writeOnly: true
+                  description: BASE64 encoded image (JPEG or PNG) to be used as the
+                    user`s avatar
+                data[short_name]:
+                  type: string
+                  default: short name of an organizational unit or group
+                  description: short name of this actor
           multipart/form-data:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[full_name]:
+                  type: string
+                  default: full name of an organizational unit or group
+                  description: full name of this actor
+                data[image][large]:
+                  type: string
+                data[image][medium]:
+                  type: string
+                data[image][small]:
+                  type: string
+                data[image_b64]:
+                  type: string
+                  writeOnly: true
+                  description: BASE64 encoded image (JPEG or PNG) to be used as the
+                    user`s avatar
+                data[short_name]:
+                  type: string
+                  default: short name of an organizational unit or group
+                  description: short name of this actor
   "/api/v1/apps/{app_id}/organizations/{organization_id}/actor_roles":
     post:
       summary: 'Organization Role: Create [POST]'

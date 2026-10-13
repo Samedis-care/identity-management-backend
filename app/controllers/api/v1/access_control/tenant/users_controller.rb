@@ -19,6 +19,8 @@ class Api::V1::AccessControl::Tenant::UsersController < Api::V1::JsonApiControll
     action_suffix: 'authorized groups'
   }
 
+  PERMIT_UPDATE = [{ access_group_ids: [] }].freeze
+
   undef_method :create
 
   def index
@@ -95,10 +97,6 @@ class Api::V1::AccessControl::Tenant::UsersController < Api::V1::JsonApiControll
       update:  %w(~/invitations.writer ~/access-control.writer identity-management/apps.admin),
       destroy: %w(~/invitations.writer ~/access-control.writer identity-management/apps.admin)
     })
-  end
-
-  def params_update
-    params.fetch(:data, {}).permit(access_group_ids: [])
   end
 
 end
