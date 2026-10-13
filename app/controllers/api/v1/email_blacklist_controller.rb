@@ -8,6 +8,9 @@ class Api::V1::EmailBlacklistController < Api::V1::JsonApiController
 
   SWAGGER = { tag: 'Email Blacklist', name: 'Email Blacklist', header: 'Manage blocked email domains' }
 
+  PERMIT_UPDATE = %i[domain active].freeze
+  PERMIT_CREATE = PERMIT_UPDATE
+
   private
   def cando
     CANDO.merge({
@@ -17,13 +20,6 @@ class Api::V1::EmailBlacklistController < Api::V1::JsonApiController
       update:  %w(identity-management/global.admin+identity-management/email-blacklists.writer),
       destroy: %w(identity-management/global.admin+identity-management/email-blacklists.deleter)
     })
-  end
-
-  def params_update
-    params.fetch(:data, {}).permit(:domain, :active)
-  end
-  def params_create
-    params_update
   end
 
 end
