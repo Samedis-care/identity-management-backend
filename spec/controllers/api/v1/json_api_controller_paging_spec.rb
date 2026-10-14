@@ -105,6 +105,9 @@ RSpec.describe Api::V1::JsonApiController, 'paging params' do
   end
 
   it 'keeps the largest skip any controller can request far below int64' do
+    # config/environments/test.rb only eager loads when CI is set, and `descendants` holds only
+    # what has been autoloaded so far -- load every controller so no PAGE_LIMIT_MAX override is missed
+    Rails.application.eager_load!
     largest_limit = described_class.descendants.filter_map { |c| c.const_get(:PAGE_LIMIT_MAX) if c.name }.max
     skip = (described_class::PAGE_NUMBER_MAX - 1) * largest_limit + described_class::PAGE_PADDING_MAX
 
