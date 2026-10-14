@@ -22,6 +22,13 @@ class Api::V1::JsonApiController < ApplicationController
 
   PAGE_LIMIT = 50
   PAGE_LIMIT_MAX = 100
+  # Upper bounds for page[number] / page[padding]. Without one, a value beyond int64 becomes a
+  # Bignum, the skip derived from it overflows what BSON can serialize and the find command
+  # raises RangeError (HTTP 500). 2**31 - 1 times the largest PAGE_LIMIT_MAX stays far below
+  # int64 and still answers an empty page for any page number that was representable before
+  # (Samedis-care/samedis-care-issues#2994).
+  PAGE_NUMBER_MAX = 2**31 - 1
+  PAGE_PADDING_MAX = 2**31 - 1
 
   PERMIT_CREATE = []
   PERMIT_UPDATE = []
@@ -357,6 +364,7 @@ class Api::V1::JsonApiController < ApplicationController
     @page_number ||= params_json_api[:page]
     @page_number = @page_number.numeric? ? @page_number.to_i.abs : 1
     @page_number = 1 if @page_number < 1
+    @page_number = self.class::PAGE_NUMBER_MAX if @page_number > self.class::PAGE_NUMBER_MAX
     @page_number
   end
 
@@ -364,6 +372,7 @@ class Api::V1::JsonApiController < ApplicationController
     @page_padding = params_json_api.dig(:page, :padding) rescue nil
     @page_padding ||= params_json_api[:padding]
     @page_padding = @page_padding.numeric? ? @page_padding.to_i.abs : 0
+    @page_padding = self.class::PAGE_PADDING_MAX if @page_padding > self.class::PAGE_PADDING_MAX
     @page_padding
   end
 

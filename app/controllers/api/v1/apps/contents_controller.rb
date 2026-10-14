@@ -10,6 +10,10 @@ class Api::V1::Apps::ContentsController < Api::V1::JsonApiController
 
   SWAGGER = { tag: 'Contents', name: 'Content', header: 'Manage app content like terms and policies' }
 
+  # client-supplied attributes only; actors_app_id/app are server-set in #params_create
+  PERMIT_UPDATE = [:name, :active, :acceptance_required, { content_translations: {} }].freeze
+  PERMIT_CREATE = PERMIT_UPDATE
+
   skip_before_action :authenticate_user!, only: :show
   skip_before_action :authorize, only: :show
 
@@ -24,11 +28,8 @@ class Api::V1::Apps::ContentsController < Api::V1::JsonApiController
     })
   end
 
-  def params_update
-    params.fetch(:data, {}).permit(:name, :active, :acceptance_required, :content_translations => {})
-  end
   def params_create
-    params_update.merge({actors_app_id: current_app_id, app: current_app_actor.name.to_s.gsub(/\_/,'-').to_slug})
+    super.merge({actors_app_id: current_app_id, app: current_app_actor.name.to_s.gsub(/\_/,'-').to_slug})
   end
 
 end

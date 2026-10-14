@@ -66,7 +66,9 @@ class Actor < ApplicationDocument
 
   strip_attributes collapse_spaces: true
 
-  has_one :user, class_name: '::User', inverse_of: :actor, dependent: :destroy
+  # No dependent: :destroy here — User belongs_to :actor with dependent: :destroy,
+  # and declaring it on both sides makes User#destroy recurse until SystemStackError.
+  has_one :user, class_name: '::User', inverse_of: :actor
   has_and_belongs_to_many :roles, inverse_of: nil # this creates role_ids on the actor
 
   belongs_to :map_actor, class_name: 'Actor', optional: true

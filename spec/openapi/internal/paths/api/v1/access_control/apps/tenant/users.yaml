@@ -539,16 +539,32 @@ paths:
           application/json:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data:
+                  type: object
+                  description: the main attributes of this record
+                  properties:
+                    access_group_ids:
+                      type: array
+                      description: id of an access group
+                      items:
+                        type: string
           application/x-www-form-urlencoded:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[access_group_ids]:
+                  type: array
+                  description: id of an access group
+                  items:
+                    type: string
           multipart/form-data:
             schema:
               type: object
-              description: This endpoint does not support sending any attributes
-              nullable: true
+              properties:
+                data[access_group_ids]:
+                  type: array
+                  description: id of an access group
+                  items:
+                    type: string
 

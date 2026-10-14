@@ -40,7 +40,9 @@ class Api::V1::App::SocialAuthController < ApplicationController
     if provider == 'apple' && params[:name].present?
       user.first_name = params.dig(:name, :first) if params.dig(:name, :first).present?
       user.last_name = params.dig(:name, :last) if params.dig(:name, :last).present?
-      user.save! if user.changed?
+      # not save!: a user rejected by from_omniauth (e.g. blacklisted email domain) is unsaved and
+      # therefore always changed?; save re-validates and keeps the errors for the check below
+      user.save if user.changed?
     end
 
     unless user.errors.empty?

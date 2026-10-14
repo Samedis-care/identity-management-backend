@@ -2,7 +2,16 @@ module Actors
 
   class User < Actor
 
-    has_one :user, class_name: '::User', inverse_of: :actor, dependent: :destroy
+    # See Actor#user: the destroy cascade lives on User#actor only.
+    has_one :user, class_name: '::User', inverse_of: :actor
+
+    # A user's group/tenant memberships are Actors::Mapping documents elsewhere in the
+    # tree that point here via map_actor_id; Actor#destroy_mappings only covers mappings
+    # UNDER this actor (parent_id). Left behind, they make a later destroy of the group
+    # raise from Actors::Mapping#user_cache_expire! (map_actor.user on a deleted actor).
+    # delete_all, not destroy_all: destroying would fire after_destroy :user_cache_expire!
+    # per mapping, the reentrancy warned about above User#unmap_orphaned_group_memberships!.
+    before_destroy { Actors::Mapping.where(map_actor_id: id).delete_all }
 
     def self.global_admin
       where(name: :global_admin).first_or_create(
