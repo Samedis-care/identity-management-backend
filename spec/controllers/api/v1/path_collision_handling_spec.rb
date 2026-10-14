@@ -8,7 +8,8 @@ require 'rails_helper'
 RSpec.describe BaseControllerMethods, 'Actor::PathCollisionError handling' do
   subject(:controller_instance) { Api::V1::EmailBlacklistController.new }
 
-  let(:collisions) { [{ path: 'tenant / someone@x.test', actor_ids: %w[a b] }] }
+  # the shape Actor.path_rebuild_collisions produces
+  let(:collisions) { [{ name: 'someone@x.test', path: 'tenant / someone@x.test', ids: %w[a b] }] }
   let(:error) { Actor::PathCollisionError.new('collision', collisions: collisions) }
 
   before do
