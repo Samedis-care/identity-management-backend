@@ -5,7 +5,7 @@ fr:
     gridfilter_error: Erreur de filtre de grille
     general_error: Erreur générale
     database_error: erreur de la base de données
-    path_collision_error: "Les chemins n'ont pas pu être mis à jour en raison d'entrées en double. Veuillez contacter le support."
+    path_collision_error: "La modification a été enregistrée, mais les chemins en dessous n'ont pas pu être entièrement mis à jour en raison d'entrées en double. Veuillez contacter le support au lieu d'enregistrer à nouveau."
     authorization_error: Erreur d'autorisation
     object_id_invalid_error: Un ID d'objet non valide a été fourni
     malformed_csv_error: >-
