@@ -137,6 +137,26 @@ RSpec.describe Api::V1::Devise::OmniauthCallbacksController, type: :controller d
       end
     end
 
+    # Samedis-care/samedis-care-issues#2572: from_omniauth now hands back an unsaved user
+    # carrying errors (e.g. blacklisted email domain) instead of raising; do_oauth must turn
+    # that into a login redirect. It used to call ActiveModel::Errors#keys, which Rails 7+ removed.
+    context 'when the user comes back with validation errors' do
+      let(:invalid_user) do
+        User.new(email: 'someone@blocked.test').tap { |user| user.errors.add(:email, 'not valid') }
+      end
+
+      before { allow(User).to receive(:from_omniauth).and_return(invalid_user) }
+
+      it 'redirects to the login url with oauth_incomplete and the failing attribute' do
+        session[:oauth_state_nonce] = nonce
+        get :dynamic_provider_callback,
+            params: { provider: provider_domain, code: 'auth-code-xyz', state: valid_state }
+
+        expect(response).to be_redirect
+        expect(response.location).to include('error=oauth_incomplete', 'message=email')
+      end
+    end
+
     context 'when the nonce does not match' do
       def do_wrong_nonce_callback
         session[:oauth_state_nonce] = nonce

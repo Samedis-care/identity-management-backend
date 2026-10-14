@@ -190,6 +190,13 @@ class User < ApplicationDocument
   }
   validates_confirmation_of :email, message: -> { I18n.t('errors.email.confirmation') }, on: :create
 
+  # Runs when the address is set or changed, not on every save: an account already registered
+  # on a listed domain stays editable as long as it keeps its address, but nobody can create
+  # an account on, or move an existing one onto, a listed domain
+  # (Samedis-care/samedis-care-issues#2572). `email` is writable through PUT /user and the
+  # admin/tenant-admin user controllers; a reconfirmable change sets it before validation.
+  validate :email_blacklisted, if: :email_changed?
+
   # Minimum length matches identity-management-frontend's CreateAccount.tsx (minPwLen = 8).
   validates :password, presence: true,
             length: { in: 8..1024,
@@ -270,7 +277,9 @@ class User < ApplicationDocument
       user.set_password = _password
     end
     user.confirmed_at ||= Time.now
-    user.save!
+    # not save!: both callers (OmniauthCallbacksController#do_oauth, SocialAuthController#create)
+    # turn user.errors into a login redirect / 422, e.g. for a blacklisted email domain
+    user.save
     user
   end
 
@@ -1135,6 +1144,10 @@ class User < ApplicationDocument
   end
 
   def email_blacklisted
+    # a blank address is already rejected by the presence validation; EmailBlacklist.validate
+    # treats a blank domain as blacklisted, which would only add a misleading second error
+    return if email.blank?
+
     unless EmailBlacklist.validate(self.email)
       errors.add(:email, I18n.t('errors.email.blacklisted'))
     end
