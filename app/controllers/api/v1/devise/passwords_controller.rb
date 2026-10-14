@@ -1,4 +1,4 @@
-# OpenAPI spec: spec/openapi/ident/paths/api/v1/devise/passwords.yaml
+# OpenAPI spec: spec/openapi/internal/paths/api/v1/devise/passwords.yaml
 module Api::V1::Devise
   class PasswordsController < Devise::PasswordsController
     respond_to :json
