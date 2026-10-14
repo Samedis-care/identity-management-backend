@@ -190,6 +190,10 @@ class User < ApplicationDocument
   }
   validates_confirmation_of :email, message: -> { I18n.t('errors.email.confirmation') }, on: :create
 
+  # Only on create: accounts already registered on a listed domain must stay editable
+  # (Samedis-care/samedis-care-issues#2572).
+  validate :email_blacklisted, on: :create
+
   # Minimum length matches identity-management-frontend's CreateAccount.tsx (minPwLen = 8).
   validates :password, presence: true,
             length: { in: 8..1024,
@@ -1135,6 +1139,10 @@ class User < ApplicationDocument
   end
 
   def email_blacklisted
+    # a blank address is already rejected by the presence validation; EmailBlacklist.validate
+    # treats a blank domain as blacklisted, which would only add a misleading second error
+    return if email.blank?
+
     unless EmailBlacklist.validate(self.email)
       errors.add(:email, I18n.t('errors.email.blacklisted'))
     end
