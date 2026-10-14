@@ -40,14 +40,21 @@ RSpec.describe NormalizeEmailBlacklistDomains do
     expect(EmailBlacklist.validate("a@#{domain}")).to be(false)
   end
 
-  it 'merges variants of one domain into a single row, keeping the already-normalised one' do
-    keeper = insert(domain, active: false)
+  it 'merges variants of one domain into the already-normalised row' do
+    keeper = insert(domain, active: true)
+    insert(domain.upcase, active: false)
+    run
+
+    expect(rows(domain, domain.upcase).map { |row| row['_id'] }).to eq([keeper])
+  end
+
+  it 'keeps the active flag of the normalised row, so a deactivated domain does not become a block' do
+    insert(domain, active: false)
     insert(domain.upcase, active: true)
     run
 
-    remaining = rows(domain, domain.upcase)
-    expect(remaining.map { |row| row['_id'] }).to eq([keeper])
-    expect(remaining.first['active']).to be(true)
+    expect(rows(domain).first['active']).to be(false)
+    expect(EmailBlacklist.validate("a@#{domain}")).to be(true)
   end
 
   it 'keeps the oldest row when no variant is normalised yet' do
@@ -56,6 +63,21 @@ RSpec.describe NormalizeEmailBlacklistDomains do
     run
 
     expect(rows(domain).map { |row| row['_id'] }).to eq([oldest])
+  end
+
+  it 'is active when any variant was and none is normalised yet' do
+    insert(domain.upcase, active: false)
+    insert(" #{domain} ", active: true)
+    run
+
+    expect(rows(domain).first['active']).to be(true)
+  end
+
+  it 'prints each merge with the resulting active flag' do
+    insert(domain, active: false)
+    insert(domain.upcase, active: true)
+
+    expect { described_class.up }.to output(/merged 2 rows into #{Regexp.escape(domain)} \(active: false\)/).to_stdout
   end
 
   it 'leaves entries that are already normalised untouched' do
