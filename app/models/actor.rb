@@ -16,6 +16,19 @@
 # - Time
 # - TimeWithZone
 class Actor < ApplicationDocument
+  # Raised when rebuilding the materialized paths would make two undeleted actors
+  # share the same (name, path), i.e. violates the unique index
+  # actor_path_unique_undeleted. +collisions+ lists the offending groups as
+  # [{ name:, path:, ids: [...] }] (best effort, may be empty).
+  class PathCollisionError < StandardError
+    attr_reader :collisions
+
+    def initialize(message, collisions: [])
+      super(message)
+      @collisions = collisions
+    end
+  end
+
   include Mongoid::Document
   include Mongoid::Timestamps
   include Mongoid::Tree
@@ -1176,6 +1189,33 @@ class Actor < ApplicationDocument
         }
       ]
     ).to_a
+  rescue Mongo::Error::OperationFailure => e
+    raise unless e.message.include?('actor_path_unique_undeleted')
+
+    # The $merge is not atomic: documents processed before the conflict keep their
+    # new path. Surface which actors collide instead of a bare E11000.
+    collisions = path_rebuild_collisions
+    details = collisions.first(5).map { |c| "#{c[:name]} @ #{c[:path]} => #{c[:ids].join(', ')}" }.join('; ')
+    raise PathCollisionError.new(
+      "Path rebuild aborted by duplicate (name, path): #{details.presence || e.message}",
+      collisions: collisions
+    )
+  end
+
+  # Read-only preview of the rebuild: groups undeleted actors that would end up with
+  # the same (name, path). Used to explain a unique-index failure of merge_rebuild_path!.
+  # Only sees collisions inside the scoped subtree; a clash with an actor outside of it
+  # leaves the result empty.
+  def self.path_rebuild_collisions
+    rebuilt = collection.aggregate(aggregation_rebuild_path).to_a
+    names = collection.find(_id: { '$in' => rebuilt.map { _1['_id'] } }, deleted: false)
+                      .projection(name: 1).to_h { [_1['_id'], _1['name']] }
+    rebuilt.select { names.key?(_1['_id']) }
+           .group_by { [names[_1['_id']], _1['path']] }
+           .select { |_, docs| docs.size > 1 }
+           .map { |(name, path), docs| { name: name, path: path, ids: docs.map { _1['_id'].to_s } } }
+  rescue Mongo::Error
+    []
   end
 
   # fetches the next available uniq name with criteria

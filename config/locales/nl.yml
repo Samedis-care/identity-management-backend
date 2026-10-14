@@ -5,6 +5,7 @@ nl:
     gridfilter_error: Grid filter fout
     general_error: Algemene fout
     database_error: Database fout
+    path_collision_error: De wijziging is opgeslagen, maar de paden eronder konden vanwege dubbele items niet volledig worden bijgewerkt. Neem contact op met support in plaats van opnieuw op te slaan.
     authorization_error: Autorisatie fout
     object_id_invalid_error: Er is een ongeldige object-ID opgegeven
     malformed_csv_error: >-

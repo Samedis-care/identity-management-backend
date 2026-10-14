@@ -5,6 +5,7 @@ ru:
     gridfilter_error: Ошибка сетевого фильтра
     general_error: Общая ошибка
     database_error: ошибка базы данных
+    path_collision_error: Изменение сохранено, но пути ниже не удалось полностью обновить из-за дублирующихся записей. Обратитесь в службу поддержки, а не сохраняйте повторно.
     authorization_error: Ошибка авторизации
     object_id_invalid_error: Указан недопустимый идентификатор объекта
     malformed_csv_error: >-

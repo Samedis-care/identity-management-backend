@@ -5,6 +5,7 @@ en:
     gridfilter_error: Grid filter error
     general_error: General error
     database_error: Database error
+    path_collision_error: The change was saved, but the paths below it could not be fully updated because of duplicate entries. Please contact support instead of saving again.
     authorization_error: Authorization error
     oauth_error: The remote authentication server didn't return the minimum required
       information for logging in (trusted email, first name and last name).
