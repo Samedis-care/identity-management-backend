@@ -113,7 +113,7 @@ RSpec.describe RemoveOrphanedAutoJoinInvites do
       run(apply)
       expect(exists?(orphan)).to be(false)
 
-      Invite.collection.insert_many(File.foreach(backup_path).map { |line| BSON::ExtJSON.parse(line, mode: :bson) })
+      Invite.collection.insert_many(File.foreach(backup_path).map { |line| BSON::ExtJSON.parse(line, mode: :bson) }, ordered: false)
 
       restored = Invite.valid.where(_id: orphan).first
       expect(restored).not_to be_nil
@@ -144,6 +144,16 @@ RSpec.describe RemoveOrphanedAutoJoinInvites do
       run(apply)
 
       expect(exists?(id)).to be(false)
+    end
+
+    it 'can be restored again after a partial restore, because ordered: false skips what is still there' do
+      second = insert("orphan2-#{sfx}")
+      run(apply)
+      docs = File.foreach(backup_path).map { |line| BSON::ExtJSON.parse(line, mode: :bson) }
+      Invite.collection.insert_many([docs.find { |doc| doc['_id'] == orphan }])
+
+      expect { Invite.collection.insert_many(docs, ordered: false) }.to raise_error(Mongo::Error::BulkWriteError)
+      expect(exists?(second)).to be(true)
     end
 
     it 'honours LIMIT' do
@@ -232,6 +242,11 @@ RSpec.describe RemoveOrphanedAutoJoinInvites do
       File.write(backup_path, 'previous run')
 
       expect { run('APPLY' => 'true', 'BACKUP_FILE' => backup_path) }.to raise_error(ArgumentError, /already exists/)
+      expect(exists?(orphan)).to be(true)
+    end
+
+    it 'when MIN_KEEP is not a number, which to_i would turn into 0 and switch the guard off' do
+      expect { run('MIN_KEEP' => 'abc') }.to raise_error(ArgumentError, /invalid value for Integer/)
       expect(exists?(orphan)).to be(true)
     end
 

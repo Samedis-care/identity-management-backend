@@ -54,7 +54,8 @@
 #   they are never touched; a cutoff later than the real export would delete the ones in between.
 # BACKUP_FILE: required with APPLY. Every deleted invite is written here as one canonical
 #   Extended JSON line (mode 0600, flushed before the delete), so a wrong run can be restored:
-#     Invite.collection.insert_many(File.foreach(path).map { |l| BSON::ExtJSON.parse(l, mode: :bson) })
+#     Invite.collection.insert_many(File.foreach(path).map { |l| BSON::ExtJSON.parse(l, mode: :bson) }, ordered: false)
+#   (ordered: false so a re-run, or a document that is still there, does not stop the restore)
 #   (plain JSON.parse would bring back String ids and dates that nothing finds). It contains
 #   live tokens: delete it once the cleanup is verified.
 #
@@ -130,8 +131,9 @@ class RemoveOrphanedAutoJoinInvites < Mongoid::Migration
     raise Mongoid::IrreversibleMigration,
           'Deleted invites are only restorable from the BACKUP_FILE written by the run (one canonical ' \
           'Extended JSON document per line). Restore with: Invite.collection.insert_many(File.foreach(path)' \
-          '.map { |line| BSON::ExtJSON.parse(line, mode: :bson) }). Plain JSON.parse would bring back ' \
-          'documents with String ids and dates that nothing finds.'
+          '.map { |line| BSON::ExtJSON.parse(line, mode: :bson) }, ordered: false). Plain JSON.parse would ' \
+          'bring back documents with String ids and dates that nothing finds; ordered: false lets a re-run ' \
+          'skip documents that are still there instead of stopping at the first duplicate _id.'
   end
 
   def self.read_config
@@ -153,7 +155,8 @@ class RemoveOrphanedAutoJoinInvites < Mongoid::Migration
 
     { app: app, keep_file: keep_file, export_at: export_at, apply: apply, backup_file: backup_file,
       limit: ENV['LIMIT'].presence&.to_i, tenant_id: ENV['TENANT_ID'].presence,
-      min_keep: (ENV['MIN_KEEP'].presence || 1).to_i }
+      # Integer(), not to_i: 'abc'.to_i is 0 and would silently switch the empty-keep-list guard off
+      min_keep: Integer(ENV['MIN_KEEP'].presence || 1) }
   rescue ArgumentError => e
     raise ArgumentError, "#{e.message} (EXPORT_AT must be ISO 8601, e.g. 2026-10-14T10:13:40Z)" if e.message.start_with?('invalid xmlschema')
 
