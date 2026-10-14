@@ -18,14 +18,16 @@ class Api::V1::Devise::OmniauthCallbacksController < ::Devise::OmniauthCallbacks
 
   def do_oauth
     unless user.errors.empty?
-      generic_error(user.errors)
+      # not generic_error: Sentry.capture_exception raises ArgumentError for an ActiveModel::Errors,
+      # and a rejected sign-up (e.g. blacklisted email domain) is an expected outcome, not an exception
+      Rails.logger.info("OAuth sign-in rejected: #{user.errors.full_messages.join(', ')}")
       login_url = URI.parse(User.redirect_url_login(user.app_context, invite_token: user.invite_token) % { HOST: user.host })
       q = Hash[URI.decode_www_form(login_url.query || '')].merge({
         error: 'oauth_incomplete',
-        message: (user.errors.keys - [:password]).join(',')
+        message: (user.errors.attribute_names - [:password]).join(',')
       })
       login_url.query = URI.encode_www_form(q)
-      redirect_to login_url.to_s and return
+      redirect_to login_url.to_s, allow_other_host: true and return
     end
 
     token = Doorkeeper::AccessToken.create(

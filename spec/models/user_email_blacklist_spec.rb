@@ -74,4 +74,54 @@ RSpec.describe User, 'email blacklist' do
     expect(user).to be_valid
     expect(user.save).to be(true)
   end
+
+  describe 'changing the address of an existing user' do
+    let(:unlisted_email) { "keep-#{sfx}@blacklist-spec-unlisted-#{sfx}.test" }
+    let(:user) do
+      build_user(email: unlisted_email).tap do |record|
+        record.skip_confirmation_notification!
+        record.save!
+      end
+    end
+
+    before do
+      user
+      EmailBlacklist.create!(domain: domain, active: true)
+    end
+
+    after { described_class.where(email: unlisted_email).each(&:destroy) }
+
+    it 'is rejected when the new address is on a listed domain' do
+      user.reload.email = email
+
+      expect(user).not_to be_valid
+      expect(user.errors[:email]).to include(blocked_message)
+    end
+
+    it 'is accepted when the new address is on an unlisted domain' do
+      user.reload.email = "other-#{sfx}@blacklist-spec-unlisted-#{sfx}.test"
+
+      expect(user).to be_valid
+    end
+  end
+
+  describe '.from_omniauth' do
+    let(:auth) do
+      OmniAuth::AuthHash.new(
+        provider: 'google_oauth2', uid: sfx,
+        info: { email: email, first_name: 'Sso', last_name: 'User' },
+        credentials: { token: 't', expires: true, expires_at: 1.hour.from_now.to_i, refresh_token: 'r' }
+      )
+    end
+
+    before { EmailBlacklist.create!(domain: domain, active: true) }
+
+    it 'returns an unsaved user carrying the error instead of raising' do
+      user = nil
+
+      expect { user = described_class.from_omniauth(auth) }.not_to raise_error
+      expect(user).not_to be_persisted
+      expect(user.errors[:email]).to include(blocked_message)
+    end
+  end
 end

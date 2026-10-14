@@ -105,6 +105,32 @@ RSpec.describe 'Social Auth Endpoint', type: :request do
       end
     end
 
+    # Samedis-care/samedis-care-issues#2572: the blacklist is now enforced when a user is
+    # created, and from_omniauth used to save! -- a blacklisted domain raised a 500 instead of
+    # reaching the controller's own errors check
+    context 'with an email on a blacklisted domain' do
+      let(:domain) { "blocked-sso-#{SecureRandom.hex(4)}.test" }
+      let(:claims) { valid_claims.merge('email' => "someone@#{domain}") }
+      let(:id_token) { build_token(claims) }
+
+      before { EmailBlacklist.create!(domain:, active: true) }
+
+      after { EmailBlacklist.where(domain:).delete_all }
+
+      it 'answers 422 with the blacklist message instead of raising' do
+        post url, params: { provider: 'google', id_token: }.to_json, headers: json_headers
+
+        expect(response.status).to eq(422)
+        expect(response.body).to include(I18n.t('errors.email.blacklisted'))
+      end
+
+      it 'does not create a user' do
+        post url, params: { provider: 'google', id_token: }.to_json, headers: json_headers
+
+        expect(User.where(email: claims['email']).first).to be_nil
+      end
+    end
+
     context 'with a valid token but expired signature' do
       it 'returns 401' do
         expired_claims = valid_claims.merge('exp' => 1.hour.ago.to_i)
