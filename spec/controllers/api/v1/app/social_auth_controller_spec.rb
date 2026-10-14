@@ -129,6 +129,33 @@ RSpec.describe 'Social Auth Endpoint', type: :request do
 
         expect(User.where(email: claims['email']).first).to be_nil
       end
+
+      # Apple only sends the name on the very first sign-in, i.e. exactly the new-user case:
+      # the name block used to save! the rejected, unsaved user and raise
+      context 'when Apple sends the name with the first sign-in' do
+        let(:ec_key) { OpenSSL::PKey::EC.generate('prime256v1') }
+        let(:apple_claims) { claims.merge('iss' => 'https://appleid.apple.com', 'aud' => 'test-apple-client-id') }
+        let(:apple_token) { JWT.encode(apple_claims, ec_key, 'ES256', { kid: }) }
+
+        before do
+          jwks = { 'keys' => [JWT::JWK.new(ec_key, kid:).export] }.to_json
+          response_double = instance_double(Net::HTTPSuccess, body: jwks)
+          allow(response_double).to receive(:is_a?).with(Net::HTTPSuccess).and_return(true)
+          allow(Net::HTTP).to receive(:get_response).and_return(response_double)
+          ENV['APPLE_CLIENT_ID'] = 'test-apple-client-id'
+        end
+
+        after { ENV['APPLE_CLIENT_ID'] = nil }
+
+        it 'answers 422 instead of raising' do
+          post url,
+               params: { provider: 'apple', id_token: apple_token, name: { first: 'Ap', last: 'Ple' } }.to_json,
+               headers: json_headers
+
+          expect(response.status).to eq(422)
+          expect(response.body).to include(I18n.t('errors.email.blacklisted'))
+        end
+      end
     end
 
     context 'with a valid token but expired signature' do
