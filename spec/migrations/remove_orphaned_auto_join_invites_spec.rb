@@ -104,9 +104,22 @@ RSpec.describe RemoveOrphanedAutoJoinInvites do
     it 'writes the deleted invite to the backup file before deleting, mode 0600, and nothing else' do
       run(apply)
 
-      lines = File.readlines(backup_path).map { |line| JSON.parse(line) }
+      lines = File.readlines(backup_path).map { |line| BSON::ExtJSON.parse(line, mode: :bson) }
       expect(lines.map { |doc| doc['token'] }).to eq(["orphan-#{sfx}"])
       expect(File.stat(backup_path).mode & 0o777).to eq(0o600)
+    end
+
+    it 'writes a backup that restores a working invite (ObjectIds and Times survive)' do
+      run(apply)
+      expect(exists?(orphan)).to be(false)
+
+      Invite.collection.insert_many(File.foreach(backup_path).map { |line| BSON::ExtJSON.parse(line, mode: :bson) })
+
+      restored = Invite.valid.where(_id: orphan).first
+      expect(restored).not_to be_nil
+      expect(restored.token).to eq("orphan-#{sfx}")
+      expect(Invite.collection.find('_id' => orphan).first['tenant_id']).to be_a(BSON::ObjectId)
+      expect(Invite.where(tenant_id: tenant_oid, token: "orphan-#{sfx}").count).to eq(1)
     end
 
     it 'only deletes what matches every condition' do
@@ -171,8 +184,36 @@ RSpec.describe RemoveOrphanedAutoJoinInvites do
     end
 
     it 'with an EXPORT_AT that is not ISO 8601' do
-      stub_const('ENV', ENV.to_hash.merge('KEEP_FILE' => keep_path, 'EXPORT_AT' => 'yesterday'))
+      stub_const('ENV', ENV.to_hash.merge('KEEP_FILE' => keep_path, 'EXPORT_AT' => 'yesterdayZ'))
       expect { described_class.up }.to raise_error(ArgumentError, /ISO 8601/)
+    end
+
+    it 'with a word instead of a time' do
+      stub_const('ENV', ENV.to_hash.merge('KEEP_FILE' => keep_path, 'EXPORT_AT' => 'yesterday'))
+      expect { described_class.up }.to raise_error(ArgumentError, /explicit offset/)
+    end
+
+    it 'with an EXPORT_AT without an offset, which would be read in the operator\'s local zone' do
+      stub_const('ENV', ENV.to_hash.merge('KEEP_FILE' => keep_path, 'EXPORT_AT' => '2026-10-14T10:13:40'))
+
+      expect { described_class.up }.to raise_error(ArgumentError, /explicit offset/)
+    end
+
+    it 'with an EXPORT_AT in the future' do
+      stub_const('ENV', ENV.to_hash.merge('KEEP_FILE' => keep_path, 'EXPORT_AT' => 1.hour.from_now.utc.iso8601))
+
+      expect { described_class.up }.to raise_error(ArgumentError, /in the future/)
+    end
+
+    it 'accepts an explicit offset other than Z' do
+      File.write(keep_path, "#{kept_token}\n")
+      stub_const('ENV', ENV.to_hash.merge('KEEP_FILE' => keep_path, 'TENANT_ID' => tenant_id,
+                                          'EXPORT_AT' => export_at.in_time_zone('Europe/Berlin').iso8601))
+      $stdout = output_io
+
+      expect { described_class.up }.to raise_error(described_class::DryRunFinished)
+    ensure
+      $stdout = STDOUT
     end
 
     it 'with an empty keep list, which would delete every live invite' do

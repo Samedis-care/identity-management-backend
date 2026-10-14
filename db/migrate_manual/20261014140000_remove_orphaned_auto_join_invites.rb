@@ -14,7 +14,7 @@
 # db:migrate would first apply every pending regular migration on that cluster):
 #
 #   MANUAL=true KEEP_FILE=/secure/keep.txt EXPORT_AT=2026-10-14T10:13:40Z \
-#     VERSION=20261014140000 RAILS_ENV=live bundle exec rails db:migrate:up
+#     VERSION=20261014140000 RAILS_ENV=production bundle exec rails db:migrate:up
 #
 # That is a DRY RUN: it deletes nothing and finishes by raising DryRunFinished, so the
 # version is NOT recorded (Mongoid::Migrator#run is a silent no-op once a version is
@@ -22,11 +22,11 @@
 # BACKUP_FILE=...:
 #
 #   MANUAL=true APPLY=true BACKUP_FILE=/secure/removed-invites.jsonl KEEP_FILE=... EXPORT_AT=... \
-#     VERSION=20261014140000 RAILS_ENV=live bundle exec rails db:migrate:up
+#     VERSION=20261014140000 RAILS_ENV=production bundle exec rails db:migrate:up
 #
 # Later batches (after the version is recorded) run directly via rails runner:
 #
-#   KEEP_FILE=... EXPORT_AT=... RAILS_ENV=live bundle exec rails runner \
+#   KEEP_FILE=... EXPORT_AT=... RAILS_ENV=production bundle exec rails runner \
 #     'load Rails.root.join("db/migrate_manual/20261014140000_remove_orphaned_auto_join_invites.rb").to_s
 #      RemoveOrphanedAutoJoinInvites.up'
 #
@@ -49,16 +49,20 @@
 # KEEP_FILE: one token per line, '#' comments and blank lines ignored; read-only export from
 #   SC live (every token an SC Invite still references, accepted ones included). Tokens are
 #   credentials for joining the tenant: never print them, and delete the file afterwards.
-# EXPORT_AT: ISO 8601 time the export was taken. Invites created after it cannot be in the
-#   keep list yet and are legitimate, so they are never touched.
-# BACKUP_FILE: required with APPLY. Every deleted invite is written here as one JSON line
-#   (mode 0600, flushed before the delete), so a wrong run can be restored. It contains live
-#   tokens: delete it once the cleanup is verified.
+# EXPORT_AT: ISO 8601 time the export was taken, WITH an explicit offset (Z or +hh:mm), never in
+#   the future. Invites created after it cannot be in the keep list yet and are legitimate, so
+#   they are never touched; a cutoff later than the real export would delete the ones in between.
+# BACKUP_FILE: required with APPLY. Every deleted invite is written here as one canonical
+#   Extended JSON line (mode 0600, flushed before the delete), so a wrong run can be restored:
+#     Invite.collection.insert_many(File.foreach(path).map { |l| BSON::ExtJSON.parse(l, mode: :bson) })
+#   (plain JSON.parse would bring back String ids and dates that nothing finds). It contains
+#   live tokens: delete it once the cleanup is verified.
 #
 # Knobs: LIMIT=n (delete at most n), TENANT_ID=<id> (one tenant), APP=<app name>,
 #        MIN_KEEP=n (refuse to run when the keep list has fewer tokens, default 1).
-# One log line per tenant. Run once per cluster - the APAC cluster (RAILS_ENV=apac) has its
-# own data and its own SC.
+# One log line per tenant. Run once per cluster - the APAC cluster has its own database and its
+# own SC (production runs as RAILS_ENV=production on every cluster; point the checkout's
+# mongoid.yml at the right one and check the target before applying).
 class RemoveOrphanedAutoJoinInvites < Mongoid::Migration
 
   # raised at the end of a dry run so the version is not recorded as applied
@@ -124,15 +128,25 @@ class RemoveOrphanedAutoJoinInvites < Mongoid::Migration
   # the same tokens through the API.
   def self.down
     raise Mongoid::IrreversibleMigration,
-          'Deleted invites are only restorable from the BACKUP_FILE written by the run ' \
-          '(one JSON document per line, insert them back with Invite.collection.insert_many).'
+          'Deleted invites are only restorable from the BACKUP_FILE written by the run (one canonical ' \
+          'Extended JSON document per line). Restore with: Invite.collection.insert_many(File.foreach(path)' \
+          '.map { |line| BSON::ExtJSON.parse(line, mode: :bson) }). Plain JSON.parse would bring back ' \
+          'documents with String ids and dates that nothing finds.'
   end
 
   def self.read_config
     app = ENV['APP'].presence || 'samedis-care'
     keep_file = ENV['KEEP_FILE'].presence or raise ArgumentError, 'KEEP_FILE is required (SC token export, one per line)'
     export_at = ENV['EXPORT_AT'].presence or raise ArgumentError, 'EXPORT_AT is required (ISO 8601 time of the SC export)'
+    # Time.iso8601 reads a value without an offset in the process's local zone, so the cutoff would
+    # silently move with the operator's TZ; a cutoff later than the real export deletes invites SC
+    # created since, which cannot be in the keep list yet
+    unless export_at.to_s.match?(/(Z|[+-]\d{2}:\d{2})\z/i)
+      raise ArgumentError, "EXPORT_AT needs an explicit offset (Z or +hh:mm), got #{export_at.inspect}"
+    end
+
     export_at = Time.iso8601(export_at.to_s).utc
+    raise ArgumentError, "EXPORT_AT #{export_at.iso8601} is in the future" if export_at > Time.now
     apply = ENV['APPLY'].to_s.casecmp('true').zero?
     backup_file = ENV['BACKUP_FILE'].presence
     raise ArgumentError, 'BACKUP_FILE is required with APPLY=true' if apply && backup_file.nil?
@@ -172,7 +186,10 @@ class RemoveOrphanedAutoJoinInvites < Mongoid::Migration
 
     if backup
       docs = Invite.collection.find('_id' => { '$in' => pending }).to_a
-      docs.each { |doc| backup.puts(doc.to_json) }
+      # canonical Extended JSON, not to_json: to_json writes ObjectIds and Times as plain
+      # strings, and a document restored from that is dead (Invite.valid and the tenant scope
+      # never find it, its _id differs)
+      docs.each { |doc| backup.puts(doc.to_extended_json(mode: :canonical)) }
       backup.flush
       backup.fsync
       result = Invite.collection.delete_many('_id' => { '$in' => docs.map { |doc| doc['_id'] } })
