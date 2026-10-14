@@ -1,4 +1,5 @@
 require 'rails_helper'
+require Rails.root.join('lib/generators/openapi_spec/lib/helpers').to_s
 
 # Regression coverage for Samedis-care/samedis-care-issues#2815.
 #
@@ -7,23 +8,16 @@ require 'rails_helper'
 # March while the controllers it documented kept changing, and it was served from the
 # static public/ directory with no signal that it was abandoned.
 RSpec.describe 'published OpenAPI bundles' do
-  let(:published) { Dir.glob(Rails.root.join('public/api-docs/v*/*.yaml').to_s) }
-  let(:sources) do
-    Dir.glob(Rails.root.join('spec/openapi/*/api_v*.yaml').to_s).map do |file|
-      File.join(File.basename(File.dirname(file)), file[/v\d+/])
-    end
-  end
+  # compare against exactly what `combine` writes, not a re-derived source glob
+  let(:generated) { OpenapiSpec::Helpers.available_specs.map { |spec| spec[:destination] } }
+  let(:published) { Dir.glob('public/api-docs/v*/*.yaml') }
 
   it 'has a source under spec/openapi for every bundle served from public/api-docs' do
-    served = published.map { |file| File.join(File.basename(file, '.yaml'), file[%r{api-docs/(v\d+)/}, 1]) }
-
-    expect(served - sources).to be_empty
+    expect(published - generated).to be_empty
   end
 
   it 'finds a published bundle for every source (combine writes it)' do
-    served = published.map { |file| File.join(File.basename(file, '.yaml'), file[%r{api-docs/(v\d+)/}, 1]) }
-
-    expect(sources - served).to be_empty
+    expect(generated - published).to be_empty
   end
 
   it 'only points controller header comments at spec files that exist' do
