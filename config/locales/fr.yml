@@ -5,6 +5,7 @@ fr:
     gridfilter_error: Erreur de filtre de grille
     general_error: Erreur générale
     database_error: erreur de la base de données
+    actor_path_collision_error: "La modification n'a pas pu être enregistrée : des entrées de ce locataire sont en conflit et ne peuvent être renommées ou supprimées qu'après réparation. Veuillez contacter le support en indiquant les identifiants : %{ids}"
     authorization_error: Erreur d'autorisation
     object_id_invalid_error: Un ID d'objet non valide a été fourni
     malformed_csv_error: >-

@@ -5,6 +5,7 @@ de:
     gridfilter_error: Gridfilter Fehler
     general_error: Allgemeiner Fehler
     database_error: Datenbankfehler
+    actor_path_collision_error: "Die Änderung konnte nicht gespeichert werden: Einträge in diesem Mandanten kollidieren und können erst nach einer Bereinigung umbenannt oder gelöscht werden. Bitte wenden Sie sich an den Support und nennen Sie die IDs: %{ids}"
     authorization_error: Berechtigungsfehler
     object_id_invalid_error: Es wurde eine ungültige Objekt-ID angegeben
     malformed_csv_error: >-

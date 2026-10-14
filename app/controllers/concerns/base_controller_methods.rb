@@ -14,6 +14,7 @@ module BaseControllerMethods
     rescue_from Mongoid::Errors::DocumentNotFound, with: :record_not_found_error
     rescue_from Mongoid::Errors::InvalidFind, with: :record_not_found_error
     rescue_from Mongo::Error::OperationFailure, with: :database_error
+    rescue_from Actor::PathCollisionError, with: :actor_path_collision_error
     rescue_from CSV::MalformedCSVError, with: :malformed_csv_error
     rescue_from Net::SMTPSyntaxError, with: :smtp_syntax_error
     rescue_from Net::SMTPFatalError, with: :smtp_syntax_error
@@ -181,6 +182,22 @@ module BaseControllerMethods
     return if performed?
     message = Rails.env.production? ? I18n.t('json_api.database_error') : e.message
     render_jsonapi_error(message, "database_error", 500, exception: e) and return
+  end
+
+  # Samedis-care/samedis-care-issues#3160: renaming or deleting an actor rewrites the paths of
+  # its whole subtree, and orphaned mappings can collapse onto the same (name, path). That used
+  # to surface as an opaque "Datenbankfehler" (500). A 409 with the colliding ids tells the
+  # caller what is wrong; it is still reported to Sentry (below 500 render_jsonapi_error does not).
+  def actor_path_collision_error(e)
+    raise e unless silence_errors?
+    return if performed?
+
+    Sentry.with_scope do |scope|
+      scope.set_context('actor_path_collision', { name: e.name, path: e.path, actor_ids: e.actor_ids.map(&:to_s) })
+      Sentry.capture_exception(e)
+    end
+    message = Rails.env.production? ? I18n.t('json_api.actor_path_collision_error', ids: e.actor_ids.join(', ')) : e.message
+    render_jsonapi_error(message, 'actor_path_collision', 409, meta: { actor_ids: e.actor_ids.map(&:to_s) }, exception: e) and return
   end
 
   def authorization_error(e)

@@ -5,6 +5,7 @@ en:
     gridfilter_error: Grid filter error
     general_error: General error
     database_error: Database error
+    actor_path_collision_error: "The change could not be saved: entries in this tenant collide and cannot be renamed or deleted until they are repaired. Please contact support and quote the ids: %{ids}"
     authorization_error: Authorization error
     oauth_error: The remote authentication server didn't return the minimum required
       information for logging in (trusted email, first name and last name).

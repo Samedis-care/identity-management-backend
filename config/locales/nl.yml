@@ -5,6 +5,7 @@ nl:
     gridfilter_error: Grid filter fout
     general_error: Algemene fout
     database_error: Database fout
+    actor_path_collision_error: "De wijziging kon niet worden opgeslagen: items in deze tenant botsen en kunnen pas worden hernoemd of verwijderd na herstel. Neem contact op met de support en vermeld de id's: %{ids}"
     authorization_error: Autorisatie fout
     object_id_invalid_error: Er is een ongeldige object-ID opgegeven
     malformed_csv_error: >-

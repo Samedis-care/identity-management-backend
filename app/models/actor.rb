@@ -1162,6 +1162,26 @@ class Actor < ApplicationDocument
     ]
   end
 
+  # Raised when rewriting the actor paths would give two undeleted actors the same
+  # (name, path), i.e. when the unique index actor_path_unique_undeleted rejects the $merge
+  # (Samedis-care/samedis-care-issues#3160). Typically orphaned Actors::Mapping docs whose
+  # parent no longer exists: they lose that parent's segment and collapse onto one path.
+  class PathCollisionError < StandardError
+    attr_reader :name, :path, :actor_ids
+
+    def initialize(name:, path:, actor_ids:)
+      @name = name
+      @path = path
+      @actor_ids = actor_ids
+      super(
+        "Rebuilding the actor paths would give #{actor_ids.size} actors the same name and path " \
+        "(name: #{name.inspect}, path: #{path.inspect}); colliding actor ids: #{actor_ids.join(', ')}"
+      )
+    end
+  end
+
+  # The $merge is not atomic: when it aborts, the paths written before the collision stay
+  # rewritten. The error therefore names what collided so it can be repaired.
   def self.merge_rebuild_path!
     collection.aggregate(
       aggregation_rebuild_path +
@@ -1176,6 +1196,35 @@ class Actor < ApplicationDocument
         }
       ]
     ).to_a
+  rescue Mongo::Error::OperationFailure => e
+    raise unless path_collision?(e)
+
+    raise path_collision_error(e)
+  end
+
+  PATH_UNIQUE_INDEX = 'actor_path_unique_undeleted'.freeze
+
+  # @return [Boolean] true for E11000 on the (name, path) unique index
+  def self.path_collision?(error)
+    error.message.to_s.include?('E11000') && error.message.to_s.include?(PATH_UNIQUE_INDEX)
+  end
+
+  # Builds the error for a rejected $merge: the offending (name, path) comes from the server's
+  # error, the colliding actors are the ones already holding it plus the ones the rebuild
+  # would have moved onto it.
+  def self.path_collision_error(error)
+    key = error.document.to_h['keyValue'].presence ||
+          error.message.to_s.match(/dup key: \{ name: "(?<name>.*)", path: "(?<path>.*)" \}/)&.named_captures || {}
+    name = key['name']
+    path = key['path']
+
+    # raw collection queries: this runs inside the scope of a subclass (Actors::Tenant ...), whose
+    # _type filter would hide the mappings from any Mongoid query, even Actor.unscoped
+    holding = collection.find('name' => name, 'path' => path, 'deleted' => false).projection('_id' => 1).map { |doc| doc['_id'] }
+    moving = collection.aggregate(aggregation_rebuild_path).to_a.select { |doc| doc['path'].eql?(path) }.map { |doc| doc['_id'] }
+    moving = collection.find('_id' => { '$in' => moving }, 'name' => name).projection('_id' => 1).map { |doc| doc['_id'] }
+
+    PathCollisionError.new(name: name, path: path, actor_ids: (holding + moving).uniq)
   end
 
   # fetches the next available uniq name with criteria
