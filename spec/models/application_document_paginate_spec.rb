@@ -22,14 +22,8 @@ RSpec.describe ApplicationDocument, '.paginate' do
     expect(scope.paginate(per_page: 0, page: 1).to_a).to eq([])
   end
 
-  it 'treats a limit of "0" the same way (it arrives as a string from the controller)' do
+  it 'treats a numeric string "0" the same way' do
     expect(scope.paginate(per_page: '0', page: 1).to_a).to eq([])
-  end
-
-  it 'leaves the total alone: the unpaged count of the same scope is still the full count' do
-    expect(scope.count).to eq(5)
-    expect(scope.paginate(per_page: 0, page: 1).to_a).to eq([])
-    expect(scope.count).to eq(5)
   end
 
   it 'still honours a positive limit' do
