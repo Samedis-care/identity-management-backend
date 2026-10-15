@@ -175,19 +175,8 @@ class ApplicationDocument
     where('$and': _criterias)
   end
 
-  def self.paginate(opts={})
-    # page[limit]=0 is how a client asks for the count only (the index response's total does not
-    # depend on paging). Without this it reached Kaminari's per(0) -> Mongo limit(0), which Mongo
-    # reads as "no limit": every record, past PAGE_LIMIT_MAX (Samedis-care/samedis-care-issues#3296).
-    # Same as samedis-care-backend. Only when a limit was given: nil/absent still means the default.
-    return none if opts[:per_page].present? && opts[:per_page].to_i.zero?
-
-    p = criteria
-    p = p.page(opts[:page].to_i)
-    p = p.per(opts[:per_page].to_i) if opts[:per_page].present?
-    p = p.padding(opts[:padding].to_i) if opts[:padding].present? # dynamic page offset (skip = page*per_page+padding)
-    p
-  end
+  # .paginate(per_page:, page:, padding:), shared with the Doorkeeper::AccessToken shim
+  extend Paginating
 
   def self.quickfilter(term, opts={})
     qf = criteria

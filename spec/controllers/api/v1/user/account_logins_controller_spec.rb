@@ -74,6 +74,38 @@ RSpec.describe Api::V1::User::AccountLoginsController do
     end
   end
 
+  # Samedis-care/samedis-care-issues#3298: Doorkeeper::AccessToken.paginate used to be a no-op, so the
+  # index returned every token of the user and ignored page[limit] / page[number]
+  describe 'paging the index' do
+    def paged(page_params)
+      allow(controller_instance).to receive(:params_json_api).and_return({ page: page_params }.with_indifferent_access)
+      controller_instance.send(:records_index_paged_to_a)
+    end
+
+    it 'honours page[limit]' do
+      expect(paged(limit: '1').size).to eq(1)
+    end
+
+    it 'pages: page 2 is not page 1' do
+      first = paged(limit: '1', number: '1').map(&:id)
+      second = Api::V1::User::AccountLoginsController.new.tap do |other|
+        without_partial_double_verification do
+          allow(other).to receive_messages(current_user: user, params_json_api: { page: { limit: '1', number: '2' } }.with_indifferent_access)
+        end
+      end.send(:records_index_paged_to_a).map(&:id)
+
+      expect(first + second).to match_array([live.id, soft_killed.id])
+    end
+
+    it 'returns no records for page[limit]=0 (count only)' do
+      expect(paged(limit: '0')).to eq([])
+    end
+
+    it 'still lists both sessions without paging params' do
+      expect(paged({}).map(&:id)).to match_array([live.id, soft_killed.id])
+    end
+  end
+
   describe 'the destroy scope (MODEL)' do
     it 'still resolves a logged-out session, so its surviving refresh_token stays revocable' do
       expect(controller_instance.send(:model_destroy).find(soft_killed.id.to_s)).to eq(soft_killed)

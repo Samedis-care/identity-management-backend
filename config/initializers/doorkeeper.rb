@@ -161,5 +161,7 @@ Doorkeeper.configure do
 end
 
 require "#{Rails.root}/app/models/concerns/doorkeeper/access_token.rb"
+# loaded the same way as the extension: constants in app/ are not autoloadable from an initializer
+require "#{Rails.root}/app/models/concerns/paginating.rb"
 require "#{Rails.root}/app/models/concerns/identity_management_extension.rb"
 Doorkeeper::AccessToken.send(:include, IdentityManagementExtension)
