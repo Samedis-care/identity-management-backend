@@ -160,9 +160,14 @@ class ApplicationDocument
       Invalid gridfilter parameters. Object expected.
     ERR
     return criteria if filters.keys.empty?
-    _criterias = filters.symbolize_keys.collect { |field, filter|
-      field = field_map.with_indifferent_access.dig(field) || field
-      _gridfilter_to_criteria(field, filter) if _gridfilter_field_valid?(field)
+    _criterias = filters.symbolize_keys.collect { |requested, filter|
+      field = field_map.with_indifferent_access.dig(requested) || requested
+      # The whitelist (gridfilter_fields) lists the names a client may send. field_map rewrites such a
+      # name (always id -> _id, plus per-model aliases), so checking only the rewritten name rejected
+      # a whitelisted `id` whenever the whitelist did not also list `_id`: User#gridfilter_fields has
+      # :id but not :_id, and every gridfilter on id answered 400 (Samedis-care/samedis-care-issues#2635).
+      # Accept the field when either spelling is whitelisted; the criterion uses the rewritten one.
+      _gridfilter_to_criteria(field, filter) if _gridfilter_field_valid?(requested) || _gridfilter_field_valid?(field)
     }.compact
     raise GridfilterError.new(<<~ERR) if _criterias.empty?
       None of the provided fields is valid to filter by: >>#{filters.keys * ', '}<<.
