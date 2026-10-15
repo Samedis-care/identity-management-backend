@@ -41,8 +41,8 @@ RSpec.describe Doorkeeper::AccessToken, '.paginate' do
     expect(scope.paginate(per_page: 0, page: 1).to_a).to eq([])
   end
 
-  it 'returns the default page size when no limit is given' do
-    expect(scope.paginate(page: 1).to_a.size).to eq(5)
+  it 'falls back to Kaminari\'s default page size when no limit is given, rather than returning everything' do
+    expect(scope.paginate(page: 1).limit_value).to eq(Kaminari.config.default_per_page)
   end
 
   it 'shares the implementation with ApplicationDocument, so a fix there reaches both' do

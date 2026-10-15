@@ -51,6 +51,8 @@ RSpec.describe Api::V1::User::AccountLoginsController do
 
   after do
     Doorkeeper::AccessToken.where(resource_owner_id: user.id).delete_all
+    # the user's Actors::User would otherwise stay behind in the test DB on every run
+    Actor.where(_id: user.actor_id).delete_all
     user.delete
   end
 
@@ -70,6 +72,7 @@ RSpec.describe Api::V1::User::AccountLoginsController do
       expect(controller_instance.send(:model_index).pluck(:_id)).not_to include(other.id)
     ensure
       other&.delete
+      Actor.where(_id: other_user.actor_id).delete_all if other_user
       other_user&.delete
     end
   end
@@ -123,6 +126,7 @@ RSpec.describe Api::V1::User::AccountLoginsController do
         .to raise_error(Mongoid::Errors::DocumentNotFound)
     ensure
       other&.delete
+      Actor.where(_id: other_user.actor_id).delete_all if other_user
       other_user&.delete
     end
   end
