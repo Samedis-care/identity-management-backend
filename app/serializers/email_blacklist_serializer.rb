@@ -21,7 +21,7 @@ class EmailBlacklistSerializer
           string :id, description: 'unique record id'
 
           string :domain, description: 'blacklisted domain name'
-          string :active, description: 'controls if the domain name is actively being blacklisted'
+          boolean :active, description: 'controls if the domain name is actively being blacklisted'
         end
       }
     end

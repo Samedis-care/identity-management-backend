@@ -236,12 +236,40 @@ module JsonApi
         _attributes[:properties] = _attributes[:properties].slice(*only)
       end
 
+      apply_request_property_overrides!(_attributes)
+
       {
         type: :object,
         properties: {
           data: _attributes
         }
       }.deep_symbolize_keys
+    end
+
+    # The schemas describe what a record looks like in a RESPONSE. A few properties are shaped
+    # differently in a request, and publishing the response shape tells a client to send something
+    # the controller silently drops (Samedis-care/samedis-care-issues#3215): `image` is an object of
+    # style URLs {large, medium, small} in a response, while a request carries a single file upload
+    # (permit(:image) takes a scalar) or, for JSON, the base64 string in image_b64.
+    REQUEST_PROPERTY_OVERRIDES = {
+      'image' => {
+        type: 'string',
+        format: 'binary',
+        description: 'image file to upload (multipart/form-data); JSON clients send the base64 image_b64 instead'
+      }
+    }.freeze
+
+    def apply_request_property_overrides!(attributes)
+      properties = attributes[:properties]
+      return unless properties
+
+      properties.keys.each do |key|
+        override = REQUEST_PROPERTY_OVERRIDES[key.to_s]
+        next unless override
+        next unless (properties[key][:type] || properties[key]['type']).to_s.eql?('object')
+
+        properties[key] = override.deep_dup.with_indifferent_access
+      end
     end
 
     # Request body schema for form-data (multipart)
