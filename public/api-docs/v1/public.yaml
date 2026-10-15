@@ -2215,6 +2215,11 @@ components:
         short:
           type: string
           description: short name (combination of first and last names)
+        image_b64:
+          type: string
+          writeOnly: true
+          description: BASE64 encoded image (JPEG or PNG) to be used as the user`s
+            avatar
         image:
           type: object
           description: image in different sizes

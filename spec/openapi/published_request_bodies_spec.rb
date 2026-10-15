@@ -40,6 +40,23 @@ RSpec.describe 'published OpenAPI request bodies' do
         expect(offenders).to be_empty
       end
 
+      # the image override's description sends JSON clients to image_b64, so a body that lists image
+      # must list image_b64 too (found in review, endpoint by endpoint: tenants, then users)
+      it 'lists image_b64 wherever a request body lists image' do
+        offenders = request_bodies(spec).flat_map do |operation, content|
+          content.flat_map do |media_type, body|
+            properties = body.dig('schema', 'properties') || {}
+            names = media_type.eql?('application/json') ? (properties.dig('data', 'properties') || {}).keys : properties.keys
+            image = names.grep(/\A(data\[)?image\]?\z/)
+            image_b64 = names.grep(/\A(data\[)?image_b64\]?\z/)
+
+            image.any? && image_b64.empty? ? ["#{operation} (#{media_type})"] : []
+          end
+        end
+
+        expect(offenders).to be_empty
+      end
+
       it 'documents the blacklist `active` as a boolean wherever its description appears' do
         text = File.read(Rails.root.join(bundle))
         stale = text.scan(/(?:active|data\[active\]):\n( *)type: string\n\1description: controls if the domain name is actively being blacklisted/)

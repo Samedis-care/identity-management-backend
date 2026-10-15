@@ -2220,6 +2220,11 @@ components:
         short:
           type: string
           description: short name (combination of first and last names)
+        image_b64:
+          type: string
+          writeOnly: true
+          description: BASE64 encoded image (JPEG or PNG) to be used as the user`s
+            avatar
         image:
           type: object
           description: image in different sizes
@@ -26040,6 +26045,11 @@ paths:
                       format: binary
                       description: image file to upload (multipart/form-data); JSON
                         clients send the base64 image_b64 instead
+                    image_b64:
+                      type: string
+                      writeOnly: true
+                      description: BASE64 encoded image (JPEG or PNG) to be used as
+                        the user`s avatar
                     invalid_at:
                       type: string
                       format: date-time
@@ -26092,6 +26102,11 @@ paths:
                   format: binary
                   description: image file to upload (multipart/form-data); JSON clients
                     send the base64 image_b64 instead
+                data[image_b64]:
+                  type: string
+                  writeOnly: true
+                  description: BASE64 encoded image (JPEG or PNG) to be used as the
+                    user`s avatar
                 data[invalid_at]:
                   type: string
                   format: date-time
@@ -26144,6 +26159,11 @@ paths:
                   format: binary
                   description: image file to upload (multipart/form-data); JSON clients
                     send the base64 image_b64 instead
+                data[image_b64]:
+                  type: string
+                  writeOnly: true
+                  description: BASE64 encoded image (JPEG or PNG) to be used as the
+                    user`s avatar
                 data[invalid_at]:
                   type: string
                   format: date-time
@@ -27203,6 +27223,11 @@ paths:
                       format: binary
                       description: image file to upload (multipart/form-data); JSON
                         clients send the base64 image_b64 instead
+                    image_b64:
+                      type: string
+                      writeOnly: true
+                      description: BASE64 encoded image (JPEG or PNG) to be used as
+                        the user`s avatar
                     invalid_at:
                       type: string
                       format: date-time
@@ -27255,6 +27280,11 @@ paths:
                   format: binary
                   description: image file to upload (multipart/form-data); JSON clients
                     send the base64 image_b64 instead
+                data[image_b64]:
+                  type: string
+                  writeOnly: true
+                  description: BASE64 encoded image (JPEG or PNG) to be used as the
+                    user`s avatar
                 data[invalid_at]:
                   type: string
                   format: date-time
@@ -27307,6 +27337,11 @@ paths:
                   format: binary
                   description: image file to upload (multipart/form-data); JSON clients
                     send the base64 image_b64 instead
+                data[image_b64]:
+                  type: string
+                  writeOnly: true
+                  description: BASE64 encoded image (JPEG or PNG) to be used as the
+                    user`s avatar
                 data[invalid_at]:
                   type: string
                   format: date-time
