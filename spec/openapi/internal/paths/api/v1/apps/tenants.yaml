@@ -572,6 +572,11 @@ paths:
                       format: binary
                       description: image file to upload (multipart/form-data); JSON
                         clients send the base64 image_b64 instead
+                    image_b64:
+                      type: string
+                      writeOnly: true
+                      description: BASE64 encoded image (JPEG or PNG) to be used as
+                        the tenant`s logo
                     modules_selected:
                       type: array
                       default: []
@@ -596,6 +601,11 @@ paths:
                   format: binary
                   description: image file to upload (multipart/form-data); JSON clients
                     send the base64 image_b64 instead
+                data[image_b64]:
+                  type: string
+                  writeOnly: true
+                  description: BASE64 encoded image (JPEG or PNG) to be used as the
+                    tenant`s logo
                 data[modules_selected]:
                   type: array
                   default: []
@@ -620,6 +630,11 @@ paths:
                   format: binary
                   description: image file to upload (multipart/form-data); JSON clients
                     send the base64 image_b64 instead
+                data[image_b64]:
+                  type: string
+                  writeOnly: true
+                  description: BASE64 encoded image (JPEG or PNG) to be used as the
+                    tenant`s logo
                 data[modules_selected]:
                   type: array
                   default: []

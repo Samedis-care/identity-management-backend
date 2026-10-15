@@ -58,6 +58,18 @@ RSpec.describe 'OpenAPI request body schemas' do
     end
   end
 
+  # the override's description points JSON clients at image_b64, so every endpoint that publishes the
+  # image override must also list image_b64 in its request body (review of the first version: the
+  # tenants endpoint did not, because TenantSerializer's schema had no image_b64)
+  describe 'image_b64' do
+    it 'is listed, write-only, in the request body of the tenants serializer next to image' do
+      properties = data_properties(TenantSerializer::Schema.new.openapi_consumes_schema(only: %i[image image_b64]))
+
+      expect(properties.keys).to include(:image, :image_b64)
+      expect(properties[:image_b64]).to include(type: 'string', writeOnly: true)
+    end
+  end
+
   describe 'EmailBlacklistSerializer active' do
     let(:serializer_schema) { EmailBlacklistSerializer::Schema.new }
 

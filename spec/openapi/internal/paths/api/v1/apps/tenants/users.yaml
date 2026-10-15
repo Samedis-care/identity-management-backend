@@ -443,15 +443,10 @@ paths:
                         * 1 - Male
                         * 2 - Female
                     image:
-                      type: object
-                      description: image in different sizes
-                      properties:
-                        large:
-                          type: string
-                        medium:
-                          type: string
-                        small:
-                          type: string
+                      type: string
+                      format: binary
+                      description: image file to upload (multipart/form-data); JSON
+                        clients send the base64 image_b64 instead
                     image_b64:
                       type: string
                       writeOnly: true
@@ -493,12 +488,11 @@ paths:
                     * 0 - Unspecified
                     * 1 - Male
                     * 2 - Female
-                data[image][large]:
+                data[image]:
                   type: string
-                data[image][medium]:
-                  type: string
-                data[image][small]:
-                  type: string
+                  format: binary
+                  description: image file to upload (multipart/form-data); JSON clients
+                    send the base64 image_b64 instead
                 data[image_b64]:
                   type: string
                   writeOnly: true
@@ -540,12 +534,11 @@ paths:
                     * 0 - Unspecified
                     * 1 - Male
                     * 2 - Female
-                data[image][large]:
+                data[image]:
                   type: string
-                data[image][medium]:
-                  type: string
-                data[image][small]:
-                  type: string
+                  format: binary
+                  description: image file to upload (multipart/form-data); JSON clients
+                    send the base64 image_b64 instead
                 data[image_b64]:
                   type: string
                   writeOnly: true
