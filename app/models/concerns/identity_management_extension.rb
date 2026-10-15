@@ -142,9 +142,9 @@ module IdentityManagementExtension
     def self.gridfilter(_)
       criteria
     end
-    def self.paginate(_)
-      criteria
-    end
+    # real paging, not a no-op: the account-logins index returned every token of the user and ignored
+    # page[limit] (Samedis-care/samedis-care-issues#3298)
+    extend Paginating
     def self.sorting(_)
       criteria
     end
