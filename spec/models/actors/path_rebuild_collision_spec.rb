@@ -94,4 +94,92 @@ RSpec.describe Actor, '.merge_rebuild_path! with colliding paths' do
         .to raise_error(Mongo::Error::OperationFailure, /some other failure/)
     end
   end
+
+  # Samedis-care/samedis-care-issues#3297: the new paths are checked BEFORE the $merge, so a
+  # collision leaves every path of the subtree untouched (the $merge alone left the documents
+  # processed before the conflict rewritten and the rest not)
+  describe 'all-or-nothing rebuild' do
+    let(:new_name) { "renamed-#{sfx}" }
+
+    def subtree_paths
+      Actor.collection.find('$or' => [{ _id: tenant.id }, { parent_ids: tenant.id }]).to_h { [_1['_id'], _1['path']] }
+    end
+
+    context 'when orphaned mappings would collapse onto one path' do
+      before do
+        group_a.map_into!(user_actor)
+        group_b.map_into!(user_actor)
+        Actor.collection.delete_many(_id: { '$in' => [group_a.id, group_b.id] })
+      end
+
+      it 'rewrites no path at all, neither the colliding mappings nor the healthy rest of the subtree' do
+        before_paths = subtree_paths
+
+        expect { tenant.update!(name: new_name) }.to raise_error(Actor::PathCollisionError)
+
+        expect(subtree_paths).to eq(before_paths)
+      end
+
+      it 'still names the colliding actors' do
+        ids = mapping_ids
+
+        expect { tenant.update!(name: new_name) }.to raise_error(Actor::PathCollisionError) do |e|
+          expect(e.collisions.flat_map { _1[:ids] }).to match_array(ids.map(&:to_s))
+        end
+      end
+    end
+
+    context 'when an actor OUTSIDE the subtree already holds the new (name, path)' do
+      let(:outside_id) { BSON::ObjectId.new }
+
+      before do
+        group_a.map_into!(user_actor)
+        # the path the mapping below group_a would get after the rename
+        target = [new_name, organization.name, tenant_profiles.name, group_a.name, email].join(' / ')
+        Actor.collection.insert_one('_id' => outside_id, '_type' => 'Actors::Mapping', 'name' => email,
+                                    'deleted' => false, 'parent_ids' => [], 'path' => target)
+      end
+
+      after { Actor.collection.delete_many(_id: outside_id) }
+
+      it 'refuses the rebuild before writing anything, and names the outside holder too' do
+        before_paths = subtree_paths
+
+        expect { tenant.update!(name: new_name) }.to raise_error(Actor::PathCollisionError) do |e|
+          expect(e.collisions.flat_map { _1[:ids] }).to include(outside_id.to_s, *mapping_ids.map(&:to_s))
+        end
+        expect(subtree_paths).to eq(before_paths)
+      end
+    end
+
+    context 'when the unique index rejects the $merge after a clean check (a concurrent write)' do
+      before do
+        group_a.map_into!(user_actor)
+        group_b.map_into!(user_actor)
+        Actor.collection.delete_many(_id: { '$in' => [group_a.id, group_b.id] })
+        calls = 0
+        # the first call is the check before the $merge: let it see nothing, so the $merge runs
+        allow(Actor).to receive(:path_rebuild_collisions).and_wrap_original do |original, *args|
+          (calls += 1).eql?(1) ? [] : original.call(*args)
+        end
+      end
+
+      it 'still reports the collision instead of a bare E11000' do
+        expect { tenant.update!(name: new_name) }.to raise_error(Actor::PathCollisionError) do |e|
+          expect(e.collisions.flat_map { _1[:ids] }).to match_array(mapping_ids.map(&:to_s))
+        end
+      end
+    end
+
+    context 'without any collision' do
+      it 'rewrites the paths of the whole subtree' do
+        group_a.map_into!(user_actor)
+        tenant.update!(name: new_name)
+
+        paths = subtree_paths
+        expect(paths.values).to all(start_with(new_name))
+        expect(paths[organization.id]).to eq([new_name, organization.name].join(' / '))
+      end
+    end
+  end
 end
