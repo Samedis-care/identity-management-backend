@@ -179,16 +179,9 @@ module Actors
 
       alias_attribute :bearer_token, :uses_bearer_token
 
-      # default settings from yml
-      def self.default_settings
-        @@default_settings ||= YAML::load_file(::Rails.root.join('config', 'per_app_settings.yml'))
-        @@default_settings.deep_symbolize_keys
-      end
-
-      def redirects
-        @redirects = self.class.default_settings.dig :default_redirects
-      end
-
+      # The default redirects come from Actor.default_settings (see Actor#settings). A second,
+      # independent memoized copy of the same YAML lived here (default_settings and #redirects) with
+      # no callers left anywhere (Samedis-care/samedis-care-issues#2859).
     end
 
     def host
