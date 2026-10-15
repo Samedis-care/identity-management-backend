@@ -9,6 +9,17 @@
 # knows, so an orphan for the same email and tenant stays valid for up to a year and lets a
 # revoked staff member self-join the tenant on their first login.
 #
+# STEP 0, on every installation that has run update.sh (or MANUAL=true db:migrate) since this
+# file exists: the migration was then SKIPPED and its version recorded as applied
+# (Samedis-care/samedis-care-issues#3305, see below), and db:migrate:up VERSION=... is a silent
+# no-op for a recorded version: it prints nothing and exits 0 even with a KEEP_FILE that does not
+# exist. The skip touched nothing, so removing the record is safe:
+#
+#   RAILS_ENV=production bundle exec rails runner 'DataMigration.where(version: "20261014140000").delete_all'
+#
+# (or skip the commands below and use the rails runner form further down, which ignores the
+# record). Then the dry run and the real run below work unchanged.
+#
 # Lives in db/migrate_manual, so it is only on the migration path when MANUAL is set. Use
 # db:migrate:up with an explicit VERSION, NOT db:migrate (MANUAL appends to the path, so
 # db:migrate would first apply every pending regular migration on that cluster):
@@ -36,10 +47,9 @@
 # SKIPPED WITHOUT OPERATOR INPUT: the on-prem update.sh runs `MANUAL=true rails db:migrate`, which
 # applies every manual migration (Samedis-care/samedis-care-issues#3305). When none of KEEP_FILE,
 # EXPORT_AT, APPLY and BACKUP_FILE is set, `up` therefore logs why and returns without touching
-# anything, so an update is not aborted. Mongoid::Migrator then records the version as applied,
-# after which db:migrate:up VERSION=... is a silent no-op on that installation: use the rails
-# runner form above for the real run there. If SOME of the inputs are set, `up` still refuses
-# loudly (a forgotten KEEP_FILE must not pass as a finished run).
+# anything, so an update is not aborted. Mongoid::Migrator then records the version as applied;
+# STEP 0 at the top of this header removes that record before an operator run. If SOME of the
+# inputs are set, `up` still refuses loudly (a forgotten KEEP_FILE must not pass as a finished run).
 #
 # ORDER: deploy samedis-care-backend#4477 first, otherwise the nightly syncs keep minting
 # orphans (~25k a night). Then export the keep list, then run this.

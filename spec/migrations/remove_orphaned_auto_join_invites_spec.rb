@@ -219,6 +219,37 @@ RSpec.describe RemoveOrphanedAutoJoinInvites do
     end
   end
 
+  # The documented STEP 0 of the header, through the real Mongoid::Migrator: after update.sh skipped
+  # the migration its version is recorded and db:migrate:up is a silent no-op until the record is removed
+  describe 'the recorded version after a skip (header STEP 0)' do
+    let(:version) { 20_261_014_140_000 }
+
+    def migrate(env)
+      stub_const('ENV', ENV.to_hash.except(*described_class::OPERATOR_INPUTS).merge(env))
+      $stdout = output_io
+      Mongoid::Migrator.run(:up, ['db/migrate_manual'], version)
+    ensure
+      $stdout = STDOUT
+    end
+
+    before { DataMigration.where(version: version.to_s).delete_all }
+
+    after { DataMigration.where(version: version.to_s).delete_all }
+
+    it 'records the version when skipped, makes a later operator run a silent no-op, and runs again once the record is removed' do
+      migrate({})
+      expect(DataMigration.where(version: version.to_s)).to exist
+
+      operator = { 'KEEP_FILE' => keep_path, 'EXPORT_AT' => export_at.iso8601, 'TENANT_ID' => tenant_id }
+      File.write(keep_path, "#{kept_token}\n")
+      expect { migrate(operator) }.not_to raise_error
+      expect(output_io.string).not_to include('dry run')
+
+      DataMigration.where(version: version.to_s).delete_all
+      expect { migrate(operator) }.to raise_error(StandardError, /dry run finished/)
+    end
+  end
+
   describe 'refusing to run' do
     it 'without KEEP_FILE' do
       stub_const('ENV', ENV.to_hash.merge('EXPORT_AT' => export_at.iso8601))
