@@ -121,7 +121,7 @@ paths:
                   description: the main attributes of this record
                   properties:
                     active:
-                      type: string
+                      type: boolean
                       description: controls if the domain name is actively being blacklisted
                     domain:
                       type: string
@@ -131,7 +131,7 @@ paths:
               type: object
               properties:
                 data[active]:
-                  type: string
+                  type: boolean
                   description: controls if the domain name is actively being blacklisted
                 data[domain]:
                   type: string
@@ -141,7 +141,7 @@ paths:
               type: object
               properties:
                 data[active]:
-                  type: string
+                  type: boolean
                   description: controls if the domain name is actively being blacklisted
                 data[domain]:
                   type: string
@@ -652,7 +652,7 @@ paths:
                   description: the main attributes of this record
                   properties:
                     active:
-                      type: string
+                      type: boolean
                       description: controls if the domain name is actively being blacklisted
                     domain:
                       type: string
@@ -662,7 +662,7 @@ paths:
               type: object
               properties:
                 data[active]:
-                  type: string
+                  type: boolean
                   description: controls if the domain name is actively being blacklisted
                 data[domain]:
                   type: string
@@ -672,7 +672,7 @@ paths:
               type: object
               properties:
                 data[active]:
-                  type: string
+                  type: boolean
                   description: controls if the domain name is actively being blacklisted
                 data[domain]:
                   type: string

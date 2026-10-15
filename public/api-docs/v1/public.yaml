@@ -1124,7 +1124,7 @@ components:
           type: string
           description: blacklisted domain name
         active:
-          type: string
+          type: boolean
           description: controls if the domain name is actively being blacklisted
     FunctionalityOverviewSerializer:
       type: object
@@ -1874,6 +1874,11 @@ components:
           type: string
           default: full name of an organizational unit or group
           description: full name of this actor
+        image_b64:
+          type: string
+          writeOnly: true
+          description: BASE64 encoded image (JPEG or PNG) to be used as the tenant`s
+            logo
         image:
           type: object
           description: image in different sizes
@@ -2210,6 +2215,11 @@ components:
         short:
           type: string
           description: short name (combination of first and last names)
+        image_b64:
+          type: string
+          writeOnly: true
+          description: BASE64 encoded image (JPEG or PNG) to be used as the user`s
+            avatar
         image:
           type: object
           description: image in different sizes

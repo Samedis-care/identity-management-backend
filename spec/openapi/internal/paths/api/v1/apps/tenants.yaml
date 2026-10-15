@@ -568,15 +568,15 @@ paths:
                       default: full name of an organizational unit or group
                       description: full name of this actor
                     image:
-                      type: object
-                      description: image in different sizes
-                      properties:
-                        large:
-                          type: string
-                        medium:
-                          type: string
-                        small:
-                          type: string
+                      type: string
+                      format: binary
+                      description: image file to upload (multipart/form-data); JSON
+                        clients send the base64 image_b64 instead
+                    image_b64:
+                      type: string
+                      writeOnly: true
+                      description: BASE64 encoded image (JPEG or PNG) to be used as
+                        the tenant`s logo
                     modules_selected:
                       type: array
                       default: []
@@ -596,12 +596,16 @@ paths:
                   type: string
                   default: full name of an organizational unit or group
                   description: full name of this actor
-                data[image][large]:
+                data[image]:
                   type: string
-                data[image][medium]:
+                  format: binary
+                  description: image file to upload (multipart/form-data); JSON clients
+                    send the base64 image_b64 instead
+                data[image_b64]:
                   type: string
-                data[image][small]:
-                  type: string
+                  writeOnly: true
+                  description: BASE64 encoded image (JPEG or PNG) to be used as the
+                    tenant`s logo
                 data[modules_selected]:
                   type: array
                   default: []
@@ -621,12 +625,16 @@ paths:
                   type: string
                   default: full name of an organizational unit or group
                   description: full name of this actor
-                data[image][large]:
+                data[image]:
                   type: string
-                data[image][medium]:
+                  format: binary
+                  description: image file to upload (multipart/form-data); JSON clients
+                    send the base64 image_b64 instead
+                data[image_b64]:
                   type: string
-                data[image][small]:
-                  type: string
+                  writeOnly: true
+                  description: BASE64 encoded image (JPEG or PNG) to be used as the
+                    tenant`s logo
                 data[modules_selected]:
                   type: array
                   default: []

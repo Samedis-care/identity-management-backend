@@ -50,6 +50,7 @@ class TenantSerializer
           string :path, description: 'the path of this actor within the global tree'
           string :short_name, default: 'short name of an organizational unit or group', description: 'short name of this actor'
           string :full_name, default: 'full name of an organizational unit or group', description: 'full name of this actor'
+          string :image_b64, write_only: true, description: 'BASE64 encoded image (JPEG or PNG) to be used as the tenant`s logo'
           object :image, description: 'image in different sizes' do
             string :large
             string :medium

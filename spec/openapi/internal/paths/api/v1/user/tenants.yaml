@@ -117,15 +117,10 @@ paths:
                       default: full name of an organizational unit or group
                       description: full name of this actor
                     image:
-                      type: object
-                      description: image with different styles
-                      properties:
-                        large:
-                          type: string
-                        medium:
-                          type: string
-                        small:
-                          type: string
+                      type: string
+                      format: binary
+                      description: image file to upload (multipart/form-data); JSON
+                        clients send the base64 image_b64 instead
                     image_b64:
                       type: string
                       writeOnly: true
@@ -143,12 +138,11 @@ paths:
                   type: string
                   default: full name of an organizational unit or group
                   description: full name of this actor
-                data[image][large]:
+                data[image]:
                   type: string
-                data[image][medium]:
-                  type: string
-                data[image][small]:
-                  type: string
+                  format: binary
+                  description: image file to upload (multipart/form-data); JSON clients
+                    send the base64 image_b64 instead
                 data[image_b64]:
                   type: string
                   writeOnly: true
@@ -166,12 +160,11 @@ paths:
                   type: string
                   default: full name of an organizational unit or group
                   description: full name of this actor
-                data[image][large]:
+                data[image]:
                   type: string
-                data[image][medium]:
-                  type: string
-                data[image][small]:
-                  type: string
+                  format: binary
+                  description: image file to upload (multipart/form-data); JSON clients
+                    send the base64 image_b64 instead
                 data[image_b64]:
                   type: string
                   writeOnly: true
@@ -706,15 +699,10 @@ paths:
                       default: full name of an organizational unit or group
                       description: full name of this actor
                     image:
-                      type: object
-                      description: image with different styles
-                      properties:
-                        large:
-                          type: string
-                        medium:
-                          type: string
-                        small:
-                          type: string
+                      type: string
+                      format: binary
+                      description: image file to upload (multipart/form-data); JSON
+                        clients send the base64 image_b64 instead
                     image_b64:
                       type: string
                       writeOnly: true
@@ -732,12 +720,11 @@ paths:
                   type: string
                   default: full name of an organizational unit or group
                   description: full name of this actor
-                data[image][large]:
+                data[image]:
                   type: string
-                data[image][medium]:
-                  type: string
-                data[image][small]:
-                  type: string
+                  format: binary
+                  description: image file to upload (multipart/form-data); JSON clients
+                    send the base64 image_b64 instead
                 data[image_b64]:
                   type: string
                   writeOnly: true
@@ -755,12 +742,11 @@ paths:
                   type: string
                   default: full name of an organizational unit or group
                   description: full name of this actor
-                data[image][large]:
+                data[image]:
                   type: string
-                data[image][medium]:
-                  type: string
-                data[image][small]:
-                  type: string
+                  format: binary
+                  description: image file to upload (multipart/form-data); JSON clients
+                    send the base64 image_b64 instead
                 data[image_b64]:
                   type: string
                   writeOnly: true

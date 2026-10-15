@@ -70,6 +70,7 @@ class UserSerializer
           string :first_name, description: 'first name'
           string :last_name, description: 'last name'
           string :short, description: 'short name (combination of first and last names)'
+          string :image_b64, write_only: true, description: 'BASE64 encoded image (JPEG or PNG) to be used as the user`s avatar'
           object :image, description: 'image in different sizes' do
             string :large
             string :medium
