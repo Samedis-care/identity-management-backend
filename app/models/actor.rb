@@ -1175,7 +1175,16 @@ class Actor < ApplicationDocument
     ]
   end
 
+  # All-or-nothing for the known failure (Samedis-care/samedis-care-issues#3297): the new paths are
+  # computed and checked for (name, path) collisions BEFORE anything is written, so a collision raises
+  # PathCollisionError with every path of the subtree still untouched. The $merge itself is not atomic;
+  # if the unique index still rejects it (a concurrent write between the check and the $merge), the
+  # documents processed before the conflict keep their new path, and the rescue below says which
+  # actors collide.
   def self.merge_rebuild_path!
+    collisions = path_rebuild_collisions
+    raise path_collision_error(collisions) if collisions.any?
+
     collection.aggregate(
       aggregation_rebuild_path +
       [
@@ -1192,28 +1201,46 @@ class Actor < ApplicationDocument
   rescue Mongo::Error::OperationFailure => e
     raise unless e.message.include?('actor_path_unique_undeleted')
 
-    # The $merge is not atomic: documents processed before the conflict keep their
-    # new path. Surface which actors collide instead of a bare E11000.
-    collisions = path_rebuild_collisions
+    raise path_collision_error(path_rebuild_collisions, fallback: e.message)
+  end
+
+  def self.path_collision_error(collisions, fallback: nil)
     details = collisions.first(5).map { |c| "#{c[:name]} @ #{c[:path]} => #{c[:ids].join(', ')}" }.join('; ')
-    raise PathCollisionError.new(
-      "Path rebuild aborted by duplicate (name, path): #{details.presence || e.message}",
+    PathCollisionError.new(
+      "Path rebuild aborted by duplicate (name, path): #{details.presence || fallback}",
       collisions: collisions
     )
   end
 
-  # Read-only preview of the rebuild: groups undeleted actors that would end up with
-  # the same (name, path). Used to explain a unique-index failure of merge_rebuild_path!.
-  # Only sees collisions inside the scoped subtree; a clash with an actor outside of it
-  # leaves the result empty.
+  # Read-only preview of the rebuild: groups undeleted actors that would end up with the same
+  # (name, path), inside the scoped subtree and against undeleted actors outside of it that already
+  # hold the target (name, path). Runs before the $merge to refuse a colliding rebuild, and again to
+  # explain a unique-index failure of it.
   def self.path_rebuild_collisions
     rebuilt = collection.aggregate(aggregation_rebuild_path).to_a
-    names = collection.find(_id: { '$in' => rebuilt.map { _1['_id'] } }, deleted: false)
+    rebuilt_ids = rebuilt.map { _1['_id'] }
+    names = collection.find(_id: { '$in' => rebuilt_ids }, deleted: false)
                       .projection(name: 1).to_h { [_1['_id'], _1['name']] }
+    # An outside holder has the same name too, so the query is bounded by name as well: no index
+    # starts with path, and a path-only filter read every undeleted actor of every tenant on each
+    # rebuild (20,000 docs examined for 2 holders, measured in review); with name it can use the
+    # partial {name, path} index. Nothing to check when no actor of the set is undeleted
+    # (e.g. soft-deleting a tenant whose whole subtree is already deleted).
+    # raw collection, not a Mongoid query: this runs in the scope of a subclass (Actors::Tenant ...)
+    # whose _type filter would hide the mappings
+    holders = if names.empty?
+                {}
+              else
+                collection.find(deleted: false, _id: { '$nin' => rebuilt_ids },
+                                name: { '$in' => names.values.uniq }, path: { '$in' => rebuilt.map { _1['path'] }.uniq })
+                          .projection(name: 1, path: 1).group_by { [_1['name'], _1['path']] }
+              end
     rebuilt.select { names.key?(_1['_id']) }
            .group_by { [names[_1['_id']], _1['path']] }
-           .select { |_, docs| docs.size > 1 }
-           .map { |(name, path), docs| { name: name, path: path, ids: docs.map { _1['_id'].to_s } } }
+           .filter_map do |(name, path), docs|
+             ids = docs.map { _1['_id'].to_s } + holders.fetch([name, path], []).map { _1['_id'].to_s }
+             { name: name, path: path, ids: ids } if ids.size > 1
+           end
   rescue Mongo::Error
     []
   end
