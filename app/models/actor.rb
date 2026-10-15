@@ -210,6 +210,7 @@ class Actor < ApplicationDocument
     end
     value.freeze
   end
+  private_class_method :deep_freeze_settings
 
   def proper_name
     unless get_name.to_s.to_slug.length >= 1

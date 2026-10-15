@@ -118,6 +118,11 @@ RSpec.describe Actor, '#settings' do
       expect { Actor.default_settings['default_redirects']['login'] = 'x' }.to raise_error(FrozenError)
     end
 
+    it 'keep the helper that builds them out of the public class API' do
+      expect(Actor).not_to respond_to(:deep_freeze_settings)
+      expect(Actors::Tenant).not_to respond_to(:deep_freeze_settings)
+    end
+
     it 'are still memoized: the same object on every call' do
       expect(Actor.default_settings).to equal(Actor.default_settings)
     end
