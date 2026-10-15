@@ -182,6 +182,43 @@ RSpec.describe RemoveOrphanedAutoJoinInvites do
     end
   end
 
+  # Samedis-care/samedis-care-issues#3305: update.sh runs `MANUAL=true rails db:migrate`, which
+  # applies this migration with no operator input at all and must not abort the update
+  describe 'without any operator input (update.sh running MANUAL=true db:migrate)' do
+    def run_without_input(extra = {})
+      stub_const('ENV', ENV.to_hash.except(*described_class::OPERATOR_INPUTS).merge(extra))
+      $stdout = output_io
+      described_class.up
+    ensure
+      $stdout = STDOUT
+    end
+
+    it 'logs why and returns instead of raising' do
+      expect { run_without_input }.not_to raise_error
+
+      expect(output_io.string).to include('skipped')
+    end
+
+    it 'deletes nothing' do
+      run_without_input
+
+      expect([orphan, kept].map { |id| exists?(id) }).to all(be(true))
+    end
+
+    it 'also skips when only modifiers are set, since other manual migrations read LIMIT and TENANT_ID too' do
+      expect { run_without_input('LIMIT' => '5', 'TENANT_ID' => tenant_id, 'APP' => 'samedis-care') }.not_to raise_error
+      expect(exists?(orphan)).to be(true)
+    end
+
+    it 'still refuses when only APPLY is set, so a forgotten KEEP_FILE does not pass as a finished run' do
+      expect { run_without_input('APPLY' => 'true') }.to raise_error(ArgumentError, /KEEP_FILE is required/)
+    end
+
+    it 'still refuses when only BACKUP_FILE is set' do
+      expect { run_without_input('BACKUP_FILE' => backup_path) }.to raise_error(ArgumentError, /KEEP_FILE is required/)
+    end
+  end
+
   describe 'refusing to run' do
     it 'without KEEP_FILE' do
       stub_const('ENV', ENV.to_hash.merge('EXPORT_AT' => export_at.iso8601))

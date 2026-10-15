@@ -33,6 +33,14 @@
 # Do not set INDEXES together with MANUAL: the INDEXES branch assigns the path while the
 # MANUAL branch appends, so db/migrate itself drops out.
 #
+# SKIPPED WITHOUT OPERATOR INPUT: the on-prem update.sh runs `MANUAL=true rails db:migrate`, which
+# applies every manual migration (Samedis-care/samedis-care-issues#3305). When none of KEEP_FILE,
+# EXPORT_AT, APPLY and BACKUP_FILE is set, `up` therefore logs why and returns without touching
+# anything, so an update is not aborted. Mongoid::Migrator then records the version as applied,
+# after which db:migrate:up VERSION=... is a silent no-op on that installation: use the rails
+# runner form above for the real run there. If SOME of the inputs are set, `up` still refuses
+# loudly (a forgotten KEEP_FILE must not pass as a finished run).
+#
 # ORDER: deploy samedis-care-backend#4477 first, otherwise the nightly syncs keep minting
 # orphans (~25k a night). Then export the keep list, then run this.
 #
@@ -71,7 +79,17 @@ class RemoveOrphanedAutoJoinInvites < Mongoid::Migration
 
   BATCH = 1000
 
+  # The inputs only an operator running this on purpose provides. LIMIT, TENANT_ID, APP and MIN_KEEP
+  # are modifiers (other manual migrations read LIMIT/TENANT_ID too) and do not count as intent.
+  OPERATOR_INPUTS = %w[KEEP_FILE EXPORT_AT APPLY BACKUP_FILE].freeze
+
   def self.up
+    if OPERATOR_INPUTS.all? { |name| ENV[name].blank? }
+      say "skipped: none of #{OPERATOR_INPUTS.join(', ')} is set, so this is not an operator run " \
+          '(e.g. update.sh running MANUAL=true db:migrate). Nothing was touched; see the file header for the real run.'
+      return
+    end
+
     config = read_config
     keep = read_keep_file(config[:keep_file], config[:min_keep])
 
