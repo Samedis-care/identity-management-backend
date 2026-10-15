@@ -171,6 +171,36 @@ RSpec.describe Actor, '.merge_rebuild_path! with colliding paths' do
       end
     end
 
+    # review of the first version: the query for holders outside the subtree filtered on path alone,
+    # and no index starts with path, so every rebuild read every undeleted actor of every tenant
+    describe 'the query for holders outside the subtree' do
+      let(:holder_queries) { [] }
+
+      before do
+        queries = holder_queries
+        allow_any_instance_of(Mongo::Collection).to receive(:find).and_wrap_original do |original, filter = {}, *rest|
+          queries << filter if filter.is_a?(Hash) && filter[:_id].is_a?(Hash) && filter[:_id].key?('$nin')
+          original.call(filter, *rest)
+        end
+      end
+
+      it 'is bounded by name as well, so it can use the {name, path} index' do
+        group_a.map_into!(user_actor)
+        tenant.update!(name: new_name)
+
+        expect(holder_queries).not_to be_empty
+        expect(holder_queries).to all(include(name: { '$in' => be_an(Array) }))
+        expect(holder_queries.flat_map { _1[:name]['$in'] }).to include(email)
+      end
+
+      it 'is not made at all when no actor of the set is undeleted' do
+        Actor.collection.update_many({ '$or' => [{ _id: tenant.id }, { parent_ids: tenant.id }] }, '$set' => { deleted: true })
+
+        expect { Actors::Tenant.where('$or': [{ _id: tenant.id }, { parent_ids: tenant.id }]).merge_rebuild_path! }.not_to raise_error
+        expect(holder_queries).to be_empty
+      end
+    end
+
     context 'without any collision' do
       it 'rewrites the paths of the whole subtree' do
         group_a.map_into!(user_actor)

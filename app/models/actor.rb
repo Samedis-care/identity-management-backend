@@ -1221,10 +1221,20 @@ class Actor < ApplicationDocument
     rebuilt_ids = rebuilt.map { _1['_id'] }
     names = collection.find(_id: { '$in' => rebuilt_ids }, deleted: false)
                       .projection(name: 1).to_h { [_1['_id'], _1['name']] }
+    # An outside holder has the same name too, so the query is bounded by name as well: no index
+    # starts with path, and a path-only filter read every undeleted actor of every tenant on each
+    # rebuild (20,000 docs examined for 2 holders, measured in review); with name it can use the
+    # partial {name, path} index. Nothing to check when no actor of the set is undeleted
+    # (e.g. soft-deleting a tenant whose whole subtree is already deleted).
     # raw collection, not a Mongoid query: this runs in the scope of a subclass (Actors::Tenant ...)
     # whose _type filter would hide the mappings
-    holders = collection.find(deleted: false, _id: { '$nin' => rebuilt_ids }, path: { '$in' => rebuilt.map { _1['path'] }.uniq })
-                        .projection(name: 1, path: 1).group_by { [_1['name'], _1['path']] }
+    holders = if names.empty?
+                {}
+              else
+                collection.find(deleted: false, _id: { '$nin' => rebuilt_ids },
+                                name: { '$in' => names.values.uniq }, path: { '$in' => rebuilt.map { _1['path'] }.uniq })
+                          .projection(name: 1, path: 1).group_by { [_1['name'], _1['path']] }
+              end
     rebuilt.select { names.key?(_1['_id']) }
            .group_by { [names[_1['_id']], _1['path']] }
            .filter_map do |(name, path), docs|
