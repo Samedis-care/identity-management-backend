@@ -1,10 +1,10 @@
 ru:
   json_api:
-    record_not_found_error: запись не найдена
+    record_not_found_error: Запись не найдена
     argument_error: Неверное количество аргументов
     gridfilter_error: Ошибка сетевого фильтра
     general_error: Общая ошибка
-    database_error: ошибка базы данных
+    database_error: Ошибка базы данных
     path_collision_error: Изменение сохранено, но пути ниже не удалось полностью обновить из-за дублирующихся записей. Обратитесь в службу поддержки, а не сохраняйте повторно.
     authorization_error: Ошибка авторизации
     object_id_invalid_error: Указан недопустимый идентификатор объекта
