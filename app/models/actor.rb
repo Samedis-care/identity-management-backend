@@ -190,9 +190,25 @@ class Actor < ApplicationDocument
     false
   end
 
-  # default settings from yml
+  # default settings from yml, memoized for the life of the process and deeply frozen: every caller
+  # shares these objects, so an in-place change (gsub!, <<, ...) to any leaf would silently rewrite the
+  # default for every other app on the worker (the bug of Samedis-care/samedis-care-issues#2857). It
+  # raises FrozenError now instead (Samedis-care/samedis-care-issues#2859). Use a non-destructive
+  # method on a leaf, or deep_dup the Hash first.
   def self.default_settings
-    @@default_settings ||= YAML::load_file(::Rails.root.join('config', 'per_app_settings.yml'))
+    @@default_settings ||= deep_freeze_settings(YAML::load_file(::Rails.root.join('config', 'per_app_settings.yml')))
+  end
+
+  def self.deep_freeze_settings(value)
+    case value
+    when Hash
+      value.each do |key, leaf|
+        deep_freeze_settings(key)
+        deep_freeze_settings(leaf)
+      end
+    when Array then value.each { |leaf| deep_freeze_settings(leaf) }
+    end
+    value.freeze
   end
 
   def proper_name

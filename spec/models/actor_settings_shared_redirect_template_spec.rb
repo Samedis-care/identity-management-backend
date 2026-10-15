@@ -62,8 +62,7 @@ RSpec.describe Actor, '#settings' do
   it 'does not mutate the shared default_settings cache at all' do
     non_bearer_app.settings
 
-    # Actor.default_settings (app/models/actor.rb) -- not Actors::App::Config's
-    # same-named-but-unused method -- returns the raw, string-keyed parsed YAML,
+    # Actor.default_settings (app/models/actor.rb) returns the raw, string-keyed parsed YAML,
     # cached in a class variable shared process-wide across all Actor subclasses.
     raw_default = Actor.default_settings.dig('default_redirects', 'authenticated')
     expect(raw_default).to include('/authenticated#')
@@ -89,5 +88,50 @@ RSpec.describe Actor, '#settings' do
     expect(partial_override_app.settings[:redirects][:authenticated]).to be_nil
   ensure
     partial_override_app&.delete
+  end
+
+  # Samedis-care/samedis-care-issues#2859: #294 stopped the one mutation, but every leaf of the cache was
+  # still a shared, unfrozen String; any future in-place change would reintroduce the bug class.
+  describe 'the cached default settings' do
+    def each_object(value, &block)
+      block.call(value)
+      case value
+      when Hash
+        value.each do |key, leaf|
+          each_object(key, &block)
+          each_object(leaf, &block)
+        end
+      when Array then value.each { |leaf| each_object(leaf, &block) }
+      end
+    end
+
+    it 'are frozen all the way down, keys and leaves' do
+      unfrozen = []
+      each_object(Actor.default_settings) { |object| unfrozen << object unless object.frozen? || object.nil? || object == false || object == true }
+
+      expect(unfrozen).to be_empty
+    end
+
+    it 'refuse an in-place change of a leaf instead of rewriting the default for every app' do
+      expect { Actor.default_settings.dig('default_redirects', 'authenticated').gsub!('#', '?') }.to raise_error(FrozenError)
+      expect { Actor.default_settings.dig('default_redirects', 'login') << 'x' }.to raise_error(FrozenError)
+      expect { Actor.default_settings['default_redirects']['login'] = 'x' }.to raise_error(FrozenError)
+    end
+
+    it 'are still memoized: the same object on every call' do
+      expect(Actor.default_settings).to equal(Actor.default_settings)
+    end
+
+    it 'still serve Actor#settings, whose own Hash stays writable for the non-destructive rewrite' do
+      settings = non_bearer_app.settings
+
+      expect(settings[:redirects]).not_to be_frozen
+      expect(settings[:redirects][:authenticated]).to include('/authenticated?')
+    end
+  end
+
+  it 'no longer carries the dead second copy of the default settings on Actors::App::Config' do
+    expect(Actors::App::Config).not_to respond_to(:default_settings)
+    expect(Actors::App::Config.method_defined?(:redirects)).to be(false)
   end
 end
