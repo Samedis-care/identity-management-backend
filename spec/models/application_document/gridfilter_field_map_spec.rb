@@ -54,18 +54,27 @@ RSpec.describe ApplicationDocument, '.gridfilter field whitelist and field_map' 
   end
 
   describe 'a per-model alias from set_field_map' do
-    let(:aliased) do
-      Class.new(EmailBlacklist) do
-        def self.name = 'AliasedEmailBlacklist'
-        def self.gridfilter_fields = %i[blocked]
-        set_field_map(blocked: :domain)
-      end
+    # stubs, not Class.new(EmailBlacklist): on Mongoid 9.1 a subclass adds a _type field to the root class
+    # for the rest of the process, and the suite runs in random order
+    before do
+      allow(EmailBlacklist).to receive(:gridfilter_fields).and_return(%i[blocked])
+      allow(EmailBlacklist).to receive(:field_map).and_return({ id: :_id, blocked: :domain })
     end
 
     it 'accepts a whitelisted alias and filters on the field it maps to' do
       filters = { 'blocked' => { 'filterType' => 'text', 'type' => 'contains', 'filter' => 'x' } }
 
-      expect(aliased.gridfilter(filters).selector.to_json).to include('domain')
+      expect(EmailBlacklist.gridfilter(filters).selector.to_json).to include('domain')
+    end
+
+    it 'still rejects the mapped field when only the alias is whitelisted' do
+      filters = { 'domain' => { 'filterType' => 'text', 'type' => 'contains', 'filter' => 'x' } }
+
+      expect { EmailBlacklist.gridfilter(filters) }.to raise_error(ApplicationDocument::GridfilterError)
+    end
+
+    it 'does not add a _type field to the real model (what defining a subclass here would do)' do
+      expect(EmailBlacklist.fields.keys).not_to include('_type')
     end
   end
 end
