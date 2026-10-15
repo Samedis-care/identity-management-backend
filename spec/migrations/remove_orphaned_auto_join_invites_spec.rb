@@ -182,6 +182,74 @@ RSpec.describe RemoveOrphanedAutoJoinInvites do
     end
   end
 
+  # Samedis-care/samedis-care-issues#3305: update.sh runs `MANUAL=true rails db:migrate`, which
+  # applies this migration with no operator input at all and must not abort the update
+  describe 'without any operator input (update.sh running MANUAL=true db:migrate)' do
+    def run_without_input(extra = {})
+      stub_const('ENV', ENV.to_hash.except(*described_class::OPERATOR_INPUTS).merge(extra))
+      $stdout = output_io
+      described_class.up
+    ensure
+      $stdout = STDOUT
+    end
+
+    it 'logs why and returns instead of raising' do
+      expect { run_without_input }.not_to raise_error
+
+      expect(output_io.string).to include('skipped')
+    end
+
+    it 'deletes nothing' do
+      run_without_input
+
+      expect([orphan, kept].map { |id| exists?(id) }).to all(be(true))
+    end
+
+    it 'also skips when only modifiers are set, since other manual migrations read LIMIT and TENANT_ID too' do
+      expect { run_without_input('LIMIT' => '5', 'TENANT_ID' => tenant_id, 'APP' => 'samedis-care') }.not_to raise_error
+      expect(exists?(orphan)).to be(true)
+    end
+
+    it 'still refuses when only APPLY is set, so a forgotten KEEP_FILE does not pass as a finished run' do
+      expect { run_without_input('APPLY' => 'true') }.to raise_error(ArgumentError, /KEEP_FILE is required/)
+    end
+
+    it 'still refuses when only BACKUP_FILE is set' do
+      expect { run_without_input('BACKUP_FILE' => backup_path) }.to raise_error(ArgumentError, /KEEP_FILE is required/)
+    end
+  end
+
+  # The documented STEP 0 of the header, through the real Mongoid::Migrator: after update.sh skipped
+  # the migration its version is recorded and db:migrate:up is a silent no-op until the record is removed
+  describe 'the recorded version after a skip (header STEP 0)' do
+    let(:version) { 20_261_014_140_000 }
+
+    def migrate(env)
+      stub_const('ENV', ENV.to_hash.except(*described_class::OPERATOR_INPUTS).merge(env))
+      $stdout = output_io
+      Mongoid::Migrator.run(:up, ['db/migrate_manual'], version)
+    ensure
+      $stdout = STDOUT
+    end
+
+    before { DataMigration.where(version: version.to_s).delete_all }
+
+    after { DataMigration.where(version: version.to_s).delete_all }
+
+    it 'records the version when skipped, makes a later operator run a silent no-op, and runs again once the record is removed' do
+      migrate({})
+      expect(DataMigration.where(version: version.to_s)).to exist
+
+      operator = { 'KEEP_FILE' => keep_path, 'EXPORT_AT' => export_at.iso8601, 'TENANT_ID' => tenant_id }
+      File.write(keep_path, "#{kept_token}\n")
+      expect { migrate(operator) }.not_to raise_error
+      expect(output_io.string).not_to include('dry run')
+
+      DataMigration.where(version: version.to_s).delete_all
+      expect { migrate(operator) }.to raise_error(StandardError, /dry run finished/)
+    end
+  end
+
   describe 'refusing to run' do
     it 'without KEEP_FILE' do
       stub_const('ENV', ENV.to_hash.merge('EXPORT_AT' => export_at.iso8601))
