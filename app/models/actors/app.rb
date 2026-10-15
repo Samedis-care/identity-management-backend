@@ -635,7 +635,6 @@ module Actors
 
     # Writes seed files of candos for each app to YML files
     def self.dump_candos
-      FileUtils.mkdir_p dump_path_candos
       available.each do |app|
         app.dump_candos
       end
@@ -658,11 +657,8 @@ module Actors
 
     # Imports all candos of each app from YML files into database
     def self.seed_candos!
-      Dir.glob("#{dump_path_candos}/candos.yml").each do |yml_file|
-        _app_name = File.basename(yml_file, '.yml')
-        _app = find_by name: _app_name
-        puts "Seeding Candos for: #{_app.name}"
-        _app.seed_candos!
+      available.each do |app|
+        puts "Seeded Candos for: #{app.name}" if app.seed_candos!
       end
     end
 
