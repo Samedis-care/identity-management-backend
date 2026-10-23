@@ -14,7 +14,8 @@ RSpec.describe 'tenant-scoped controller authorization', type: :model do
     Api::V1::Apps::Tenants::UsersController,
     Api::V1::AccessControl::Tenant::ProfilesController,
     Api::V1::AccessControl::Tenant::RolesController,
-    Api::V1::Picker::TenantUsersController
+    Api::V1::Picker::TenantUsersController,
+    Api::V1::App::Tenant::InvitationsController
   ].freeze
 
   def before_filters(controller)
