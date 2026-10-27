@@ -11,6 +11,15 @@ Sentry.init do |config|
   config.release = "identity-management-backend@#{File.read('public/version.txt').strip rescue 'dev'}"
   config.environment = ENV['SENTRY_ENV']
 
+  # sentry 7 replaced send_default_pii with data_collection; with pii off it drops all request params.
+  # deny-list mode (merged with Rails filter_parameters) restores the 6.x params in breadcrumbs and controller spans.
+  # it also adds query strings to error events and http.client spans, which 6.x never sent: stripped below
+  config.data_collection.url_query_params = true
+
+  config.before_send = lambda do |event, _hint|
+    event.request.query_string = nil if event.request
+    event
+  end
 
   # debug output
   #config.debug = true
@@ -55,6 +64,12 @@ Sentry.init do |config|
     event.spans.each do |span|
       op = span[:op]
       next unless op.is_a? String
+
+      if op == 'http.client'
+        span[:data]&.delete(Sentry::Span::DataConventions::HTTP_QUERY)
+        next
+      end
+
       next unless op.ends_with? '.action_controller'
 
       data = span[:data]
