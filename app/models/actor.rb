@@ -397,14 +397,19 @@ class Actor < ApplicationDocument
 
     # sync deleted to mappings
     if record.persisted?
-      if record.is_user?
-        u = User.where(actor: record).first
-        u.set(deleted: record.deleted?) unless u.nil?
-      end
       # adds uuid after the name so the account can be re-created
       record.name_uniquely_disabled! if record.deleted?
-      record.mappings.set(deleted: record.deleted?)
-      record.descendants.set(deleted: record.deleted?)
+      # Only cascade when the flag actually flips. Cascading on every save wrote deleted: false
+      # onto everything soft-deleted below a live actor, so any tenant save undeleted its
+      # OUs/groups/mappings (and the permissions they grant).
+      if record.deleted_changed?
+        if record.is_user?
+          u = User.where(actor: record).first
+          u.set(deleted: record.deleted?) unless u.nil?
+        end
+        record.mappings.set(deleted: record.deleted?)
+        record.descendants.set(deleted: record.deleted?)
+      end
     end
     (record.image_derivatives! rescue nil) if record.image
   end
