@@ -33,6 +33,17 @@ rails app:register name="my-app" url="https://domain.local"
 rails app:admin name="my-app" email="admin@domain.local"
 ```
 
+### Local test setup
+
+`bundle exec rspec` needs this first. No GitHub workflow runs the suite, so nothing else catches a failure.
+
+- `config/mongoid.yml` and `config/application.yml` are gitignored. Copy them from their `.example` files. `mongoid.yml.example` has no `test:` section, so add one with its own database.
+- With `SHRINE_STORAGE: local`, the `FILES_DIRECTORY` must exist, or boot raises.
+- Leave `CSP_HEADER` and `CSP_REPORT_ONLY_HEADER` unset. The header middleware in `config/application.rb` reads `env['REQUEST_PATH']`, which rack-test doesn't set, so every `type: :request` spec fails.
+- mongod must run as replica set `rs0`.
+- Set `CI=1` to eager-load the app (`config/environments/test.rb`), so specs that walk `descendants` see every class.
+- `0 examples, 0 failures, N errors occurred outside of examples` means boot failed. It is not a green run.
+
 ## Architecture
 
 ### Actor Hierarchy
@@ -67,10 +78,20 @@ Shrine gem with AWS S3 primary storage, local filesystem cache. A `MaintenanceSt
 ### Key Conventions
 
 - **Mongoid only** — no SQL database. MongoDB must run in replica set mode (`rs0`).
-- **Manual seed flag** — `db:seed` is a no-op without `manual=true` to prevent accidental data loss.
+- **Manual seed flag** — `db:seed` is a no-op without `manual=true` (lowercase, `db/seeds.rb`) to prevent accidental data loss.
 - **Per-app YAML configs** — app roles, functionalities, OU templates, and email templates live in `config/apps/[app-name]/`. Migrations for per-app data go in `config/apps/[app-name]/migrate/`.
 - **Memory tuning** — jemalloc, YJIT, explicit full GC once per hour via Puma's `out_of_band` handler, and heap dumps to S3 every 10 minutes when `HEAP_DUMPING=true`.
-- **Maintenance mode** — toggled via an external JSON file; handled in Puma config and `MaintenanceStorage`.
+- **Maintenance mode** — `lib/maintenance_mode.rb` polls `MAINTENANCE_STATE_URL` every 30 s (started from the Puma config). While it is active, `MaintenanceModeReadOnlyConcern`, mixed into every `Mongoid::Document`, raises `MaintenanceMode::ReadOnlyMaintenanceError` on writes, and `MaintenanceStorage` guards file storage.
+
+### Migrations
+
+The migration path is set in `config/application.rb`:
+
+- `db/migrate/` and `config/apps/*/migrate/` run with every `rails db:migrate`.
+- `db/migrate/indexes/` holds index migrations. `INDEXES=true rails db:migrate` runs only those.
+- `db/migrate_manual/` holds one-off data repairs. It is on the path only with `MANUAL=true` (uppercase; `manual=true` silently skips it). Run one with `MANUAL=true VERSION=<version> rails db:migrate:up`, not `db:migrate`, which would first apply every pending regular migration.
+- On-prem installations run `MANUAL=true rails db:migrate` on update. A manual migration must therefore do nothing, and log why, when its operator inputs are missing. The version is then recorded as applied, and `db:migrate:up` silently skips a recorded version. The header of `db/migrate_manual/20261014140000_remove_orphaned_auto_join_invites.rb` shows how to handle that.
+- Don't set `INDEXES` and `MANUAL` together: `db/migrate/` itself then drops out of the path.
 
 ### Directory Layout
 
@@ -78,6 +99,6 @@ Shrine gem with AWS S3 primary storage, local filesystem cache. A `MaintenanceSt
 - `app/controllers/api/v1/` — API controllers
 - `app/serializers/` — jsonapi-serializer serializers
 - `config/apps/` — per-app YAML seed data, email templates, migrations
-- `config/routes/v1.rb` — all v1 API routes
-- `lib/tasks/` — Rake tasks (app management, swagger, GC utilities)
+- `config/routes/{v1,v1_devise,admin}.rb` — routes, drawn from `config/routes.rb`; auth, social login and confirmations are in `v1_devise.rb`, the `admin/gc_stats` endpoint in `admin.rb`
+- `lib/tasks/` — Rake tasks (app management, OpenAPI generation, cleanup). `auto_swagger.rake` is a legacy generator writing to `swagger/v1`; use `openapi_spec` instead
 - `spec/` — RSpec tests; `spec/openapi/` holds the per-route OpenAPI sources
