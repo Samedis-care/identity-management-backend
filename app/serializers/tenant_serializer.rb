@@ -24,6 +24,11 @@ class TenantSerializer
     }
   end
 
+  # the original upload, not the resized versions above
+  attribute :image_size do |record|
+    record.image&.size rescue nil
+  end
+
   class Schema < JsonApi::Schema
 
     def schema_record
@@ -56,6 +61,9 @@ class TenantSerializer
             string :medium
             string :small
           end
+          integer :image_size, read_only: true, nullable: true,
+                               description: 'size of the uploaded image in bytes (the original, ' \
+                                            'not the resized versions)'
           string :created_at, format: 'date-time', description: 'created date'
           string :updated_at, format: 'date-time', description: 'updated date'
         end

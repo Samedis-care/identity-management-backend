@@ -49,6 +49,11 @@ class ActorSerializer
     }
   end
 
+  # the original upload, not the resized versions above
+  attribute :image_size do |record|
+    record.image&.size rescue nil
+  end
+
   # # resulting from all actors inherited and mapped
   # attribute :candos do |actor|
   #   actor.determine_candos
@@ -101,6 +106,9 @@ class ActorSerializer
             string :medium
             string :small
           end
+          integer :image_size, read_only: true, nullable: true,
+                               description: 'size of the uploaded image in bytes (the original, ' \
+                                            'not the resized versions)'
         end
       }
     end
