@@ -393,6 +393,12 @@ components:
               type: string
             small:
               type: string
+        image_size:
+          type: integer
+          readOnly: true
+          nullable: true
+          description: size of the uploaded image in bytes (the original, not the
+            resized versions)
     AppAdminOverviewSerializer:
       type: object
       description: the main attributes of this record
@@ -980,6 +986,12 @@ components:
               type: string
             small:
               type: string
+        image_size:
+          type: integer
+          readOnly: true
+          nullable: true
+          description: size of the uploaded image in bytes (the original, not the
+            resized versions)
         candos:
           type: array
           description: global candos the user has, filtered to the current app context
@@ -1894,6 +1906,12 @@ components:
               type: string
             small:
               type: string
+        image_size:
+          type: integer
+          readOnly: true
+          nullable: true
+          description: size of the uploaded image in bytes (the original, not the
+            resized versions)
         created_at:
           type: string
           format: date-time
@@ -2235,6 +2253,12 @@ components:
               type: string
             small:
               type: string
+        image_size:
+          type: integer
+          readOnly: true
+          nullable: true
+          description: size of the uploaded image in bytes (the original, not the
+            resized versions)
         title:
           type: string
           description: an optional user title
@@ -4569,18 +4593,19 @@ paths:
                   description: id of an access group
                   items:
                     type: string
-  "/api/v1/access_control/tenant/{tenant_id}/users":
+  "/api/v1/access_control/apps/{app_id}/tenant/{tenant_id}/users":
     get:
       summary: 'Tenant User: List [GET] authorized groups'
       tags:
       - Access Control
-      operationId: accesscontrol-tenant-users-index
-      x-controller: Api::V1::AccessControl::Tenant::UsersController
+      operationId: accesscontrol-apps-tenant-users-index
+      x-controller: Api::V1::AccessControl::Apps::Tenant::UsersController
       x-controller-action: index
-      x-route-name: v1_access_control_tenant_users
+      x-route-name: v1_access_control_app_tenant_users
       x-candos:
       - "~/access-control.reader"
       - identity-management/apps.admin
+      - identity-management/global.admin
       x-model-type: User
       x-record-type: tenant_user_access
       x-gridfilter-fields:
@@ -4594,7 +4619,7 @@ paths:
       - locale
       - title
       description: |-
-        Manage user access control for a tenant
+        Manage user access within a tenant context
 
         ---
 
@@ -4603,9 +4628,16 @@ paths:
 
          - ~/access-control.reader
          - identity-management/apps.admin
+         - identity-management/global.admin
       security:
       - Bearer: []
       parameters:
+      - name: app_id
+        in: path
+        required: true
+        description: Tenant User app_id
+        schema:
+          type: string
       - name: tenant_id
         in: path
         required: true
@@ -4736,19 +4768,18 @@ paths:
                 properties:
                   meta:
                     "$ref": "#/components/schemas/meta"
-  "/api/v1/access_control/apps/{app_id}/tenant/{tenant_id}/users":
+  "/api/v1/access_control/tenant/{tenant_id}/users":
     get:
       summary: 'Tenant User: List [GET] authorized groups'
       tags:
       - Access Control
-      operationId: accesscontrol-apps-tenant-users-index
-      x-controller: Api::V1::AccessControl::Apps::Tenant::UsersController
+      operationId: accesscontrol-tenant-users-index
+      x-controller: Api::V1::AccessControl::Tenant::UsersController
       x-controller-action: index
-      x-route-name: v1_access_control_app_tenant_users
+      x-route-name: v1_access_control_tenant_users
       x-candos:
       - "~/access-control.reader"
       - identity-management/apps.admin
-      - identity-management/global.admin
       x-model-type: User
       x-record-type: tenant_user_access
       x-gridfilter-fields:
@@ -4762,7 +4793,7 @@ paths:
       - locale
       - title
       description: |-
-        Manage user access within a tenant context
+        Manage user access control for a tenant
 
         ---
 
@@ -4771,16 +4802,9 @@ paths:
 
          - ~/access-control.reader
          - identity-management/apps.admin
-         - identity-management/global.admin
       security:
       - Bearer: []
       parameters:
-      - name: app_id
-        in: path
-        required: true
-        description: Tenant User app_id
-        schema:
-          type: string
       - name: tenant_id
         in: path
         required: true
@@ -11068,6 +11092,7 @@ paths:
       - parent_ids
       - path
       - path_ids
+      - region
       - role_ids
       - short_name
       - system
@@ -24143,16 +24168,8 @@ paths:
                       description: E-mail address of the account to reset
       responses:
         '200':
-          description: Password reset instructions sent
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  meta:
-                    "$ref": "#/components/schemas/meta"
-        '400':
-          description: Invalid or unknown email
+          description: 'Generic response, always returned regardless of whether the
+            email is registered - see issue #2419 (email enumeration)'
           content:
             application/json:
               schema:

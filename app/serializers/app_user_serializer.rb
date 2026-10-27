@@ -37,6 +37,11 @@ class AppUserSerializer
     }
   end
 
+  # the original upload, not the resized versions above
+  attribute :image_size do |user|
+    user.try(:image)&.size
+  end
+
   # Global candos regardless of tenant.
   # To control things outside of a specific tenant context.
   # Filtered to only supply candos for current app_context
@@ -135,6 +140,9 @@ class AppUserSerializer
             string :medium
             string :small
           end
+          integer :image_size, read_only: true, nullable: true,
+                               description: 'size of the uploaded image in bytes (the original, ' \
+                                            'not the resized versions)'
           array :candos, description: 'global candos the user has, filtered to the current app context' do
             items type: :string
           end
