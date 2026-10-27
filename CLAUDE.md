@@ -88,7 +88,7 @@ Shrine gem with AWS S3 primary storage, local filesystem cache. A `MaintenanceSt
 The migration path is set in `config/application.rb`:
 
 - `db/migrate/` and `config/apps/*/migrate/` run with every `rails db:migrate`.
-- `db/migrate/indexes/` holds index migrations. `INDEXES=true rails db:migrate` runs only those.
+- `db/migrate/indexes/` holds index migrations. They also run with a plain `db:migrate`, because the migrator globs each path recursively. `INDEXES=true rails db:migrate` limits the run to them.
 - `db/migrate_manual/` holds one-off data repairs. It is on the path only with `MANUAL=true` (uppercase; `manual=true` silently skips it). Run one with `MANUAL=true VERSION=<version> rails db:migrate:up`, not `db:migrate`, which would first apply every pending regular migration.
 - On-prem installations run `MANUAL=true rails db:migrate` on update. A manual migration must therefore do nothing, and log why, when its operator inputs are missing. The version is then recorded as applied, and `db:migrate:up` silently skips a recorded version. The header of `db/migrate_manual/20261014140000_remove_orphaned_auto_join_invites.rb` shows how to handle that.
 - Don't set `INDEXES` and `MANUAL` together: `db/migrate/` itself then drops out of the path.
