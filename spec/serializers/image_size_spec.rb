@@ -61,6 +61,16 @@ describe 'image_size', type: :model do
     end
   end
 
+  # AppUserSerializer#tenants serializes the snapshot this builds
+  it 'is in the tenant list of a user' do
+    user = User.new
+    allow(user).to receive(:candos).and_return({})
+    tenants = [Actors::Tenant.new(image_data: stored(54_321)), Actors::Tenant.new]
+    allow(Actors::Tenant).to receive(:criteria).and_return(tenants)
+
+    expect(Actors::Tenant.tenant_collection(user).pluck(:image_size)).to eq([54_321, nil])
+  end
+
   # The frontends upload a base64 data URI as image_b64, which Base64StringIO
   # wraps in a StringIO whose size Shrine records.
   describe 'an image uploaded as image_b64' do

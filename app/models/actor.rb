@@ -588,7 +588,9 @@ class Actor < ApplicationDocument
           large: (t.image[:large].url rescue nil),
           medium: (t.image[:medium].url rescue nil),
           small: (t.image[:small].url rescue nil)
-        }
+        },
+        # the original upload, not the resized versions above
+        image_size: (t.image&.size rescue nil)
       }
     end
   end

@@ -151,6 +151,9 @@ class AppUserSerializer
               array :candos do
                 items type: :string
               end
+              integer :image_size, nullable: true,
+                                   description: 'size of the tenant image in bytes (the original, ' \
+                                                'not the resized versions)'
             end
           end
           array :recent_invite_tokens, description: 'a list of recent invite tokens to pass to the authenticated remote app so the app can process these' do

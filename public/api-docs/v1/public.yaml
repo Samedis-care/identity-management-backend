@@ -1001,6 +1001,11 @@ components:
                 type: array
                 items:
                   type: string
+              image_size:
+                type: integer
+                nullable: true
+                description: size of the tenant image in bytes (the original, not
+                  the resized versions)
         recent_invite_tokens:
           type: array
           description: a list of recent invite tokens to pass to the authenticated
