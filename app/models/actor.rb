@@ -411,9 +411,9 @@ class Actor < ApplicationDocument
 
   def handle_soft_delete
     if deleted?
-      deleted_at ||= Time.now
+      self.deleted_at ||= Time.now
     else
-      deleted_at = nil
+      self.deleted_at = nil
     end
   end
 
