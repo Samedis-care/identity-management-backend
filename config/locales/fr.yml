@@ -73,11 +73,11 @@ fr:
         header: Nous avons reçu votre demande
         message_html: >-
           Votre adresse e-mail sera remplacée par <a href="mailto:%{email_new}">%
-          {email_new} </a>. <br />
+          {email_new} </a>. <br>
 
-          <br />
+          <br>
 
-          Vous n'avez pas changé votre adresse e-mail? <br />
+          Vous n'avez pas changé votre adresse e-mail? <br>
 
           Veuillez contacter immédiatement notre assistance à l'adresse: <a href="mailto:%{support_email}">
           %{support_email} </a>
@@ -85,7 +85,7 @@ fr:
         subject: Changement de mot de passe
         header: Votre mot de passe a été changé avec succès.
         message_html: >-
-          Vous n'avez pas changé votre mot de passe? <br /> Veuillez contacter immédiatement
+          Vous n'avez pas changé votre mot de passe? <br> Veuillez contacter immédiatement
           notre assistance à l'adresse: <a href="mailto:%{support_email}"> %{support_email}
           </a>
       registered: >-
@@ -99,7 +99,7 @@ fr:
         thanks: 'Votre équipe %{app_name}'
         message_1_html: Vous pouvez changer votre mot de passe maintenant
         message_2_html: >-
-          Vous n'avez pas demandé de changement de mot de passe? <br /> Alors veuillez
+          Vous n'avez pas demandé de changement de mot de passe? <br> Alors veuillez
           ignorer cet e-mail.
       reset_password_msg: >-
         Un lien pour réinitialiser votre mot de passe a été envoyé à votre adresse
@@ -336,5 +336,5 @@ fr:
       navigateur :
     regards: 'Votre équipe %{app_name}'
     footer_html: |-
-      Ce mail a été envoyé par identity-management (https://github.com/Samedis-care/identity-management) <br />
+      Ce mail a été envoyé par identity-management (https://github.com/Samedis-care/identity-management) <br>
       Veuillez configurer le pied de page dans les paramètres de votre application.

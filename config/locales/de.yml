@@ -75,11 +75,11 @@ de:
         header: Wir haben Deine Anfrage erhalten
         message_html: >-
           Deine E-Mail Adresse wird auf <a href="mailto:%{email_new}">%{email_new}</a>
-          geändert.<br />
+          geändert.<br>
 
-          <br />
+          <br>
 
-          Du hast Deine E-Mail Adresse nicht geändert?<br />
+          Du hast Deine E-Mail Adresse nicht geändert?<br>
 
           Setze Dich bitte umgehend mit unserem Support in Verbindung: <a href="mailto:%{support_email}">%{support_email}</a>
       password_change:
@@ -108,7 +108,7 @@ de:
         thanks: 'Dein %{app_name} Team'
         message_1_html: Du kannst dein Passwort jetzt zurücksetzen
         message_2_html: >-
-          Du hast nicht um ein neues Passwort gebeten?<br /> Dann kannst Du diese
+          Du hast nicht um ein neues Passwort gebeten?<br> Dann kannst Du diese
           E-Mail ignorieren.
       reset_password_msg: >-
         Ein Link zum Zurücksetzen deines Passworts wurde an deine E-Mail-Adresse gesendet
@@ -323,5 +323,5 @@ de:
       in deinen Web-Browser:
     regards: 'Dein %{app_name} Team'
     footer_html: |-
-      Diese Mail wurde von Identity-Management (https://github.com/Samedis-care/identity-management) gesendet<br />
+      Diese Mail wurde von Identity-Management (https://github.com/Samedis-care/identity-management) gesendet<br>
       Bitte konfiguriere die Fußzeile in Ihren App-Einstellungen.

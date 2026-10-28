@@ -68,19 +68,18 @@ nl:
         subject: Jouw e-mailadres wijzigen
         header: We hebben je aanvraag ontvangen
         message_html: >-
-          Jouw e-mailadres wordt gewijzigd in <a href="mailto:%{email_new}">%{email_new}</a>.<br
-          />
+          Jouw e-mailadres wordt gewijzigd in <a href="mailto:%{email_new}">%{email_new}</a>.<br>
 
-          <br />
+          <br>
 
-          Heb je je e-mailadres niet gewijzigd?<br />
+          Heb je je e-mailadres niet gewijzigd?<br>
 
           Neem onmiddellijk contact op met onze ondersteuning via:<a href="mailto:%{support_email}">%{support_email}</a>
       password_change:
         subject: Wijziging wachtwoord
         header: Je wachtwoord is met succes veranderd.
         message_html: >-
-          Heb jij je wachtwoord niet gewijzigd? <br /> Neem onmiddellijk contact op
+          Heb jij je wachtwoord niet gewijzigd? <br> Neem onmiddellijk contact op
           met onze ondersteuning via:<a href="mailto:%{support_email}">%{support_email}</a>
       registered: >-
         Controleer jouw e-mails om de registratie te bevestigen. Jouw account %{email}
