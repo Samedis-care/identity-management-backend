@@ -100,19 +100,18 @@ en:
         subject: Changing your email address
         header: We have received your request
         message_html: >-
-          Your email address will be changed to <a href="mailto:%{email_new}">%{email_new}</a>.<br
-          />
+          Your email address will be changed to <a href="mailto:%{email_new}">%{email_new}</a>.<br>
 
-          <br />
+          <br>
 
-          You didn't change your email address?<br />
+          You didn't change your email address?<br>
 
           Please contact our support immediately at: <a href="mailto:%{support_email}">%{support_email}</a>
       password_change:
         subject: Password change
         header: Your password has been changed successfully.
         message_html: >-
-          You didn't change your password?<br /> Please contact our support immediately
+          You didn't change your password?<br> Please contact our support immediately
           at: <a href="mailto:%{support_email}">%{support_email}</a>
       registered: >-
         Please check your emails to confirm the registration. Your account %{email}
@@ -132,7 +131,7 @@ en:
         thanks: 'Your %{app_name} Team'
         message_1_html: You can change your password now
         message_2_html: >-
-          You didn't request a password change?<br /> Then please just ignore this
+          You didn't request a password change?<br> Then please just ignore this
           email.
       reset_password_msg: >-
         A link to reset your password has been sent to your email address (%{email}).
@@ -306,6 +305,6 @@ en:
       Browser:
     regards: 'Your %{app_name} Team'
     footer_html: |-
-      This mail was send by identity-management (https://github.com/Samedis-care/identity-management)<br />
+      This mail was send by identity-management (https://github.com/Samedis-care/identity-management)<br>
       Please configure the footer in your app-settings.
 
