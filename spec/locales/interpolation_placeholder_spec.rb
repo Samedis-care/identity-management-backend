@@ -11,10 +11,10 @@ RSpec.describe 'locale interpolation placeholders' do # rubocop:disable RSpec/De
     end
   end
 
-  %w[en de fr nl ru].each do |locale|
-    it "has no placeholder split by whitespace in #{locale}" do
+  Dir[Rails.root.join('config/locales/*.yml')].each do |file|
+    it "has no placeholder split by whitespace in #{File.basename(file)}" do
       broken = []
-      leaf_strings(YAML.load_file(Rails.root.join("config/locales/#{locale}.yml"))) do |key, value|
+      leaf_strings(YAML.load_file(file)) do |key, value|
         broken << key if value.match?(/%\s+\{\w+\}/)
       end
 
