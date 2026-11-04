@@ -317,11 +317,11 @@ class User < ApplicationDocument
   def do_before_save
     record = self
     if record.write_protected && record.write_protected_was
-      errors.add :write_protected, 'protection flag set'
+      errors.add :write_protected, :protected
       throw(:abort)
     end
     if record.system && record.deleted
-      errors.add :system, 'protection flag set'
+      errors.add :system, :protected
       throw(:abort)
     end
     if record.deleted_changed? && record.deleted?
@@ -360,7 +360,7 @@ class User < ApplicationDocument
 
   before_destroy do |record|
     if record.system || record.write_protected
-      errors.add :system, 'protection flag set'
+      errors.add :system, :protected
       throw(:abort)
     end
   end

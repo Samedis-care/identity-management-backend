@@ -152,6 +152,11 @@ ru:
         Этот доступ еще не подтвержден. Пожалуйста, сначала подтвердите свой адрес
         электронной почты.
   errors:
+    attributes:
+      system:
+        protected: Предопределённые записи нельзя удалить.
+      write_protected:
+        protected: Записи, защищённые от изменений, нельзя изменить.
     messages:
       contains_html_tags: не должно содержать HTML-теги
     actor:
@@ -218,6 +223,10 @@ ru:
       models:
         actor:
           attributes:
+            system:
+              format: '%{message}'
+            write_protected:
+              format: '%{message}'
             name:
               uniqueness: 'Выбранное имя "%{value}" уже существует на этом уровне.'
             parent_id:
@@ -235,6 +244,10 @@ ru:
                 В приложении уже есть функционал для выбранного модуля с этим идентификатором.
         role:
           attributes:
+            system:
+              format: '%{message}'
+            write_protected:
+              format: '%{message}'
             description:
               blank: Описание не может быть пустым.
             title:
@@ -242,6 +255,10 @@ ru:
               taken: Роль с таким названием уже есть.
         user:
           attributes:
+            system:
+              format: '%{message}'
+            write_protected:
+              format: '%{message}'
             email:
               already_confirmed: Электронный адрес уже подтвержден.
               blank: Адрес не может быть пустым.

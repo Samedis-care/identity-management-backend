@@ -38,12 +38,12 @@ class Role < ApplicationDocument
   end
 
   before_save if: :is_write_protected? do |record|
-    errors.add :write_protected, 'protection flag set'
+    errors.add :write_protected, :protected
     throw(:abort)
   end
 
   before_destroy if: :is_system_protected? do |record|
-    errors.add :system, 'protection flag set'
+    errors.add :system, :protected
     throw(:abort)
   end
 

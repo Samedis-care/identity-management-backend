@@ -149,6 +149,11 @@ en:
         This access has not yet been confirmed. Please confirm your email address
         first.
   errors:
+    attributes:
+      system:
+        protected: Predefined records cannot be deleted.
+      write_protected:
+        protected: Write-protected records cannot be changed.
     messages:
       contains_html_tags: must not contain HTML tags
     actor:
@@ -212,6 +217,10 @@ en:
       models:
         actor:
           attributes:
+            system:
+              format: '%{message}'
+            write_protected:
+              format: '%{message}'
             name:
               uniqueness: 'The selected name "%{value}" already exists in this level.'
             parent_id:
@@ -230,6 +239,10 @@ en:
                 with this identifier.
         role:
           attributes:
+            system:
+              format: '%{message}'
+            write_protected:
+              format: '%{message}'
             description:
               blank: Description cannot be empty.
             title:
@@ -237,6 +250,10 @@ en:
               taken: There is already a role with that title.
         user:
           attributes:
+            system:
+              format: '%{message}'
+            write_protected:
+              format: '%{message}'
             email:
               already_confirmed: The email address has already been confirmed.
               blank: Address cannot be empty.

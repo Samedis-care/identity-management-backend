@@ -160,6 +160,11 @@ fr:
         Cet accès n'a pas encore été confirmé. Veuillez d'abord confirmer votre adresse
         e-mail.
   errors:
+    attributes:
+      system:
+        protected: Les enregistrements prédéfinis ne peuvent pas être supprimés.
+      write_protected:
+        protected: Les enregistrements protégés en écriture ne peuvent pas être modifiés.
     messages:
       contains_html_tags: ne doit pas contenir de balises HTML
     actor:
@@ -227,6 +232,10 @@ fr:
       models:
         actor:
           attributes:
+            system:
+              format: '%{message}'
+            write_protected:
+              format: '%{message}'
             name:
               uniqueness: 'Le nom sélectionné "%{value}" existe déjà dans ce niveau.'
             parent_id:
@@ -246,6 +255,10 @@ fr:
                 avec cet identifiant.
         role:
           attributes:
+            system:
+              format: '%{message}'
+            write_protected:
+              format: '%{message}'
             description:
               blank: La description ne peut pas être vide.
             title:
@@ -253,6 +266,10 @@ fr:
               taken: Il y a déjà un rôle avec ce titre.
         user:
           attributes:
+            system:
+              format: '%{message}'
+            write_protected:
+              format: '%{message}'
             email:
               already_confirmed: L'adresse e-mail a déjà été confirmée.
               blank: L'adresse ne peut pas être vide.

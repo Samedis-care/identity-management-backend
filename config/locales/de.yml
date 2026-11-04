@@ -161,6 +161,11 @@ de:
         Dieser Zugang wurde noch nicht bestätigt. Bitte bestätige zuerst Deine E-Mail
         Adresse.
   errors:
+    attributes:
+      system:
+        protected: Vordefinierte Datensätze können nicht gelöscht werden.
+      write_protected:
+        protected: Schreibgeschützte Datensätze können nicht geändert werden.
     messages:
       contains_html_tags: darf keine HTML-Tags enthalten
     actor:
@@ -227,6 +232,10 @@ de:
       models:
         actor:
           attributes:
+            system:
+              format: '%{message}'
+            write_protected:
+              format: '%{message}'
             name:
               uniqueness: 'Der gewählte Name "%{value}" existiert bereits in dieser
                 Ebene.'
@@ -247,6 +256,10 @@ de:
                 Modul mit diesem Identifikator.
         role:
           attributes:
+            system:
+              format: '%{message}'
+            write_protected:
+              format: '%{message}'
             description:
               blank: Beschreibung darf nicht leer sein.
             title:
@@ -254,6 +267,10 @@ de:
               taken: Es gibt bereits eine Rolle mit diesem Titel.
         user:
           attributes:
+            system:
+              format: '%{message}'
+            write_protected:
+              format: '%{message}'
             email:
               already_confirmed: Die E-Mail Adresse wurde bereits bestätigt.
               blank: Adresse darf nicht leer sein.
