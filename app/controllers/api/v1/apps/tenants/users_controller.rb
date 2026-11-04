@@ -35,17 +35,19 @@ class Api::V1::Apps::Tenants::UsersController < Api::V1::JsonApiController
   skip_before_action :authorize
   before_action :tenant_authorize
 
-  # Candos from #cando that are app-wide by design and therefore also count when
-  # held in any tenant, like the global `authorize` on Api::V1::Apps::UsersController
-  # (App > Users, same users and update fields) and the sibling apps/tenants/*
-  # endpoints. Without this an app admin who is not a member of the path tenant
-  # is refused (Samedis-care/samedis-care-issues#3530).
+  # Candos from #cando that also count when held in any tenant, so an app admin
+  # who is not a member of the path tenant is not refused
+  # (Samedis-care/samedis-care-issues#3530). The apps.admin combos are the ones
+  # Api::V1::Apps::UsersController (App > Users, same users and update fields)
+  # checks globally. app-tenant.admin is app-wide for reading only, as on the
+  # sibling apps/tenants/* endpoints: app-wide it would reach set_password of
+  # every user in the app.
   # Never add ~/tenant.admin: it is per-tenant and bundled into customer roles.
-  APP_WIDE_CANDOS = %w(
-    ~/app-tenant.admin
-    ~/apps.admin+identity-management/users.reader
-    ~/apps.admin+identity-management/users.writer
-  ).freeze
+  APP_WIDE_CANDOS = {
+    show:   %w(~/app-tenant.admin ~/apps.admin+identity-management/users.reader),
+    index:  %w(~/app-tenant.admin ~/apps.admin+identity-management/users.reader),
+    update: %w(~/apps.admin+identity-management/users.writer)
+  }.freeze
 
   undef_method :create
   undef_method :destroy
@@ -63,10 +65,10 @@ class Api::V1::Apps::Tenants::UsersController < Api::V1::JsonApiController
     super || app_wide_authorization
   end
 
-  # Checks only the APP_WIDE_CANDOS entries of the current action's requirements
+  # Checks only the current action's APP_WIDE_CANDOS entries of its requirements
   # against all of the caller's candos.
   def app_wide_authorization
-    app_wide = APP_WIDE_CANDOS.map do |c|
+    app_wide = APP_WIDE_CANDOS.fetch(params[:action].to_sym, []).map do |c|
       c.split('+').map { |s| s.sub(%r{\A~/}, "#{current_app_actor.name}/") }
     end
     requirements = current_cando_requirements.map do |combos|

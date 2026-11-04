@@ -37,10 +37,15 @@ RSpec.describe Api::V1::Apps::Tenants::UsersController do
   end
 
   describe 'a caller who is not a member of the path tenant' do
-    %w(index show update).each do |action|
+    %w(index show).each do |action|
       it "allows an app-tenant.admin to #{action}" do
         expect(authorized?(action, other_tenant_id => ['samedis-care/app-tenant.admin'])).to be(true)
       end
+    end
+
+    # app-wide it would reach set_password of every user in the app
+    it 'refuses an app-tenant.admin an update' do
+      expect(authorized?('update', other_tenant_id => ['samedis-care/app-tenant.admin'])).to be(false)
     end
 
     it 'allows apps.admin + users.reader to list, as App > Users does' do
@@ -76,6 +81,10 @@ RSpec.describe Api::V1::Apps::Tenants::UsersController do
   describe 'a member of the path tenant' do
     it 'allows a tenant.admin of that tenant' do
       expect(authorized?('update', path_tenant_id => ['samedis-care/tenant.admin'])).to be(true)
+    end
+
+    it 'allows an app-tenant.admin of that tenant an update' do
+      expect(authorized?('update', path_tenant_id => ['samedis-care/app-tenant.admin'])).to be(true)
     end
 
     it 'refuses a member without an admin cando' do
