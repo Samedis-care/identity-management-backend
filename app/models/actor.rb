@@ -979,13 +979,19 @@ class Actor < ApplicationDocument
   # A role name in the actor defaults that matches no role is dropped, so the
   # actor silently grants nothing (Samedis-care/samedis-care-issues#3533: a
   # misspelled role left a group empty for months). Report it instead of
-  # raising: this runs on every tenant save. On a fresh database App#seed!
-  # runs ensure_defaults! once before the roles are seeded, so that first
-  # pass reports the app's own roles one time.
+  # raising: this runs on every tenant save.
+  # Only actors inside a tenant go to Sentry, where a missing role costs users
+  # their access. The app-level containers are ensured on every db:seed, and
+  # the identity-management app's `users` container names `~-user`, a role
+  # its seeds do not define, so reporting those would be a standing alert.
   def report_unknown_role_names(unknown)
     return if unknown.empty?
 
     Rails.logger.warn("Actor#ensure_named_roles: no role named #{unknown.join(', ')} for #{path}")
+    # parent, not self: ancestors of a group ensure_defaults! is still
+    # creating are empty until it is saved
+    return unless is_tenant? || parent&.tenant
+
     Sentry.capture_message(
       'Actor#ensure_named_roles: actor defaults name a role that does not exist',
       level: :warning,
