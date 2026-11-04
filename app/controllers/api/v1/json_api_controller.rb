@@ -143,7 +143,9 @@ class Api::V1::JsonApiController < ApplicationController
     records.to_a.each do |record|
       if record.respond_to?(:deleted)
         record.deleted = true
-        record.save(validate: false)
+        # a before_save can refuse this (system / write_protected); a mapping's before_save
+        # hard-deletes it and then aborts, which is no refusal
+        undeletables << record unless record.save(validate: false) || record.destroyed?
       else
         record.destroy
         undeletables << record if record.errors.any?

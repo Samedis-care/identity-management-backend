@@ -28,6 +28,7 @@ class GroupActorSerializer
     :title,
     :title_translations,
     :active,
+    :system,
     :created_at,
     :updated_at
   )
@@ -74,6 +75,7 @@ class GroupActorSerializer
           end
 
           boolean :active, default: true, description: 'indicating if this actor is available'
+          boolean :system, default: false, description: 'predefined group that cannot be deleted'
 
           string :created_at, format: 'date-time', description: 'created date'
           string :updated_at, format: 'date-time', description: 'updated date'

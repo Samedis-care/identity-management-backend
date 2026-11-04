@@ -1308,6 +1308,10 @@ components:
           type: boolean
           default: true
           description: indicating if this actor is available
+        system:
+          type: boolean
+          default: false
+          description: predefined group that cannot be deleted
         created_at:
           type: string
           format: date-time
