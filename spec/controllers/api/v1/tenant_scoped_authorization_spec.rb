@@ -33,6 +33,13 @@ RSpec.describe 'tenant-scoped controller authorization', type: :model do
       it 'does not fall back to the global :authorize' do
         expect(before_filters(controller)).not_to include(:authorize)
       end
+
+      # APP_WIDE_CANDOS are checked against the candos of all the caller's tenants
+      it 'lists no per-tenant cando in APP_WIDE_CANDOS' do
+        candos = controller::APP_WIDE_CANDOS.values.flatten.flat_map { |c| c.split('+') }
+        per_tenant = candos.select { |c| c == '~/tenant.admin' || c.start_with?('~/access-control.') }
+        expect(per_tenant).to be_empty
+      end
     end
   end
 end
