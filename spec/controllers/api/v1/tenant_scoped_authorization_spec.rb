@@ -12,6 +12,7 @@ require 'rails_helper'
 RSpec.describe 'tenant-scoped controller authorization', type: :model do
   TENANT_SCOPED_CONTROLLERS = [
     Api::V1::Apps::Tenants::UsersController,
+    Api::V1::AccessControl::Apps::Tenant::UsersController,
     Api::V1::AccessControl::Tenant::ProfilesController,
     Api::V1::AccessControl::Tenant::RolesController,
     Api::V1::Picker::TenantUsersController
@@ -23,6 +24,15 @@ RSpec.describe 'tenant-scoped controller authorization', type: :model do
               .map(&:filter)
   end
 
+  # APP_WIDE_CANDOS are checked against the candos of all the caller's tenants.
+  # Matched without the app prefix, so `<app>/tenant.admin` is caught like `~/tenant.admin`.
+  def per_tenant_app_wide_candos(controller)
+    controller::APP_WIDE_CANDOS.values.flatten.flat_map { |c| c.split('+') }.select do |c|
+      name = c.sub(%r{\A[^/]+/}, '')
+      name == 'tenant.admin' || name.start_with?('access-control.')
+    end
+  end
+
   TENANT_SCOPED_CONTROLLERS.each do |controller|
     describe controller.name do
       it 'authorizes per-tenant via :tenant_authorize' do
@@ -31,6 +41,10 @@ RSpec.describe 'tenant-scoped controller authorization', type: :model do
 
       it 'does not fall back to the global :authorize' do
         expect(before_filters(controller)).not_to include(:authorize)
+      end
+
+      it 'lists no per-tenant cando in APP_WIDE_CANDOS' do
+        expect(per_tenant_app_wide_candos(controller)).to be_empty
       end
     end
   end

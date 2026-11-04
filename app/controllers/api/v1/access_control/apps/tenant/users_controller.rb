@@ -3,6 +3,17 @@ class Api::V1::AccessControl::Apps::Tenant::UsersController < Api::V1::JsonApiCo
   skip_before_action :authorize
   before_action :tenant_authorize
 
+  # The IM admin candos are held in IM's own tenants, never in the path tenant,
+  # so membership-scoped they refused every IM admin (App > Tenants > (tenant) >
+  # Users, remove; Samedis-care/samedis-care-issues#3623).
+  # ~/access-control.* stays membership-scoped.
+  APP_WIDE_CANDOS = {
+    index:   %w(identity-management/apps.admin identity-management/global.admin),
+    show:    %w(identity-management/apps.admin identity-management/global.admin),
+    update:  %w(identity-management/apps.admin identity-management/global.admin),
+    destroy: %w(identity-management/apps.admin identity-management/global.admin)
+  }.freeze
+
   PAGE_LIMIT = 20
   PAGE_LIMIT_MAX = 50
 
@@ -82,9 +93,12 @@ class Api::V1::AccessControl::Apps::Tenant::UsersController < Api::V1::JsonApiCo
     record_show
   end
 
-  # return the tenant_id from filter[tenant_id] if the current_user is member of that tenant
+  # return the tenant_id from filter[tenant_id] if the current_user is member of that tenant,
+  # or, for an app-wide admin, if the tenant belongs to the app in the path
   def tenant_id
-    (current_user.tenants.pluck(:id) & [params_json_api[:tenant_id]]).first || raise("MISSING_TENANT_ID")
+    @tenant_id ||= (current_user.tenants.pluck(:id) & [params_json_api[:tenant_id]]).first ||
+                   (current_tenant_actor.id.to_s if app_wide_authorization) ||
+                   raise('MISSING_TENANT_ID')
   end
 
   def json_api_permits
