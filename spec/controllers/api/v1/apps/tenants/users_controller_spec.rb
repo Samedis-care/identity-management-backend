@@ -15,10 +15,6 @@ RSpec.describe Api::V1::Apps::Tenants::UsersController do
   let(:app_actor) { double('Actors::App', name: 'samedis-care') }
   let(:user) { User.new }
 
-  # The test env has no Devise secret configured, so the first lazy route load
-  # (devise_for :users) would raise. Set one so the controller can be exercised.
-  before { Devise.secret_key ||= 'test-suite-secret' }
-
   # memberships: { tenant_id => [candos held in that tenant] }
   def authorized?(action, memberships)
     allow(user).to receive_messages(
