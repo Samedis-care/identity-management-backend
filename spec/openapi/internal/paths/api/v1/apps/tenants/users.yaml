@@ -14,6 +14,7 @@ paths:
       x-route-name: v1_app_tenant_users
       x-candos:
       - "~/app-tenant.admin"
+      - "~/apps.admin+identity-management/users.reader"
       - "~/tenant.admin"
       x-model-type: User
       x-record-type: user
@@ -36,6 +37,7 @@ paths:
         tenant to do any of these
 
          - ~/app-tenant.admin
+         - ~/apps.admin+identity-management/users.reader
          - ~/tenant.admin
       security:
       - Bearer: []
@@ -187,6 +189,7 @@ paths:
       x-route-name: v1_app_tenant_users
       x-candos:
       - "~/app-tenant.admin"
+      - "~/apps.admin+identity-management/users.reader"
       - "~/tenant.admin"
       x-model-type: User
       x-record-type: user
@@ -199,6 +202,7 @@ paths:
         tenant to do any of these
 
          - ~/app-tenant.admin
+         - ~/apps.admin+identity-management/users.reader
          - ~/tenant.admin
       security:
       - Bearer: []
@@ -304,6 +308,7 @@ paths:
       x-route-name: v1_app_tenant_users
       x-candos:
       - "~/app-tenant.admin"
+      - "~/apps.admin+identity-management/users.writer"
       - "~/tenant.admin"
       x-model-type: User
       x-record-type: user
@@ -316,6 +321,7 @@ paths:
         tenant to do any of these
 
          - ~/app-tenant.admin
+         - ~/apps.admin+identity-management/users.writer
          - ~/tenant.admin
       security:
       - Bearer: []
