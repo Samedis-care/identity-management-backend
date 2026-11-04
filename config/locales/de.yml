@@ -161,6 +161,11 @@ de:
         Dieser Zugang wurde noch nicht bestätigt. Bitte bestätige zuerst Deine E-Mail
         Adresse.
   errors:
+    attributes:
+      system:
+        protected: Vordefinierte Datensätze können nicht gelöscht werden.
+      write_protected:
+        protected: Schreibgeschützte Datensätze können nicht geändert werden.
     messages:
       contains_html_tags: darf keine HTML-Tags enthalten
     actor:

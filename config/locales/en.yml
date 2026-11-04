@@ -149,6 +149,11 @@ en:
         This access has not yet been confirmed. Please confirm your email address
         first.
   errors:
+    attributes:
+      system:
+        protected: Predefined records cannot be deleted.
+      write_protected:
+        protected: Write-protected records cannot be changed.
     messages:
       contains_html_tags: must not contain HTML tags
     actor:

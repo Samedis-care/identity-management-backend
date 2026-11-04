@@ -341,7 +341,7 @@ class Actor < ApplicationDocument
   def before_destroy
     record = self
     if record.system && !record.system_override
-      errors.add :system, 'protection flag set'
+      errors.add :system, :protected
       throw(:abort)
     end
   end
@@ -377,11 +377,11 @@ class Actor < ApplicationDocument
     record.ensure_required_fields
 
     if record.write_protected && record.write_protected_was && !record.system_override
-      errors.add :write_protected, 'protection flag set'
+      errors.add :write_protected, :protected
       throw(:abort)
     end
     if record.system && record.deleted && !record.system_override
-      errors.add :system, 'protection flag set'
+      errors.add :system, :protected
       throw(:abort)
     end
     if record.is_user? && !record.parent.eql?(Actor.user_container)

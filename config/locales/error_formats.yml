@@ -1,0 +1,114 @@
+# Full-message formats (i18n_customize_full_message, see config/initializers/active_model_error_format.rb).
+# Code, not copy: kept out of the <locale>.yml files that Weblate translates, since a "translated"
+# format would bring the attribute name back in front of the message in that locale only.
+# The refusals themselves are translated under errors.attributes.{system,write_protected}.protected.
+en:
+  mongoid:
+    errors:
+      models:
+        actor:
+          attributes:
+            system:
+              format: '%{message}'
+            write_protected:
+              format: '%{message}'
+        role:
+          attributes:
+            system:
+              format: '%{message}'
+            write_protected:
+              format: '%{message}'
+        user:
+          attributes:
+            system:
+              format: '%{message}'
+            write_protected:
+              format: '%{message}'
+de:
+  mongoid:
+    errors:
+      models:
+        actor:
+          attributes:
+            system:
+              format: '%{message}'
+            write_protected:
+              format: '%{message}'
+        role:
+          attributes:
+            system:
+              format: '%{message}'
+            write_protected:
+              format: '%{message}'
+        user:
+          attributes:
+            system:
+              format: '%{message}'
+            write_protected:
+              format: '%{message}'
+fr:
+  mongoid:
+    errors:
+      models:
+        actor:
+          attributes:
+            system:
+              format: '%{message}'
+            write_protected:
+              format: '%{message}'
+        role:
+          attributes:
+            system:
+              format: '%{message}'
+            write_protected:
+              format: '%{message}'
+        user:
+          attributes:
+            system:
+              format: '%{message}'
+            write_protected:
+              format: '%{message}'
+nl:
+  mongoid:
+    errors:
+      models:
+        actor:
+          attributes:
+            system:
+              format: '%{message}'
+            write_protected:
+              format: '%{message}'
+        role:
+          attributes:
+            system:
+              format: '%{message}'
+            write_protected:
+              format: '%{message}'
+        user:
+          attributes:
+            system:
+              format: '%{message}'
+            write_protected:
+              format: '%{message}'
+ru:
+  mongoid:
+    errors:
+      models:
+        actor:
+          attributes:
+            system:
+              format: '%{message}'
+            write_protected:
+              format: '%{message}'
+        role:
+          attributes:
+            system:
+              format: '%{message}'
+            write_protected:
+              format: '%{message}'
+        user:
+          attributes:
+            system:
+              format: '%{message}'
+            write_protected:
+              format: '%{message}'

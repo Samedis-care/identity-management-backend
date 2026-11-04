@@ -149,6 +149,11 @@ nl:
       unverified: >-
         Deze toegang is nog niet bevestigd. Bevestig eerst jouw e-mailadres.
   errors:
+    attributes:
+      system:
+        protected: Vooraf gedefinieerde records kunnen niet worden verwijderd.
+      write_protected:
+        protected: Schrijfbeveiligde records kunnen niet worden gewijzigd.
     messages:
       contains_html_tags: mag geen HTML-tags bevatten
     actor:

@@ -160,6 +160,11 @@ fr:
         Cet accès n'a pas encore été confirmé. Veuillez d'abord confirmer votre adresse
         e-mail.
   errors:
+    attributes:
+      system:
+        protected: Les enregistrements prédéfinis ne peuvent pas être supprimés.
+      write_protected:
+        protected: Les enregistrements protégés en écriture ne peuvent pas être modifiés.
     messages:
       contains_html_tags: ne doit pas contenir de balises HTML
     actor:
