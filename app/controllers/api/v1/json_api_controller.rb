@@ -41,6 +41,13 @@ class Api::V1::JsonApiController < ApplicationController
    #all: %w(public) # @DEV ONLY !!! DISABLES USER AUTHORIZATION
   }
 
+  # Per action: candos from #cando that also count when held in ANY tenant, for
+  # `tenant_authorize` controllers that double as app admin surfaces (see
+  # #app_wide_authorization). Never list a per-tenant cando such as
+  # ~/tenant.admin or ~/access-control.writer: checked across tenants it lets
+  # the admin of one tenant act on every other tenant (security audit C-1).
+  APP_WIDE_CANDOS = {}.freeze
+
   def index(&block)
     respond_to do |format|
       format.xlsx {
@@ -399,11 +406,28 @@ class Api::V1::JsonApiController < ApplicationController
   def tenant_authorization
     return false unless current_cando_requirements.is_a?(Array)
     return true if current_action_is_public?
+    return true if app_wide_authorization
     if current_cando_requirements.any?
       return authorized_tenants.any? if current_action_is_multi_tenant?
       return (cando_any?(current_cando_requirements) rescue false)
     end
     false
+  end
+
+  # True when the caller holds one of the current action's APP_WIDE_CANDOS in
+  # any tenant. Only those entries of the action's requirements are checked
+  # against all of the caller's candos, like `authorize` does; everything else
+  # stays membership-scoped under `tenant_authorize`.
+  def app_wide_authorization
+    return @app_wide_authorization if defined?(@app_wide_authorization)
+
+    app_wide = self.class::APP_WIDE_CANDOS.fetch(params[:action].to_sym, []).map do |c|
+      c.split('+').map { |s| s.sub(%r{\A~/}, "#{current_app_actor.name}/") }
+    end
+    requirements = current_cando_requirements.map do |combos|
+      combos.select { |combo| app_wide.include?(combo) }
+    end
+    @app_wide_authorization = app_wide.any? && (current_user.cando_any?(requirements) rescue false)
   end
 
   def authorization

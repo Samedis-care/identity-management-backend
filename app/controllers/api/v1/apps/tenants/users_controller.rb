@@ -61,20 +61,4 @@ class Api::V1::Apps::Tenants::UsersController < Api::V1::JsonApiController
     })
   end
 
-  def tenant_authorization
-    super || app_wide_authorization
-  end
-
-  # Checks only the current action's APP_WIDE_CANDOS entries of its requirements
-  # against all of the caller's candos.
-  def app_wide_authorization
-    app_wide = APP_WIDE_CANDOS.fetch(params[:action].to_sym, []).map do |c|
-      c.split('+').map { |s| s.sub(%r{\A~/}, "#{current_app_actor.name}/") }
-    end
-    requirements = current_cando_requirements.map do |combos|
-      combos.select { |combo| app_wide.include?(combo) }
-    end
-    current_user.cando_any?(requirements) rescue false
-  end
-
 end
