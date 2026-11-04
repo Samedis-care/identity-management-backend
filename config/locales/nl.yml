@@ -220,10 +220,6 @@ nl:
       models:
         actor:
           attributes:
-            system:
-              format: '%{message}'
-            write_protected:
-              format: '%{message}'
             name:
               uniqueness: 'De geselecteerde naam "%{value}" bestaat al op dit niveau.'
             parent_id:
@@ -242,10 +238,6 @@ nl:
                 met deze identifier.
         role:
           attributes:
-            system:
-              format: '%{message}'
-            write_protected:
-              format: '%{message}'
             description:
               blank: Beschrijving mag niet leeg zijn.
             title:
@@ -253,10 +245,6 @@ nl:
               taken: Er is al een rol met die titel.
         user:
           attributes:
-            system:
-              format: '%{message}'
-            write_protected:
-              format: '%{message}'
             email:
               already_confirmed: Het e-mailadres is al bevestigd.
               blank: Adres mag niet leeg zijn.
