@@ -14,10 +14,11 @@ class Api::V1::User::InvitationsController < Api::V1::JsonApiController
     header: 'Pending invitations for the current user'
   }
 
-  # no routable create (only the noswagger accept PUT exists)
+  # only the noswagger accept PUT is routed
   undef_method :create
   undef_method :index
   undef_method :show
+  undef_method :destroy
 
   def update
     records = model_update.where(token: params_json_api[:id])
@@ -30,24 +31,16 @@ class Api::V1::User::InvitationsController < Api::V1::JsonApiController
   end
 
   private
-  def record_destroy
-    model_destroy.where(token: params_json_api[:id])
-  end
-
   # restrict to the current_user's invites
   def model_update
     self.class::MODEL_OVERVIEW.valid.for_user(current_user)
   end
 
-  def model_destroy
-    self.class::MODEL
-  end
-
+  # Accepting needs no cando: model_update limits it to the current user's own
+  # invites. The ~/invites.* candos once listed here guarded actions this
+  # controller never served (Samedis-care/samedis-care-issues#2658).
   def cando
     CANDO.merge({
-      index: %w(~/invites.reader),
-      create: %w(~/invites.writer),
-      destroy: %w(~/invites.deleter),
       update: %w(public)
     })
   end
