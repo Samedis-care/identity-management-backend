@@ -7,108 +7,48 @@ en:
     errors:
       models:
         actor:
-          attributes:
-            system:
-              format: '%{message}'
-            write_protected:
-              format: '%{message}'
+          attributes: {}
         role:
-          attributes:
-            system:
-              format: '%{message}'
-            write_protected:
-              format: '%{message}'
+          attributes: {}
         user:
-          attributes:
-            system:
-              format: '%{message}'
-            write_protected:
-              format: '%{message}'
+          attributes: {}
 de:
   mongoid:
     errors:
       models:
         actor:
-          attributes:
-            system:
-              format: '%{message}'
-            write_protected:
-              format: '%{message}'
+          attributes: {}
         role:
-          attributes:
-            system:
-              format: '%{message}'
-            write_protected:
-              format: '%{message}'
+          attributes: {}
         user:
-          attributes:
-            system:
-              format: '%{message}'
-            write_protected:
-              format: '%{message}'
+          attributes: {}
 fr:
   mongoid:
     errors:
       models:
         actor:
-          attributes:
-            system:
-              format: '%{message}'
-            write_protected:
-              format: '%{message}'
+          attributes: {}
         role:
-          attributes:
-            system:
-              format: '%{message}'
-            write_protected:
-              format: '%{message}'
+          attributes: {}
         user:
-          attributes:
-            system:
-              format: '%{message}'
-            write_protected:
-              format: '%{message}'
+          attributes: {}
 nl:
   mongoid:
     errors:
       models:
         actor:
-          attributes:
-            system:
-              format: '%{message}'
-            write_protected:
-              format: '%{message}'
+          attributes: {}
         role:
-          attributes:
-            system:
-              format: '%{message}'
-            write_protected:
-              format: '%{message}'
+          attributes: {}
         user:
-          attributes:
-            system:
-              format: '%{message}'
-            write_protected:
-              format: '%{message}'
+          attributes: {}
 ru:
   mongoid:
     errors:
       models:
         actor:
-          attributes:
-            system:
-              format: '%{message}'
-            write_protected:
-              format: '%{message}'
+          attributes: {}
         role:
-          attributes:
-            system:
-              format: '%{message}'
-            write_protected:
-              format: '%{message}'
+          attributes: {}
         user:
-          attributes:
-            system:
-              format: '%{message}'
-            write_protected:
-              format: '%{message}'
+          attributes: {}
