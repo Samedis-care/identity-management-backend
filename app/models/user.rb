@@ -370,11 +370,11 @@ class User < ApplicationDocument
   end
 
   def self.writable
-    all.not.where(write_protected: true)
+    all.where(:write_protected.ne => true)
   end
 
   def self.deletable
-    all.not.where(system: true)
+    all.where(:system.ne => true)
   end
 
   def redirect_host=(_host)
@@ -551,7 +551,7 @@ class User < ApplicationDocument
 
   # Filter by users allowed to login
   def self.login_allowed
-    available.where(active: true).not.where(:invalid_at.lt => Time.now)
+    available.where(active: true).not(:invalid_at.lt => Time.now)
   end
 
   def undelete!
