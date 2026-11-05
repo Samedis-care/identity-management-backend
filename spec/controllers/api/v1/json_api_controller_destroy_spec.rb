@@ -42,7 +42,7 @@ RSpec.describe Api::V1::JsonApiController, '#destroy' do
 
     expect(rendered[:status]).to eq(409)
     expect(rendered[:msg]).to include(success: false, error: :conflict)
-    expect(rendered[:msg][:error_details]).to eq(system_group.id => ['System protection flag set'])
+    expect(rendered[:msg][:error_details]).to eq(system_group.id => [I18n.t('errors.attributes.system.protected')])
     expect(Actor.find(system_group.id).deleted).to be(false)
   end
 
