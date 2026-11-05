@@ -22,7 +22,8 @@ class Download < ApplicationDocument
   end
 
   def self.available
-    all.not.expired
+    # not `not(expired)`: chained, expired would carry the caller's scope and negate it too
+    all.not(:expires_at.lt => Time.current)
   end
 
   def self.expired

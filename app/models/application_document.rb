@@ -134,7 +134,7 @@ class ApplicationDocument
 
   # default scopes
   def self.available
-    criteria.not.where(deleted: true)
+    criteria.where(:deleted.ne => true)
   end
   def self.deleted
     criteria.where(deleted: true)

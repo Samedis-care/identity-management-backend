@@ -14,10 +14,10 @@ module Api::V1::Picker
 
     private
     def model_index
-      self.class::MODEL.not.mappings_and_users.reorder(short_name: 1)
+      self.class::MODEL.not(Actor.mappings_and_users).reorder(short_name: 1)
     end
     def model_show
-      self.class::MODEL.not.mappings_and_users
+      self.class::MODEL.not(Actor.mappings_and_users)
     end
 
     def cando
