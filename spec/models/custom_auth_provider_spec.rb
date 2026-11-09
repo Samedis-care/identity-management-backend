@@ -291,6 +291,8 @@ RSpec.describe CustomAuthProvider, type: :model do
 
       duplicate = described_class.new(domain: "other-#{sfx}.de", trusted_email_domains: ["shared-#{sfx}.de"])
       expect(duplicate.save).to be(false)
+      # pins the reason, so a later presence validation cannot keep this green
+      expect(duplicate.errors[:trusted_email_domains]).to be_present
     end
   end
 
