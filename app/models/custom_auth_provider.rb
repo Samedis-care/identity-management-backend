@@ -136,7 +136,11 @@ class CustomAuthProvider < ApplicationDocument
   end
 
   def unique_trusted_email_domains
-    return unless self.class.where(:_id.ne => id, :trusted_email_domains.in => trusted_email_domains).exists?
+    # optional field: $in with nil makes MongoDB raise BadValue, and a nil element
+    # would match every provider without the field (Samedis-care/samedis-care-issues#3678)
+    domains = Array(trusted_email_domains).compact_blank
+    return if domains.empty?
+    return unless self.class.where(:_id.ne => id, :trusted_email_domains.in => domains).exists?
 
     errors.add(:trusted_email_domains, 'A provider for one of the trusted email domains already exists') and throw(:abort)
   end

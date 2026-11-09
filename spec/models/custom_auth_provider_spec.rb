@@ -257,6 +257,46 @@ RSpec.describe CustomAuthProvider, type: :model do
   end
 
   # ──────────────────────────────────────────────
+  # unique_trusted_email_domains (Samedis-care/samedis-care-issues#3678)
+  # ──────────────────────────────────────────────
+  describe 'trusted_email_domains uniqueness' do
+    let(:sfx) { SecureRandom.hex(4) }
+    let(:created) { [] }
+
+    # no host and no issuer_url, so saving triggers no OIDC discovery request
+    def create_provider(**attrs)
+      described_class.create!(domain: "kunde-#{sfx}-#{created.size}.de", client_id: 'x', client_secret: 'y', **attrs)
+                     .tap { |p| created << p }
+    end
+
+    after { created.each(&:delete) }
+
+    it 'saves a provider without trusted_email_domains, as in the documented minimal setup' do
+      expect { create_provider }.not_to raise_error
+    end
+
+    it 'saves a provider with empty trusted_email_domains' do
+      expect { create_provider(trusted_email_domains: []) }.not_to raise_error
+    end
+
+    # $in [nil] would match every provider without the field
+    it 'does not treat a nil entry as colliding with a provider without trusted_email_domains' do
+      create_provider
+
+      expect { create_provider(trusted_email_domains: [nil]) }.not_to raise_error
+    end
+
+    it 'still rejects a trusted email domain another provider already has' do
+      create_provider(trusted_email_domains: ["shared-#{sfx}.de"])
+
+      duplicate = described_class.new(domain: "other-#{sfx}.de", trusted_email_domains: ["shared-#{sfx}.de"])
+      expect(duplicate.save).to be(false)
+      # pins the reason, so a later presence validation cannot keep this green
+      expect(duplicate.errors[:trusted_email_domains]).to be_present
+    end
+  end
+
+  # ──────────────────────────────────────────────
   # email_trusted?
   # ──────────────────────────────────────────────
   describe '#email_trusted?' do
