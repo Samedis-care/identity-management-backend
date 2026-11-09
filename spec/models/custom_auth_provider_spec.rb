@@ -279,6 +279,13 @@ RSpec.describe CustomAuthProvider, type: :model do
       expect { create_provider(trusted_email_domains: []) }.not_to raise_error
     end
 
+    # $in [nil] would match every provider without the field
+    it 'does not treat a nil entry as colliding with a provider without trusted_email_domains' do
+      create_provider
+
+      expect { create_provider(trusted_email_domains: [nil]) }.not_to raise_error
+    end
+
     it 'still rejects a trusted email domain another provider already has' do
       create_provider(trusted_email_domains: ["shared-#{sfx}.de"])
 
