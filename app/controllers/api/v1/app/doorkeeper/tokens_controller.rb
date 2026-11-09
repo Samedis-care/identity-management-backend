@@ -30,6 +30,7 @@ class Api::V1::App::Doorkeeper::TokensController < Doorkeeper::TokensController
     response = authorize_response
 
     _im_otp_provided = grant_type.eql?('refresh_token')
+    _im_sso_provider = nil
     # revoke used refresh_token
     if grant_type.eql?('refresh_token') && params[:refresh_token].present?
       # .present? guard: find_by(refresh_token: nil) matches ANY document missing the
@@ -40,6 +41,8 @@ class Api::V1::App::Doorkeeper::TokensController < Doorkeeper::TokensController
       _previous_token = Doorkeeper::AccessToken.find_by(refresh_token: params[:refresh_token])
       if _previous_token
         _im_otp_provided = !!_previous_token.im_otp_provided
+        # a refreshed SSO session is still an SSO session: its logout must end the IdP session too
+        _im_sso_provider = _previous_token.im_sso_provider
         invalidate_previous_token(_previous_token)
       end
     end
@@ -55,6 +58,7 @@ class Api::V1::App::Doorkeeper::TokensController < Doorkeeper::TokensController
         im_ip: request.remote_ip.to_s.to_utf8.presence,
         im_navigator: request.user_agent.to_s.to_utf8.presence,
         im_otp_provided: _im_otp_provided,
+        im_sso_provider: _im_sso_provider,
         expires_in: Doorkeeper.configuration.access_token_expires_in
       }
       response.token.update_attributes(**_token_attrs)

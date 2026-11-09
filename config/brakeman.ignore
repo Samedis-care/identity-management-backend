@@ -45,6 +45,29 @@
         601
       ],
       "note": "regular login redirect"
+    },
+    {
+      "warning_type": "Redirect",
+      "warning_code": 18,
+      "fingerprint": "57f86c67c04515f7190523a306f6d6f0e403bf78e51e8a36ec19fe5d58b97b0a",
+      "check_name": "Redirect",
+      "message": "Possible unprotected redirect",
+      "file": "app/controllers/api/v1/devise/omniauth_callbacks_controller.rb",
+      "line": 121,
+      "link": "https://brakemanscanner.org/docs/warning_types/redirect/",
+      "code": "redirect_to(User.redirect_url_login((current_app or \"identity-management\")), :allow_other_host => true)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Api::V1::Devise::OmniauthCallbacksController",
+        "method": "dynamic_provider_logged_out"
+      },
+      "user_input": "User.redirect_url_login((current_app or \"identity-management\"))",
+      "confidence": "Weak",
+      "cwe_id": [
+        601
+      ],
+      "note": "post-logout redirect to the app login page from app config; app name from state must be a known app (#3666)"
     }
   ],
   "brakeman_version": "8.0.4"

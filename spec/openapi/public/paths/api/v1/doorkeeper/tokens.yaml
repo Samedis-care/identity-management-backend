@@ -16,6 +16,12 @@ paths:
 
         If no token is provided in the body, the current Bearer token
         from the Authorization header will be revoked.
+
+        If the revoked session came from an enterprise SSO login whose
+        identity provider has an end-session endpoint configured, the
+        response carries `meta.logout_url`. Send the browser there to also
+        end the session at the identity provider (OIDC RP-initiated logout);
+        it returns to the app's login page afterwards.
       requestBody:
         content:
           application/x-www-form-urlencoded:
@@ -34,4 +40,14 @@ paths:
                 type: object
                 properties:
                   meta:
-                    "$ref": "#/components/schemas/meta"
+                    allOf:
+                      - "$ref": "#/components/schemas/meta"
+                      - type: object
+                        properties:
+                          logout_url:
+                            type: string
+                            format: uri
+                            description: |
+                              Identity provider logout URL. Only present for a
+                              session from an SSO login whose provider has an
+                              end-session endpoint.

@@ -135,6 +135,14 @@ RSpec.describe Api::V1::Devise::OmniauthCallbacksController, type: :controller d
         expect(response).to be_redirect
         expect(response.location).to include('app.example.com')
       end
+
+      # Samedis-care/samedis-care-issues#3666: the revoke endpoint needs the provider
+      # to build the IdP logout URL for this session
+      it 'remembers the provider domain on the issued token' do
+        do_valid_callback
+        expect(Doorkeeper::AccessToken).to have_received(:create)
+          .with(hash_including(im_sso_provider: provider_domain))
+      end
     end
 
     # Samedis-care/samedis-care-issues#2572: from_omniauth now hands back an unsaved user

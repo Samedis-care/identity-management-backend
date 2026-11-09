@@ -32,10 +32,27 @@ class Api::V1::Doorkeeper::TokensController < Doorkeeper::TokensController
           _token.revoke
         end
       end
-      render_jsonapi_msg({ success: tokens_to_revoke.any? }) and return
+      render_jsonapi_msg({ success: tokens_to_revoke.any? }, 200, logout_meta(tokens_to_revoke)) and return
     end
 
     render_jsonapi_error(I18n.t('auth.error.token_invalid'), 'invalid_token', 403, meta: { token: token }) and return
+  end
+
+  private
+
+  # For a session that came from a CustomAuthProvider SSO login, the client
+  # must also end the IdP session, or the next authorize request on a shared
+  # device passes straight through as the previous user. Returned on both
+  # revoke branches: the samedis-care frontend logs out with
+  # token_type_hint: 'access_token' whenever it holds a refresh token, which
+  # every SSO login does (Samedis-care/samedis-care-issues#3666).
+  def logout_meta(tokens)
+    token = tokens.detect { |t| t.im_sso_provider.present? }
+    return {} unless token
+
+    provider = CustomAuthProvider.where(domain: token.im_sso_provider).first
+    logout_url = provider&.logout_url(state: { app: token.im_app }.to_json)
+    logout_url ? { logout_url: } : {}
   end
 
 end

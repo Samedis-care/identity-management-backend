@@ -16,6 +16,9 @@ namespace :v1 do
     constraints(provider: /[^\/]+/) do
       devise_scope :user do
         get '/users/auth/:provider/callback', to: 'devise/omniauth_callbacks#dynamic_provider_callback', as: :user_custom_omniauth_callback
+        # post_logout_redirect_uri for RP-initiated logout; must precede '/users/auth/:provider/:app'
+        get '/users/auth/:provider/logged_out',
+            to: 'devise/omniauth_callbacks#dynamic_provider_logged_out', as: :user_custom_omniauth_logged_out
 
         # test for having bookmarkable URL to start a custom oauth2 login
         get '/users/auth/:provider/:app', to: 'devise/omniauth_callbacks#dynamic_provider_authorize', as: :user_custom_omniauth_authorize_app_get

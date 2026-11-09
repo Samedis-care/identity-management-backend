@@ -3,7 +3,7 @@ require 'digest'
 # Enterprise SSO via OAuth2/OIDC for customer-managed Identity Providers.
 #
 # Supports OIDC Auto-Discovery: set `issuer_url` and all endpoint URLs
-# (authorize, token, userinfo, jwks) are populated automatically on save.
+# (authorize, token, userinfo, jwks, end_session) are populated automatically on save.
 # Manual overrides are preserved — only blank fields get auto-filled.
 #
 # Tested with: Azure AD, Keycloak, Okta, Auth0, WSO2 Identity Server.
@@ -46,6 +46,9 @@ class CustomAuthProvider < ApplicationDocument
   field :token_url, type: String
   field :userinfo_url, type: String
   field :jwks_uri, type: String
+  # OIDC end_session_endpoint (absolute URL) for RP-initiated logout. Filled by
+  # discover! when blank; set it by hand for providers without issuer_url.
+  field :end_session_url, type: String
   field :userinfo_schema, type: Hash
   field :userinfo_mapping, type: Hash
   field :claims
@@ -83,6 +86,8 @@ class CustomAuthProvider < ApplicationDocument
     self.userinfo_url   = config['userinfo_endpoint'] if read_attribute(:userinfo_url).blank? && config['userinfo_endpoint']
     self.jwks_uri       = config['jwks_uri'] if jwks_uri.blank? && config['jwks_uri']
     self.scope          = config['scopes_supported']&.intersection(%w[openid profile email])&.join(' ') if read_attribute(:scope).blank? && config['scopes_supported']
+
+    self.end_session_url = config['end_session_endpoint'] if end_session_url.blank? && config['end_session_endpoint']
   end
 
   # Probe common OIDC discovery paths when only host is known.
@@ -157,6 +162,33 @@ class CustomAuthProvider < ApplicationDocument
   # the callback uri forwared to the remote oauth2 server
   def redirect_uri
     url_helpers.v1_user_custom_omniauth_callback_url(provider: domain) #, host: 'https://dev.ident.services')
+  end
+
+  # the uri the remote oauth2 server returns to after RP-initiated logout.
+  # Stable per provider, so customers register it once at their IdP
+  # ("Valid post logout redirect URIs" in Keycloak).
+  def post_logout_redirect_uri
+    url_helpers.v1_user_custom_omniauth_logged_out_url(provider: domain)
+  end
+
+  # OIDC RP-initiated logout URL that ends the session at the IdP, or nil when
+  # no end_session_url is configured. Built from this record only, never from
+  # request params. No id_token_hint: the id_token is not stored, so Keycloak
+  # asks the user to confirm the logout (Samedis-care/samedis-care-issues#3666).
+  def logout_url(state: nil)
+    return if end_session_url.blank?
+
+    uri = URI.parse(end_session_url)
+    query = URI.decode_www_form(uri.query || '').to_h.merge(
+      'client_id' => client_id,
+      'post_logout_redirect_uri' => post_logout_redirect_uri,
+      'state' => state.presence
+    ).compact
+    uri.query = URI.encode_www_form(query)
+    uri.to_s
+  rescue URI::InvalidURIError
+    Rails.logger.warn("CustomAuthProvider#logout_url for #{domain}: invalid end_session_url #{end_session_url.inspect}")
+    nil
   end
 
   # the initial url as POST target that will redirect to the remote host

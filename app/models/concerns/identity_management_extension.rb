@@ -23,6 +23,10 @@ module IdentityManagementExtension
     field :im_navigator, type: String
     field :im_location, type: String
     field :im_device, type: String
+    # CustomAuthProvider#domain of the SSO login that created this session, nil
+    # for any other login. Per token, not per user: revoking a password session of
+    # the same user must not end their IdP session (Samedis-care/samedis-care-issues#3666).
+    field :im_sso_provider, type: String
 
     field :im_otp_required, type: Mongoid::Boolean
     field :im_otp_provided, type: Mongoid::Boolean
