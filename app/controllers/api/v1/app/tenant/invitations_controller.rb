@@ -1,5 +1,11 @@
 class Api::V1::App::Tenant::InvitationsController < Api::V1::JsonApiController
 
+  # Samedis-care/samedis-care-issues#3408: the default `authorize` checks User#global_candos
+  # (all tenants), and record_create stamps the invite with the path tenant, so invitations.writer
+  # in one tenant let a plain member of another invite themself into its admin group.
+  skip_before_action :authorize
+  before_action :tenant_authorize
+
   MODEL_BASE = Invite
   MODEL = Invite.valid
   MODEL_OVERVIEW = Invite.valid
