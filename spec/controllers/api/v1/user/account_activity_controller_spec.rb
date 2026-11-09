@@ -41,8 +41,6 @@ RSpec.describe Api::V1::User::AccountActivityController do
   let!(:soft_killed_activity) { activity_for(soft_killed) }
 
   before do
-    Devise.secret_key ||= 'test-suite-secret'
-
     without_partial_double_verification do
       allow(controller_instance).to receive(:current_user).and_return(user)
     end
