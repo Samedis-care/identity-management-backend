@@ -38,7 +38,8 @@ class Api::V1::Devise::OmniauthCallbacksController < ::Devise::OmniauthCallbacks
       im_otp_required: false,
       im_app: user.app_context,
       im_ip: request.remote_ip.to_s.to_utf8.presence,
-      im_navigator: request.user_agent.to_s.to_utf8.presence
+      im_navigator: request.user_agent.to_s.to_utf8.presence,
+      im_sso_provider: @custom_auth_provider&.domain
     )
 
     url_values = {
@@ -103,8 +104,21 @@ class Api::V1::Devise::OmniauthCallbacksController < ::Devise::OmniauthCallbacks
     provider = CustomAuthProvider.find_by(domain: params[:provider])
     user_info = provider.access_token(code, code_verifier: cookies[:code_verifier])
     request.env['omniauth.auth'] = provider.auth(user_info)
+    # remembered on the token, so its logout can end the IdP session too
+    @custom_auth_provider = provider
 
     do_oauth
+  end
+
+  # post_logout_redirect_uri of CustomAuthProvider#logout_url: the IdP returns
+  # here after RP-initiated logout. The only input taken from state is the app
+  # name, which must be a known app; the target is that app's login page from
+  # the app config, so this is no open redirect.
+  def dynamic_provider_logged_out
+    app = current_app
+    app = 'identity-management' unless User.per_app_settings[app.to_sym]
+
+    redirect_to User.redirect_url_login(app), allow_other_host: true
   end
 
   def user

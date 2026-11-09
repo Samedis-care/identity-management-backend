@@ -336,6 +336,7 @@ RSpec.describe CustomAuthProvider, type: :model do
         'token_endpoint' => 'https://sso.kunde.de/oauth2/v2.0/token',
         'userinfo_endpoint' => 'https://sso.kunde.de/oauth2/v2.0/userinfo',
         'jwks_uri' => 'https://sso.kunde.de/oauth2/v2.0/keys',
+        'end_session_endpoint' => 'https://sso.kunde.de/oauth2/v2.0/logout',
         'scopes_supported' => %w[openid profile email offline_access]
       }
     end
@@ -387,12 +388,18 @@ RSpec.describe CustomAuthProvider, type: :model do
         provider.discover!
         expect(provider.read_attribute(:scope)).to eq('openid profile email')
       end
+
+      it 'populates end_session_url as full URL' do
+        provider.discover!
+        expect(provider.end_session_url).to eq('https://sso.kunde.de/oauth2/v2.0/logout')
+      end
     end
 
     context 'when fields are already manually set' do
       before do
         provider.issuer_url = 'https://sso.kunde.de/oauth2/v2.0'
         # host is already set to 'sso.example.com' from subject
+        provider.end_session_url = 'https://sso.example.com/manual/logout'
         allow(Faraday).to receive(:get).and_return(
           faraday_response(status: 200, body: discovery_doc)
         )
@@ -401,6 +408,11 @@ RSpec.describe CustomAuthProvider, type: :model do
       it 'does not overwrite existing host' do
         provider.discover!
         expect(provider.host).to eq('sso.example.com')
+      end
+
+      it 'does not overwrite an existing end_session_url' do
+        provider.discover!
+        expect(provider.end_session_url).to eq('https://sso.example.com/manual/logout')
       end
     end
 
@@ -424,6 +436,84 @@ RSpec.describe CustomAuthProvider, type: :model do
         provider.issuer_url = nil
         expect(Faraday).not_to receive(:get)
         provider.discover!
+      end
+    end
+  end
+
+  # ──────────────────────────────────────────────
+  # RP-initiated logout (Samedis-care/samedis-care-issues#3666)
+  # ──────────────────────────────────────────────
+  describe '#logout_url' do
+    let(:state) { { app: 'samedis-care' }.to_json }
+
+    it 'is nil without an end_session_url' do
+      expect(provider.logout_url(state:)).to be_nil
+    end
+
+    context 'with an end_session_url' do
+      before { provider.end_session_url = 'https://sso.example.com/realms/kh/protocol/openid-connect/logout' }
+
+      let(:uri) { URI.parse(provider.logout_url(state:)) }
+      let(:query) { URI.decode_www_form(uri.query).to_h }
+
+      it 'points at the end_session_url' do
+        expect("#{uri.scheme}://#{uri.host}#{uri.path}")
+          .to eq('https://sso.example.com/realms/kh/protocol/openid-connect/logout')
+      end
+
+      it 'carries client_id, the stable post_logout_redirect_uri and the state' do
+        expect(query).to eq(
+          'client_id' => 'test-client-id',
+          'post_logout_redirect_uri' => provider.post_logout_redirect_uri,
+          'state' => state
+        )
+      end
+
+      it 'sends no id_token_hint' do
+        expect(query).not_to have_key('id_token_hint')
+      end
+
+      it 'uses the per-provider logged_out route as post_logout_redirect_uri' do
+        expect(provider.post_logout_redirect_uri).to end_with('/api/v1/users/auth/example.com/logged_out')
+      end
+    end
+
+    context 'when the end_session_url already has a query' do
+      before { provider.end_session_url = 'https://login.example.com/logout?p=b2c_policy' }
+
+      it 'keeps it' do
+        query = URI.decode_www_form(URI.parse(provider.logout_url(state:)).query).to_h
+        expect(query['p']).to eq('b2c_policy')
+        expect(query['client_id']).to eq('test-client-id')
+      end
+    end
+
+    context 'when the end_session_url is a path, like authorize_url' do
+      before { provider.end_session_url = '/realms/kh/protocol/openid-connect/logout' }
+
+      it 'resolves it against the provider host' do
+        expect(provider.logout_url(state:))
+          .to start_with('https://sso.example.com/realms/kh/protocol/openid-connect/logout?')
+      end
+
+      # as pasted from the Keycloak admin UI; URI::HTTPS.build rejects it unprefixed
+      it 'resolves a path without leading slash too' do
+        provider.end_session_url = 'realms/kh/protocol/openid-connect/logout'
+        expect(provider.logout_url(state:))
+          .to start_with('https://sso.example.com/realms/kh/protocol/openid-connect/logout?')
+      end
+
+      it 'is nil without a host to resolve it against' do
+        provider.host = nil
+        expect(provider.logout_url(state:)).to be_nil
+      end
+    end
+
+    context 'when the end_session_url is not a valid URI' do
+      before { provider.end_session_url = 'https://exa mple.com/logout' }
+
+      it 'returns nil instead of raising' do
+        expect(provider.logout_url(state:)).to be_nil
       end
     end
   end
