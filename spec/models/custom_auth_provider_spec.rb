@@ -456,6 +456,13 @@ RSpec.describe CustomAuthProvider, type: :model do
           .to start_with('https://sso.example.com/realms/kh/protocol/openid-connect/logout?')
       end
 
+      # as pasted from the Keycloak admin UI; URI::HTTPS.build rejects it unprefixed
+      it 'resolves a path without leading slash too' do
+        provider.end_session_url = 'realms/kh/protocol/openid-connect/logout'
+        expect(provider.logout_url(state:))
+          .to start_with('https://sso.example.com/realms/kh/protocol/openid-connect/logout?')
+      end
+
       it 'is nil without a host to resolve it against' do
         provider.host = nil
         expect(provider.logout_url(state:)).to be_nil

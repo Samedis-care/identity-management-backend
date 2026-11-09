@@ -180,7 +180,9 @@ class CustomAuthProvider < ApplicationDocument
 
     uri = URI.parse(end_session_url)
     # path-only, like authorize_url and token_url: the endpoint lives on host
-    uri = URI::HTTPS.build(host:, path: uri.path, query: uri.query) if uri.host.nil? && host.present?
+    if uri.host.nil? && host.present?
+      uri = URI::HTTPS.build(host:, path: "/#{uri.path.delete_prefix('/')}", query: uri.query)
+    end
     return if uri.host.nil?
 
     query = URI.decode_www_form(uri.query || '').to_h.merge(
@@ -190,7 +192,9 @@ class CustomAuthProvider < ApplicationDocument
     ).compact
     uri.query = URI.encode_www_form(query)
     uri.to_s
-  rescue URI::InvalidURIError
+  # URI::Error, not only InvalidURIError: URI::HTTPS.build raises InvalidComponentError.
+  # Called after revoke has already revoked the tokens, so degrade to no logout_url.
+  rescue URI::Error
     Rails.logger.warn("CustomAuthProvider#logout_url for #{domain}: invalid end_session_url #{end_session_url.inspect}")
     nil
   end
