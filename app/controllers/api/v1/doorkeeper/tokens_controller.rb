@@ -22,7 +22,7 @@ class Api::V1::Doorkeeper::TokensController < Doorkeeper::TokensController
 
     if token.present?
       # will find the token record regardless of token type (access or refresh)
-      tokens_to_revoke = Doorkeeper::AccessToken.or({ token: token}, { refresh_token: token })
+      tokens_to_revoke = Doorkeeper::AccessToken.or({ token: token}, { refresh_token: token }).to_a
       tokens_to_revoke.each do |_token|
         if token_type_hint.downcase.eql?('access_token')
           # expires the access token, but leaves the refresh_token still valid

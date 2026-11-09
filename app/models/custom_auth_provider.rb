@@ -179,6 +179,10 @@ class CustomAuthProvider < ApplicationDocument
     return if end_session_url.blank?
 
     uri = URI.parse(end_session_url)
+    # path-only, like authorize_url and token_url: the endpoint lives on host
+    uri = URI::HTTPS.build(host:, path: uri.path, query: uri.query) if uri.host.nil? && host.present?
+    return if uri.host.nil?
+
     query = URI.decode_www_form(uri.query || '').to_h.merge(
       'client_id' => client_id,
       'post_logout_redirect_uri' => post_logout_redirect_uri,

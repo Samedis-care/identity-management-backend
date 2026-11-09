@@ -448,6 +448,20 @@ RSpec.describe CustomAuthProvider, type: :model do
       end
     end
 
+    context 'when the end_session_url is a path, like authorize_url' do
+      before { provider.end_session_url = '/realms/kh/protocol/openid-connect/logout' }
+
+      it 'resolves it against the provider host' do
+        expect(provider.logout_url(state:))
+          .to start_with('https://sso.example.com/realms/kh/protocol/openid-connect/logout?')
+      end
+
+      it 'is nil without a host to resolve it against' do
+        provider.host = nil
+        expect(provider.logout_url(state:)).to be_nil
+      end
+    end
+
     context 'when the end_session_url is not a valid URI' do
       before { provider.end_session_url = 'https://exa mple.com/logout' }
 
