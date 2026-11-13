@@ -18,10 +18,10 @@ class Api::V1::User::AccountActivityController < Api::V1::JsonApiController
 
   private
   def model_index
-    # leave out currently valid tokens from activities
-    current_user.account_activities
-                .nin(token_id: current_user.active_logins.pluck(:id))
-                .order(created_at: -1)
+    # Lists every login activity, including those of still active sessions (and the
+    # current one). Active sessions also show up in AccountLoginsController; appearing
+    # in both lists is intended (samedis-care-issues#3635).
+    current_user.account_activities.order(created_at: -1)
   end
 
   def cando

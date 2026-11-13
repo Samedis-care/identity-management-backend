@@ -980,9 +980,8 @@ class User < ApplicationDocument
   # expires_in: -1 for the token_type_hint: 'access_token' branch) kept counting as
   # an active session until its created_at aged past that global lifetime: up to 30
   # days after the user logged out, in the very screen someone opens to check that
-  # logout worked (#2422). It also kept those sessions out of the account activity
-  # log, which deliberately lists everything that is NOT an active login
-  # (Api::V1::User::AccountActivityController#model_index).
+  # logout worked (#2422). (The account activity log lists every session, active or
+  # not, so it is unaffected -- Api::V1::User::AccountActivityController#model_index.)
   #
   # Doorkeeper::AccessToken.not_expired (from doorkeeper-mongodb) already encodes
   # exactly this, per document and including revoked_at, so use it rather than
