@@ -52,9 +52,16 @@ class Api::V1::App::Tenant::InvitationsController < Api::V1::JsonApiController
     model_create.create(params_create.merge(app: current_app, tenant_id: current_tenant_id))
   end
 
+  # Samedis-care/samedis-care-issues#3757: the cando is checked against the path tenant, so
+  # the lookup must be pinned to it as well (as record_create is). A token is not secret to
+  # its holder, and users get their own invite tokens from AppUserSerializer#recent_invite_tokens.
+  # The tenant is compared in Ruby: Invite#tenant_id is a foreign key, so a query condition is
+  # mongoized to an ObjectId and would skip legacy invites that store it as a String.
+  # Tokens are unique, so the lookup by app and token leaves at most a few records.
   def records_destroy
     ids = params_json_api[:id].to_s.gsub(',', ' ').split(' ')
-    model_destroy.where(:token.in => ids)
+    model_destroy.where(app: current_app, :token.in => ids)
+                 .select { |invite| invite.tenant_id.to_s == current_tenant_id.to_s }
   end
 
   def cando
