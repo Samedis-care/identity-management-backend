@@ -10,8 +10,7 @@ require 'rails_helper'
 # expires_in: -1 and deliberately leaving revoked_at nil, so a just-logged-out
 # session still satisfied both conditions and kept counting as active for up to the
 # full 30-day lifetime -- in exactly the screen a user opens to check that logout
-# worked (Api::V1::User::AccountLoginsController), and it stayed out of the account
-# activity log, which lists everything that is NOT an active login.
+# worked (Api::V1::User::AccountLoginsController).
 #
 # These tests use a user WITHOUT OTP so IdentityManagementExtension's before_save
 # leaves expires_in alone; the callback's own protection of an explicit expires_in

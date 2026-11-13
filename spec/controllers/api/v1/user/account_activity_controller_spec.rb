@@ -1,11 +1,10 @@
 require 'rails_helper'
 
-# Regression coverage for https://github.com/Samedis-care/samedis-care-issues/issues/3635
+# Coverage for https://github.com/Samedis-care/samedis-care-issues/issues/3635
 #
-# The activity log is meant to leave out the entries of the user's currently active
-# logins (those are listed by Api::V1::User::AccountLoginsController). The scope used
-# to negate an equality against the whole id array (token_id $ne [id, ...]); a String
-# field never equals an array, so every entry -- including the current session -- passed.
+# The activity log lists every login activity of the user: still active sessions
+# (including the current one), logged-out and expired ones alike. Active sessions also
+# appear in Api::V1::User::AccountLoginsController; being in both lists is intended.
 #
 # Follows the in-repo convention for controller scoping specs (see
 # spec/controllers/api/v1/user/account_logins_controller_spec.rb).
@@ -56,20 +55,23 @@ RSpec.describe Api::V1::User::AccountActivityController do
   describe 'the index scope (#model_index)' do
     subject(:ids) { controller_instance.send(:model_index).pluck(:_id) }
 
-    it 'leaves out the entries of every currently active login' do
-      expect(ids).not_to include(live_activity.id, other_live_activity.id)
+    it 'lists the entries of every currently active login' do
+      expect(ids).to include(live_activity.id, other_live_activity.id)
     end
 
-    it 'keeps the entry of a session that is no longer active' do
+    it 'lists the entry of a session that is no longer active' do
       expect(ids).to include(soft_killed_activity.id)
     end
 
-    context 'when the user has no active login' do
-      before { [live, other_live].each { |token| token.set(expires_in: -1) } }
+    it 'lists every entry of the user' do
+      expect(ids).to contain_exactly(live_activity.id, other_live_activity.id, soft_killed_activity.id)
+    end
 
-      it 'lists every entry' do
-        expect(ids).to contain_exactly(live_activity.id, other_live_activity.id, soft_killed_activity.id)
-      end
+    it 'does not list the entries of other users' do
+      foreign = activity_for(live, user_id: BSON::ObjectId.new)
+      expect(ids).not_to include(foreign.id)
+    ensure
+      foreign&.delete
     end
   end
 end
