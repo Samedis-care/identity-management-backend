@@ -106,6 +106,41 @@ RSpec.describe Api::V1::App::Tenant::InvitationsController, type: :controller do
     end
   end
 
+  # Samedis-care/samedis-care-issues#3757: DELETE looked invites up by token alone.
+  describe 'DELETE by token' do
+    def build_invite(tenant:, app: app_name)
+      Invite.new(email: email, app: app, tenant_id: tenant.id.to_s, invitable_type: 'access_control',
+                 token: SecureRandom.hex(16), valid_until: 1.week.from_now).tap { |i| i.save!(validate: false) }
+    end
+
+    before { sign_in_with(tenant_a => [writer_cando]) }
+
+    it 'deletes an invite of the path tenant and app' do
+      invite = build_invite(tenant: tenant_a)
+
+      delete :destroy, params: { app: app_name, tenant_id: tenant_a.id.to_s, id: invite.token }
+
+      expect(response).to have_http_status(:ok)
+      expect(Invite.where(id: invite.id)).to be_empty
+    end
+
+    it 'does not delete an invite of another tenant' do
+      invite = build_invite(tenant: tenant_b)
+
+      delete :destroy, params: { app: app_name, tenant_id: tenant_a.id.to_s, id: invite.token }
+
+      expect(Invite.where(id: invite.id).count).to eq(1)
+    end
+
+    it 'does not delete an invite of another app' do
+      invite = build_invite(tenant: tenant_a, app: 'other-app')
+
+      delete :destroy, params: { app: app_name, tenant_id: tenant_a.id.to_s, id: invite.token }
+
+      expect(Invite.where(id: invite.id).count).to eq(1)
+    end
+  end
+
   context 'when the caller may write invitations in tenant B' do
     before do
       sign_in_with(tenant_b => [writer_cando])
