@@ -124,6 +124,15 @@ RSpec.describe Api::V1::App::Tenant::InvitationsController, type: :controller do
       expect(Invite.where(id: invite.id)).to be_empty
     end
 
+    it 'deletes a legacy invite of the path tenant whose tenant_id is stored as a String' do
+      invite = build_invite(tenant: tenant_a)
+      Invite.collection.update_one({ _id: invite.id }, { '$set' => { tenant_id: tenant_a.id.to_s } })
+
+      delete :destroy, params: { app: app_name, tenant_id: tenant_a.id.to_s, id: invite.token }
+
+      expect(Invite.where(id: invite.id)).to be_empty
+    end
+
     it 'does not delete an invite of another tenant' do
       invite = build_invite(tenant: tenant_b)
 
