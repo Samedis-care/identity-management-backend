@@ -668,6 +668,26 @@ module Actors
       available.each &:dump
     end
 
+    # login look of the identity-management app, set when the app is created:
+    # the light theme of the IM frontend (src/theme.ts, palette `light`), i.e.
+    # primary, secondary, background and the page gradient (brand.pageGradient).
+    # Secondary must stay set, the login page cannot build a palette without it.
+    # Admins can change it in the app settings later.
+    IM_DEFAULT_THEME = {
+      mode: 'light',
+      primary: { main: '#00788A', light: nil, dark: nil },
+      secondary: { main: '#002D50', light: nil, dark: nil },
+      background: {
+        default: '#FFFFFF',
+        advanced: 'linear-gradient(270deg, #00AFC3 0%, #0869B3 60%, #0A4F86 100%)'
+      },
+      components_care: { ui_kit: { action_button: { background_color: '#00788A' } } }
+    }.freeze
+
+    def self.im_default_theme
+      Config::Theme.new(IM_DEFAULT_THEME.deep_dup)
+    end
+
     def self.ensure_im_app!
       # Create Admin account
       ::User.global_admin.set(system: true, actor_id: Actors::User.global_admin.id)
@@ -677,7 +697,9 @@ module Actors
         system: true,
         short_name: 'identity-management',
         parent: Actors::App.app_container
-      )
+      ) do |app|
+        app.config.theme = im_default_theme
+      end
 
       app_im.ensure_defaults!
 
