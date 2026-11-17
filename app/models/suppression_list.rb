@@ -58,7 +58,8 @@ class SuppressionList
   # the first mail bounces ("550 No such user") and every later invite is then silently dropped.
   #
   # Lifts the suppression so the next mail is attempted again, but ONLY for reason BOUNCE.
-  # COMPLAINT (the recipient marked us as spam) stays suppressed.
+  # COMPLAINT (the recipient marked us as spam) stays suppressed. One address is released at
+  # most once per SuppressionRelease::COOLDOWN (1 day).
   # Never raises: it runs while an invite is created and must not break that.
   # Returns true only if the address was removed from the list.
   def self.release_bounced(email)
@@ -70,7 +71,16 @@ class SuppressionList
     entry = client.get_suppressed_destination(email_address: email).suppressed_destination
     return false unless entry&.reason.to_s.upcase == 'BOUNCE'
 
-    client.delete_suppressed_destination(email_address: email)
+    # at most one release per address and day, otherwise a mistyped address would bounce
+    # again on every invite
+    return false unless SuppressionRelease.claim(email)
+
+    begin
+      client.delete_suppressed_destination(email_address: email)
+    rescue StandardError
+      SuppressionRelease.unclaim(email) # nothing was released, do not burn the slot
+      raise
+    end
     true
   rescue Aws::SESV2::Errors::NotFoundException
     false # not suppressed, the usual case

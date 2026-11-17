@@ -21,6 +21,45 @@ RSpec.describe SuppressionList do
   end
 
   describe '.release_bounced' do
+    before { SuppressionRelease.delete_all }
+    after { SuppressionRelease.delete_all }
+
+    it 'releases an address at most once per day' do
+      allow(ses).to receive(:get_suppressed_destination).and_return(entry('BOUNCE'))
+      allow(ses).to receive(:delete_suppressed_destination)
+
+      expect(described_class.release_bounced(email)).to be(true)
+      expect(described_class.release_bounced(email)).to be(false)
+      expect(ses).to have_received(:delete_suppressed_destination).once
+    end
+
+    it 'releases the address again after the cooldown' do
+      allow(ses).to receive(:get_suppressed_destination).and_return(entry('BOUNCE'))
+      allow(ses).to receive(:delete_suppressed_destination)
+      described_class.release_bounced(email)
+      SuppressionRelease.collection.update_one({ _id: email }, { '$set' => { released_at: 25.hours.ago.utc } })
+
+      expect(described_class.release_bounced(email)).to be(true)
+    end
+
+    it 'does not use up the daily release when SES fails to delete' do
+      allow(ses).to receive(:get_suppressed_destination).and_return(entry('BOUNCE'))
+      allow(ses).to receive(:delete_suppressed_destination)
+        .and_raise(Aws::SESV2::Errors::TooManyRequestsException.new(nil, 'slow down'))
+      allow(Sentry).to receive(:capture_exception)
+
+      expect(described_class.release_bounced(email)).to be(false)
+      expect(SuppressionRelease.where(_id: email).count).to eq(0)
+    end
+
+    it 'does not use up the daily release for an address that is not suppressed' do
+      allow(ses).to receive(:get_suppressed_destination)
+        .and_raise(Aws::SESV2::Errors::NotFoundException.new(nil, 'not found'))
+
+      described_class.release_bounced(email)
+      expect(SuppressionRelease.where(_id: email).count).to eq(0)
+    end
+
     it 'removes an address suppressed because of a bounce' do
       allow(ses).to receive(:get_suppressed_destination).with(email_address: email).and_return(entry('BOUNCE'))
       expect(ses).to receive(:delete_suppressed_destination).with(email_address: email)
