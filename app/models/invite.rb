@@ -63,6 +63,14 @@ class Invite < ApplicationDocument
     record.has_account = User.email(record.email.to_s.downcase).present?
   end
 
+  # The invited person may have bounced an earlier invite before their mailbox existed, and SES
+  # then drops every later mail to that address. Done inline (not in a job) so it is lifted
+  # before the caller sends the invitation mail. Only reason BOUNCE is lifted, see
+  # SuppressionList.release_bounced. It never raises.
+  after_create do |record|
+    SuppressionList.release_bounced(record.email) if record.email.present?
+  end
+
   validates :invitable_type, :token, presence: true
   validates :invitable_id, presence: true, if: -> { %i(app).include?(self.invitable_type.to_sym) }
   validate :reject_unparseable_valid_until
