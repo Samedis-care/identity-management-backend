@@ -129,6 +129,16 @@ RSpec.describe 'SSO logout (RP-initiated)' do
       end
     end
 
+    context 'when the provider is disabled' do
+      before { provider.update!(disabled: true) }
+
+      it 'returns no logout_url' do
+        revoke(create_token(im_sso_provider: domain))
+
+        expect(response.parsed_body['meta']).not_to have_key('logout_url')
+      end
+    end
+
     context 'when the provider was deleted' do
       it 'returns no logout_url' do
         token = create_token(im_sso_provider: 'gone.example.com')

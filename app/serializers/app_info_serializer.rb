@@ -62,7 +62,7 @@ class AppInfoSerializer
   end
 
   attribute :auth_provider_hints do |app|
-    CustomAuthProvider.all.collect(&:trusted_domain_checksums).flatten
+    CustomAuthProvider.enabled.collect(&:trusted_domain_checksums).flatten
   end
 
   class Schema < JsonApi::Schema

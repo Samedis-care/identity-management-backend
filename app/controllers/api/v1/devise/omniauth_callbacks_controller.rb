@@ -71,7 +71,7 @@ class Api::V1::Devise::OmniauthCallbacksController < ::Devise::OmniauthCallbacks
 
   def dynamic_provider_authorize
     _domain = params[:provider]
-    provider = CustomAuthProvider.where('$or': [{ domain: _domain }, { trusted_email_domains: _domain }]).first
+    provider = CustomAuthProvider.for_domain(_domain)
 
     state = params[:state]
     if !state && params[:app]
@@ -101,7 +101,7 @@ class Api::V1::Devise::OmniauthCallbacksController < ::Devise::OmniauthCallbacks
     end
 
     code = params[:code]
-    provider = CustomAuthProvider.find_by(domain: params[:provider])
+    provider = CustomAuthProvider.enabled.find_by(domain: params[:provider])
     user_info = provider.access_token(code, code_verifier: cookies[:code_verifier])
     request.env['omniauth.auth'] = provider.auth(user_info)
     # remembered on the token, so its logout can end the IdP session too

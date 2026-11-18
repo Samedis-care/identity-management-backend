@@ -52,9 +52,21 @@ class CustomAuthProvider < ApplicationDocument
   field :userinfo_schema, type: Hash
   field :userinfo_mapping, type: Hash
   field :claims
+  # A disabled provider acts as if it did not exist: no SSO hint for the frontend,
+  # no login routes, no IdP logout. Lets a provider be preconfigured before the
+  # customer's IdP is ready. Its domains stay reserved (unique_trusted_email_domains).
+  field :disabled, type: Mongoid::Boolean, default: false
+
+  # ne(true), not false: records saved before the field existed have no value
+  scope :enabled, -> { where(:disabled.ne => true) }
 
   validates :domain, uniqueness: true
   validate :unique_trusted_email_domains
+
+  # the enabled provider responsible for a domain, by its own or a trusted email domain
+  def self.for_domain(domain)
+    enabled.where('$or': [{ domain: }, { trusted_email_domains: domain }]).first
+  end
 
   before_save :auto_discover!, if: -> { issuer_url_changed? || (issuer_url.blank? && host_changed?) }
 
@@ -126,7 +138,9 @@ class CustomAuthProvider < ApplicationDocument
   # Fetch and cache the OIDC discovery document
   def discovery_config
     cache_key = "oidc_discovery:#{issuer_url}"
-    Rails.cache.fetch(cache_key, expires_in: DISCOVERY_CACHE_TTL) do
+    # skip_nil: a failed fetch must not block a retry for the whole TTL, e.g. while
+    # the customer is still configuring their IdP
+    Rails.cache.fetch(cache_key, expires_in: DISCOVERY_CACHE_TTL, skip_nil: true) do
       discovery_url = "#{issuer_url.chomp('/')}/.well-known/openid-configuration"
       response = Faraday.get(discovery_url)
       unless response.status == 200

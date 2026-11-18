@@ -21,8 +21,7 @@ RSpec.describe Api::V1::Devise::OmniauthCallbacksController, type: :controller d
 
   before do
     # Avoid real DB lookups
-    allow(CustomAuthProvider).to receive(:where).and_return(double(first: provider))
-    allow(CustomAuthProvider).to receive(:find_by).and_return(provider)
+    allow(CustomAuthProvider).to receive_messages(for_domain: provider, enabled: double(find_by: provider))
     # failure path calls User.redirect_url_login
     allow(User).to receive(:redirect_url_login).and_return('https://app.example.com/login')
   end

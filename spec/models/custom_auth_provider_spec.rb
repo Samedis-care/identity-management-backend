@@ -286,6 +286,13 @@ RSpec.describe CustomAuthProvider, type: :model do
       expect { create_provider(trusted_email_domains: [nil]) }.not_to raise_error
     end
 
+    it 'keeps the domains of a disabled provider reserved' do
+      create_provider(trusted_email_domains: ["reserved-#{sfx}.de"], disabled: true)
+
+      duplicate = described_class.new(domain: "other-#{sfx}.de", trusted_email_domains: ["reserved-#{sfx}.de"])
+      expect(duplicate.save).to be(false)
+    end
+
     it 'still rejects a trusted email domain another provider already has' do
       create_provider(trusted_email_domains: ["shared-#{sfx}.de"])
 
@@ -437,6 +444,70 @@ RSpec.describe CustomAuthProvider, type: :model do
         expect(Faraday).not_to receive(:get)
         provider.discover!
       end
+    end
+  end
+
+  describe '.for_domain' do
+    let(:sfx) { SecureRandom.hex(4) }
+    let(:domain) { "kunde-#{sfx}.de" }
+    let(:trusted_domain) { "mvz-#{sfx}.de" }
+
+    # no host and no issuer_url, so saving triggers no OIDC discovery request
+    let!(:record) do
+      described_class.create!(domain:, trusted_email_domains: [trusted_domain], client_id: 'x', client_secret: 'y')
+    end
+
+    after { record.delete }
+
+    it 'finds an enabled provider by its domain' do
+      expect(described_class.for_domain(domain)).to eq(record)
+    end
+
+    it 'finds an enabled provider by a trusted email domain' do
+      expect(described_class.for_domain(trusted_domain)).to eq(record)
+    end
+
+    it 'ignores a disabled provider' do
+      record.update!(disabled: true)
+
+      expect(described_class.for_domain(trusted_domain)).to be_nil
+    end
+
+    # records saved before the field existed must keep working
+    it 'treats a provider without the disabled field as enabled' do
+      record.unset(:disabled)
+
+      expect(described_class.for_domain(domain)).to eq(record)
+    end
+  end
+
+  describe '#discovery_config caching' do
+    let(:discovery_doc) { { 'issuer' => 'https://sso.kunde.de/realms/kh' } }
+
+    before do
+      allow(Rails).to receive(:cache).and_return(ActiveSupport::Cache::MemoryStore.new)
+      provider.issuer_url = 'https://sso.kunde.de/realms/kh'
+    end
+
+    context 'when the first fetch fails' do
+      before do
+        allow(Faraday).to receive(:get).and_return(
+          faraday_response(status: 404, body: { error: 'not_found' }),
+          faraday_response(status: 200, body: discovery_doc)
+        )
+        provider.discovery_config
+      end
+
+      it 'fetches again instead of caching the failure' do
+        expect(provider.discovery_config).to eq(discovery_doc)
+      end
+    end
+
+    it 'caches a successful fetch' do
+      allow(Faraday).to receive(:get).and_return(faraday_response(status: 200, body: discovery_doc))
+
+      2.times { provider.discovery_config }
+      expect(Faraday).to have_received(:get).once
     end
   end
 
