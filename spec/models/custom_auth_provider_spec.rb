@@ -481,6 +481,56 @@ RSpec.describe CustomAuthProvider, type: :model do
     end
   end
 
+  describe 'enabling a provider preconfigured before its IdP was ready' do
+    let(:sfx) { SecureRandom.hex(4) }
+    let(:issuer) { "https://idp-#{sfx}.example.com/realms/kh" }
+    let(:discovery_doc) do
+      {
+        'authorization_endpoint' => "#{issuer}/protocol/openid-connect/auth",
+        'token_endpoint' => "#{issuer}/protocol/openid-connect/token",
+        'userinfo_endpoint' => "#{issuer}/protocol/openid-connect/userinfo"
+      }
+    end
+
+    # the IdP is not up yet when the provider is created, so discovery fails
+    let!(:record) do
+      allow(Rails).to receive(:cache).and_return(ActiveSupport::Cache::MemoryStore.new)
+      allow(Faraday).to receive(:get).and_return(faraday_response(status: 503, body: {}))
+      described_class.create!(domain: "kunde-#{sfx}.de", issuer_url: issuer, client_id: 'x', client_secret: 'y',
+                              disabled: true)
+    end
+
+    after { record.delete }
+
+    context 'when the IdP answers by then' do
+      before { allow(Faraday).to receive(:get).and_return(faraday_response(status: 200, body: discovery_doc)) }
+
+      it 'discovers the endpoints on enabling' do
+        record.update!(disabled: false)
+
+        expect(record.reload.host).to eq("idp-#{sfx}.example.com")
+      end
+
+      it 'discovers the endpoints when saved again with the same issuer_url' do
+        record.save!
+
+        expect(record.reload.read_attribute(:authorize_url)).to eq('/realms/kh/protocol/openid-connect/auth')
+      end
+    end
+
+    context 'when discovery still fails' do
+      it 'refuses to enable' do
+        expect(record.update(disabled: false)).to be(false)
+      end
+
+      it 'keeps the provider disabled' do
+        record.update(disabled: false)
+
+        expect(record.reload.disabled).to be(true)
+      end
+    end
+  end
+
   describe '#discovery_config caching' do
     let(:discovery_doc) { { 'issuer' => 'https://sso.kunde.de/realms/kh' } }
 

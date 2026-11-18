@@ -68,7 +68,12 @@ class CustomAuthProvider < ApplicationDocument
     enabled.where('$or': [{ domain: }, { trusted_email_domains: domain }]).first
   end
 
-  before_save :auto_discover!, if: -> { issuer_url_changed? || (issuer_url.blank? && host_changed?) }
+  # issuer_url with a blank host means an earlier discovery failed: every save
+  # retries it, including the one that enables a preconfigured provider
+  before_save :auto_discover!, if: lambda {
+    issuer_url_changed? || (issuer_url.blank? && host_changed?) || (issuer_url.present? && host.blank?)
+  }
+  before_save :refuse_enabling_without_host
 
   attr_accessor :code_verifier
 
@@ -152,6 +157,16 @@ class CustomAuthProvider < ApplicationDocument
       Rails.logger.warn("OIDC discovery failed for #{issuer_url}: #{e.message}")
       nil
     end
+  end
+
+  # Enabling without a host would send every user of the provider's domains to
+  # "https:/oauth2/authorize". Only the switch from disabled is refused; providers
+  # created enabled keep their previous behaviour.
+  def refuse_enabling_without_host
+    return unless persisted? && disabled_changed? && !disabled? && host.blank?
+
+    errors.add(:host, 'is blank, discovery found no endpoints; the provider stays disabled')
+    throw(:abort)
   end
 
   def unique_trusted_email_domains
