@@ -52,11 +52,24 @@ class CustomAuthProvider < ApplicationDocument
   field :userinfo_schema, type: Hash
   field :userinfo_mapping, type: Hash
   field :claims
+  # A disabled provider acts as if it did not exist: no SSO hint for the frontend,
+  # no login routes, no IdP logout. Lets a provider be preconfigured before the
+  # customer's IdP is ready. Its domains stay reserved (unique_trusted_email_domains).
+  field :disabled, type: Mongoid::Boolean, default: false
+
+  # ne(true), not false: records saved before the field existed have no value
+  scope :enabled, -> { where(:disabled.ne => true) }
 
   validates :domain, uniqueness: true
   validate :unique_trusted_email_domains
 
-  before_save :auto_discover!, if: -> { issuer_url_changed? || (issuer_url.blank? && host_changed?) }
+  # the enabled provider responsible for a domain, by its own or a trusted email domain
+  def self.for_domain(domain)
+    enabled.where('$or': [{ domain: }, { trusted_email_domains: domain }]).first
+  end
+
+  before_save :auto_discover!, if: :discovery_due?
+  before_save :refuse_enabling_without_host
 
   attr_accessor :code_verifier
 
@@ -126,7 +139,9 @@ class CustomAuthProvider < ApplicationDocument
   # Fetch and cache the OIDC discovery document
   def discovery_config
     cache_key = "oidc_discovery:#{issuer_url}"
-    Rails.cache.fetch(cache_key, expires_in: DISCOVERY_CACHE_TTL) do
+    # skip_nil: a failed fetch must not block a retry for the whole TTL, e.g. while
+    # the customer is still configuring their IdP
+    Rails.cache.fetch(cache_key, expires_in: DISCOVERY_CACHE_TTL, skip_nil: true) do
       discovery_url = "#{issuer_url.chomp('/')}/.well-known/openid-configuration"
       response = Faraday.get(discovery_url)
       unless response.status == 200
@@ -138,6 +153,30 @@ class CustomAuthProvider < ApplicationDocument
       Rails.logger.warn("OIDC discovery failed for #{issuer_url}: #{e.message}")
       nil
     end
+  end
+
+  # issuer_url with a blank host means an earlier discovery failed, so every save
+  # retries it. Enabling always retries too: a host-only provider may have been
+  # preconfigured while its IdP could not be probed (discover! fills only blanks).
+  def discovery_due?
+    issuer_url_changed? || (issuer_url.blank? && host_changed?) ||
+      (issuer_url.present? && host.blank?) || being_enabled?
+  end
+
+  # disabled_was, not disabled_changed?: on records saved before the field existed,
+  # Mongoid records the false default it fills in as a change on every save
+  def being_enabled?
+    persisted? && disabled_was && !disabled?
+  end
+
+  # Enabling without a host would send every user of the provider's domains to
+  # "https:/oauth2/authorize". Only the switch from disabled is refused; providers
+  # created enabled keep their previous behaviour.
+  def refuse_enabling_without_host
+    return unless being_enabled? && host.blank?
+
+    errors.add(:host, 'is blank, discovery found no endpoints; the provider stays disabled')
+    throw(:abort)
   end
 
   def unique_trusted_email_domains

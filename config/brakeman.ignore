@@ -26,20 +26,20 @@
     {
       "warning_type": "Redirect",
       "warning_code": 18,
-      "fingerprint": "fd7fd10fea767123bee91f33323de6c9b975c388c769d7ce04bd27b83ef296f4",
+      "fingerprint": "f8d56b8b7c06efd13ed92dda5b83b462e8db993671d514c3a592af2439b3c2e7",
       "check_name": "Redirect",
       "message": "Possible unprotected redirect",
       "file": "app/controllers/api/v1/devise/omniauth_callbacks_controller.rb",
-      "line": 91,
+      "line": 94,
       "link": "https://brakemanscanner.org/docs/warning_types/redirect/",
-      "code": "redirect_to(CustomAuthProvider.where(:$or => ([{ :domain => params[:provider] }, { :trusted_email_domains => params[:provider] }])).first.passthru_uri(:code_verifier => CustomAuthProvider.where(:$or => ([{ :domain => params[:provider] }, { :trusted_email_domains => params[:provider] }])).first.create_code_verifier!, :state => JSON.parse((params[:state] or { :app => current_app_actor.name, :redirect_host => current_app_actor.config.url }.to_json)).merge(:locale => I18n.locale, :nonce => SecureRandom.hex(16)).to_json, :login_hint => params[:login_hint]), :allow_other_host => true)",
+      "code": "redirect_to(CustomAuthProvider.for_domain(params[:provider]).passthru_uri(:code_verifier => CustomAuthProvider.for_domain(params[:provider]).create_code_verifier!, :state => JSON.parse((params[:state] or { :app => current_app_actor.name, :redirect_host => current_app_actor.config.url }.to_json)).merge(:locale => I18n.locale, :nonce => SecureRandom.hex(16)).to_json, :login_hint => params[:login_hint]), :allow_other_host => true)",
       "render_path": null,
       "location": {
         "type": "method",
         "class": "Api::V1::Devise::OmniauthCallbacksController",
         "method": "dynamic_provider_authorize"
       },
-      "user_input": "CustomAuthProvider.where(:$or => ([{ :domain => params[:provider] }, { :trusted_email_domains => params[:provider] }])).first.passthru_uri(:code_verifier => CustomAuthProvider.where(:$or => ([{ :domain => params[:provider] }, { :trusted_email_domains => params[:provider] }])).first.create_code_verifier!, :state => JSON.parse((params[:state] or { :app => current_app_actor.name, :redirect_host => current_app_actor.config.url }.to_json)).merge(:locale => I18n.locale, :nonce => SecureRandom.hex(16)).to_json, :login_hint => params[:login_hint])",
+      "user_input": "CustomAuthProvider.for_domain(params[:provider]).passthru_uri(:code_verifier => CustomAuthProvider.for_domain(params[:provider]).create_code_verifier!, :state => JSON.parse((params[:state] or { :app => current_app_actor.name, :redirect_host => current_app_actor.config.url }.to_json)).merge(:locale => I18n.locale, :nonce => SecureRandom.hex(16)).to_json, :login_hint => params[:login_hint])",
       "confidence": "Weak",
       "cwe_id": [
         601

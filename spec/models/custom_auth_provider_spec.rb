@@ -286,6 +286,13 @@ RSpec.describe CustomAuthProvider, type: :model do
       expect { create_provider(trusted_email_domains: [nil]) }.not_to raise_error
     end
 
+    it 'keeps the domains of a disabled provider reserved' do
+      create_provider(trusted_email_domains: ["reserved-#{sfx}.de"], disabled: true)
+
+      duplicate = described_class.new(domain: "other-#{sfx}.de", trusted_email_domains: ["reserved-#{sfx}.de"])
+      expect(duplicate.save).to be(false)
+    end
+
     it 'still rejects a trusted email domain another provider already has' do
       create_provider(trusted_email_domains: ["shared-#{sfx}.de"])
 
@@ -437,6 +444,160 @@ RSpec.describe CustomAuthProvider, type: :model do
         expect(Faraday).not_to receive(:get)
         provider.discover!
       end
+    end
+  end
+
+  describe '.for_domain' do
+    let(:sfx) { SecureRandom.hex(4) }
+    let(:domain) { "kunde-#{sfx}.de" }
+    let(:trusted_domain) { "mvz-#{sfx}.de" }
+
+    # no host and no issuer_url, so saving triggers no OIDC discovery request
+    let!(:record) do
+      described_class.create!(domain:, trusted_email_domains: [trusted_domain], client_id: 'x', client_secret: 'y')
+    end
+
+    after { record.delete }
+
+    it 'finds an enabled provider by its domain' do
+      expect(described_class.for_domain(domain)).to eq(record)
+    end
+
+    it 'finds an enabled provider by a trusted email domain' do
+      expect(described_class.for_domain(trusted_domain)).to eq(record)
+    end
+
+    it 'ignores a disabled provider' do
+      record.update!(disabled: true)
+
+      expect(described_class.for_domain(trusted_domain)).to be_nil
+    end
+
+    # records saved before the field existed must keep working
+    it 'treats a provider without the disabled field as enabled' do
+      record.unset(:disabled)
+
+      expect(described_class.for_domain(domain)).to eq(record)
+    end
+  end
+
+  describe 'enabling a provider preconfigured before its IdP was ready' do
+    let(:sfx) { SecureRandom.hex(4) }
+    let(:issuer) { "https://idp-#{sfx}.example.com/realms/kh" }
+    let(:discovery_doc) do
+      {
+        'authorization_endpoint' => "#{issuer}/protocol/openid-connect/auth",
+        'token_endpoint' => "#{issuer}/protocol/openid-connect/token",
+        'userinfo_endpoint' => "#{issuer}/protocol/openid-connect/userinfo"
+      }
+    end
+
+    # the IdP is not up yet when the provider is created, so discovery fails
+    let!(:record) do
+      allow(Rails).to receive(:cache).and_return(ActiveSupport::Cache::MemoryStore.new)
+      allow(Faraday).to receive(:get).and_return(faraday_response(status: 503, body: {}))
+      described_class.create!(domain: "kunde-#{sfx}.de", issuer_url: issuer, client_id: 'x', client_secret: 'y',
+                              disabled: true)
+    end
+
+    after { record.delete }
+
+    context 'when the IdP answers by then' do
+      before { allow(Faraday).to receive(:get).and_return(faraday_response(status: 200, body: discovery_doc)) }
+
+      it 'discovers the endpoints on enabling' do
+        record.update!(disabled: false)
+
+        expect(record.reload.host).to eq("idp-#{sfx}.example.com")
+      end
+
+      it 'discovers the endpoints when saved again with the same issuer_url' do
+        record.save!
+
+        expect(record.reload.read_attribute(:authorize_url)).to eq('/realms/kh/protocol/openid-connect/auth')
+      end
+    end
+
+    context 'when discovery still fails' do
+      it 'refuses to enable' do
+        expect(record.update(disabled: false)).to be(false)
+      end
+
+      it 'keeps the provider disabled' do
+        record.update(disabled: false)
+
+        expect(record.reload.disabled).to be(true)
+      end
+    end
+  end
+
+  describe 'enabling a host-only provider whose probe failed' do
+    let(:sfx) { SecureRandom.hex(4) }
+    let(:issuer) { "https://idp-#{sfx}.example.com/realms/kh" }
+    let(:faraday_conn) { instance_double(Faraday::Connection) }
+
+    # the IdP is not up yet when the provider is created, so every probe fails
+    let!(:record) do
+      allow(Rails.cache).to receive(:fetch).and_yield
+      allow(Faraday).to receive(:new).and_return(faraday_conn)
+      allow(faraday_conn).to receive(:get).and_return(faraday_response(status: 503, body: {}))
+      described_class.create!(domain: "kunde-#{sfx}.de", host: "idp-#{sfx}.example.com", client_id: 'x',
+                              client_secret: 'y', disabled: true)
+    end
+
+    after { record.delete }
+
+    it 'probes again on enabling' do
+      doc = { 'issuer' => issuer, 'authorization_endpoint' => "#{issuer}/protocol/openid-connect/auth" }
+      allow(faraday_conn).to receive(:get).and_return(faraday_response(status: 200, body: doc))
+      allow(Faraday).to receive(:get).and_return(faraday_response(status: 200, body: doc))
+
+      record.update!(disabled: false)
+      expect(record.reload.read_attribute(:authorize_url)).to eq('/realms/kh/protocol/openid-connect/auth')
+    end
+  end
+
+  describe 'saving a provider stored before the disabled field existed' do
+    # no host and no issuer_url, so saving triggers no OIDC discovery request
+    let!(:record) do
+      described_class.create!(domain: "kunde-#{SecureRandom.hex(4)}.de", client_id: 'x', client_secret: 'y')
+                     .tap { |p| p.unset(:disabled) }
+    end
+
+    after { record.delete }
+
+    it 'is not refused as an enabling save' do
+      expect(described_class.find(record.id).update(client_secret: 'z')).to be(true)
+    end
+  end
+
+  describe '#discovery_config caching' do
+    let(:discovery_doc) { { 'issuer' => 'https://sso.kunde.de/realms/kh' } }
+
+    before do
+      allow(Rails).to receive(:cache).and_return(ActiveSupport::Cache::MemoryStore.new)
+      provider.issuer_url = 'https://sso.kunde.de/realms/kh'
+    end
+
+    context 'when the first fetch fails' do
+      before do
+        allow(Faraday).to receive(:get).and_return(
+          faraday_response(status: 404, body: { error: 'not_found' }),
+          faraday_response(status: 200, body: discovery_doc)
+        )
+        provider.discovery_config
+      end
+
+      it 'fetches again instead of caching the failure' do
+        expect(provider.discovery_config).to eq(discovery_doc)
+      end
+    end
+
+    it 'caches a successful fetch' do
+      allow(Faraday).to receive(:get).and_return(faraday_response(status: 200, body: discovery_doc))
+
+      2.times { provider.discovery_config }
+      expect(Faraday).to have_received(:get).once
     end
   end
 
