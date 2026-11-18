@@ -32,7 +32,7 @@ RSpec.describe 'Disabled CustomAuthProvider' do
   end
 
   it 'gives the frontend no SSO hint for its domains' do
-    expect(auth_provider_hints).not_to include(Digest::MD5.hexdigest(trusted_domain))
+    expect(auth_provider_hints).not_to include(*provider.trusted_domain_checksums)
   end
 
   it 'does not route the authorize request' do
@@ -51,7 +51,7 @@ RSpec.describe 'Disabled CustomAuthProvider' do
     before { provider.update!(disabled: false) }
 
     it 'gives the frontend the SSO hint' do
-      expect(auth_provider_hints).to include(Digest::MD5.hexdigest(trusted_domain))
+      expect(auth_provider_hints).to include(*provider.trusted_domain_checksums)
     end
 
     it 'routes the authorize request to the IdP' do
