@@ -68,11 +68,7 @@ class CustomAuthProvider < ApplicationDocument
     enabled.where('$or': [{ domain: }, { trusted_email_domains: domain }]).first
   end
 
-  # issuer_url with a blank host means an earlier discovery failed: every save
-  # retries it, including the one that enables a preconfigured provider
-  before_save :auto_discover!, if: lambda {
-    issuer_url_changed? || (issuer_url.blank? && host_changed?) || (issuer_url.present? && host.blank?)
-  }
+  before_save :auto_discover!, if: :discovery_due?
   before_save :refuse_enabling_without_host
 
   attr_accessor :code_verifier
@@ -159,11 +155,25 @@ class CustomAuthProvider < ApplicationDocument
     end
   end
 
+  # issuer_url with a blank host means an earlier discovery failed, so every save
+  # retries it. Enabling always retries too: a host-only provider may have been
+  # preconfigured while its IdP could not be probed (discover! fills only blanks).
+  def discovery_due?
+    issuer_url_changed? || (issuer_url.blank? && host_changed?) ||
+      (issuer_url.present? && host.blank?) || being_enabled?
+  end
+
+  # disabled_was, not disabled_changed?: on records saved before the field existed,
+  # Mongoid records the false default it fills in as a change on every save
+  def being_enabled?
+    persisted? && disabled_was && !disabled?
+  end
+
   # Enabling without a host would send every user of the provider's domains to
   # "https:/oauth2/authorize". Only the switch from disabled is refused; providers
   # created enabled keep their previous behaviour.
   def refuse_enabling_without_host
-    return unless persisted? && disabled_changed? && !disabled? && host.blank?
+    return unless being_enabled? && host.blank?
 
     errors.add(:host, 'is blank, discovery found no endpoints; the provider stays disabled')
     throw(:abort)

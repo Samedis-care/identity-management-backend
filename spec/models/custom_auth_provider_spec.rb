@@ -531,6 +531,46 @@ RSpec.describe CustomAuthProvider, type: :model do
     end
   end
 
+  describe 'enabling a host-only provider whose probe failed' do
+    let(:sfx) { SecureRandom.hex(4) }
+    let(:issuer) { "https://idp-#{sfx}.example.com/realms/kh" }
+    let(:faraday_conn) { instance_double(Faraday::Connection) }
+
+    # the IdP is not up yet when the provider is created, so every probe fails
+    let!(:record) do
+      allow(Rails.cache).to receive(:fetch).and_yield
+      allow(Faraday).to receive(:new).and_return(faraday_conn)
+      allow(faraday_conn).to receive(:get).and_return(faraday_response(status: 503, body: {}))
+      described_class.create!(domain: "kunde-#{sfx}.de", host: "idp-#{sfx}.example.com", client_id: 'x',
+                              client_secret: 'y', disabled: true)
+    end
+
+    after { record.delete }
+
+    it 'probes again on enabling' do
+      doc = { 'issuer' => issuer, 'authorization_endpoint' => "#{issuer}/protocol/openid-connect/auth" }
+      allow(faraday_conn).to receive(:get).and_return(faraday_response(status: 200, body: doc))
+      allow(Faraday).to receive(:get).and_return(faraday_response(status: 200, body: doc))
+
+      record.update!(disabled: false)
+      expect(record.reload.read_attribute(:authorize_url)).to eq('/realms/kh/protocol/openid-connect/auth')
+    end
+  end
+
+  describe 'saving a provider stored before the disabled field existed' do
+    # no host and no issuer_url, so saving triggers no OIDC discovery request
+    let!(:record) do
+      described_class.create!(domain: "kunde-#{SecureRandom.hex(4)}.de", client_id: 'x', client_secret: 'y')
+                     .tap { |p| p.unset(:disabled) }
+    end
+
+    after { record.delete }
+
+    it 'is not refused as an enabling save' do
+      expect(described_class.find(record.id).update(client_secret: 'z')).to be(true)
+    end
+  end
+
   describe '#discovery_config caching' do
     let(:discovery_doc) { { 'issuer' => 'https://sso.kunde.de/realms/kh' } }
 
