@@ -735,6 +735,82 @@ RSpec.describe CustomAuthProvider, type: :model do
       end
     end
 
+    # Samedis-care/samedis-care-issues#3849: the master realm always answers, so a
+    # client in another realm got its logout endpoint from master
+    context 'when the endpoint paths name a Keycloak realm' do
+      let(:realm_doc) do
+        realm = 'https://sso.example.com/realms/kh'
+        { 'issuer' => realm, 'end_session_endpoint' => "#{realm}/protocol/openid-connect/logout",
+          'jwks_uri' => "#{realm}/protocol/openid-connect/certs" }
+      end
+
+      before do
+        provider.issuer_url = nil
+        provider.authorize_url = '/realms/kh/protocol/openid-connect/auth'
+        allow(faraday_conn).to receive(:get) do |url|
+          next faraday_response(status: 404, body: '') unless url.include?('/realms/kh/')
+
+          faraday_response(status: 200, body: realm_doc)
+        end
+        allow(Faraday).to receive(:get).and_return(faraday_response(status: 200, body: realm_doc))
+      end
+
+      it 'takes the issuer from that realm' do
+        provider.probe_and_discover!
+        expect(provider.issuer_url).to eq('https://sso.example.com/realms/kh')
+      end
+
+      it 'fills the logout endpoint from that realm' do
+        provider.probe_and_discover!
+        expect(provider.end_session_url).to eq('https://sso.example.com/realms/kh/protocol/openid-connect/logout')
+      end
+
+      it 'does not probe the master realm' do
+        provider.probe_and_discover!
+        expect(faraday_conn).not_to have_received(:get).with(%r{/realms/master/})
+      end
+    end
+
+    context 'when the realm named in the endpoint paths does not answer, but master does' do
+      before do
+        provider.issuer_url = nil
+        provider.authorize_url = '/realms/kh/protocol/openid-connect/auth'
+        master_doc = { 'issuer' => 'https://sso.example.com/realms/master' }
+        allow(faraday_conn).to receive(:get) do |url|
+          next faraday_response(status: 503, body: '') if url.include?('/realms/kh/')
+
+          faraday_response(status: 200, body: master_doc)
+        end
+      end
+
+      it 'does not fall back to master' do
+        provider.probe_and_discover!
+        expect(provider.issuer_url).to be_nil
+      end
+    end
+
+    describe '#discovery_probes' do
+      it 'keeps the generic probes without a realm in the endpoint paths' do
+        provider.authorize_url = '/oauth2/authorize'
+        expect(provider.discovery_probes).to eq(described_class::DISCOVERY_PROBES)
+      end
+
+      it 'reads the realm from the legacy /auth path' do
+        provider.token_url = 'auth/realms/kh/protocol/openid-connect/token'
+        expect(provider.discovery_probes).to eq(['/auth/realms/kh/.well-known/openid-configuration'])
+      end
+
+      it 'reads the realm behind a custom context path' do
+        provider.authorize_url = '/sso/realms/kh/protocol/openid-connect/auth'
+        expect(provider.discovery_probes).to eq(['/sso/realms/kh/.well-known/openid-configuration'])
+      end
+
+      it 'reads the realm from an absolute endpoint URL' do
+        provider.userinfo_url = 'https://sso.example.com/realms/kh/protocol/openid-connect/userinfo'
+        expect(provider.discovery_probes).to eq(['/realms/kh/.well-known/openid-configuration'])
+      end
+    end
+
     context 'when no discovery endpoint is found' do
       before do
         provider.issuer_url = nil
