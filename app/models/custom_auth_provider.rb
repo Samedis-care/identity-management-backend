@@ -114,10 +114,14 @@ class CustomAuthProvider < ApplicationDocument
     '/.well-known/openid-configuration/',                          # trailing slash variant
   ].freeze
 
+  # A Keycloak realm in an endpoint path: "/realms/<realm>/...", or behind a
+  # context path such as the legacy "/auth/realms/<realm>/..."; absolute or not.
+  KEYCLOAK_REALM_PATH = %r{\A/?(?<realm_path>(?:[^/]+/)*?realms/[^/]+)/}
+
   def probe_and_discover!
     conn = Faraday.new { |f| f.response :follow_redirects, limit: 3 }
 
-    DISCOVERY_PROBES.each do |path|
+    discovery_probes.each do |path|
       url = "https://#{host}#{path}"
       response = conn.get(url)
       next unless response.status == 200 && response.body.length > 10
@@ -133,7 +137,36 @@ class CustomAuthProvider < ApplicationDocument
       next
     end
 
-    Rails.logger.info("OIDC discovery: no discovery endpoint found for host #{host}")
+    message = "OIDC discovery: no discovery endpoint found for host #{host}"
+    # a named realm that does not answer leaves the provider without end_session_url
+    # and jwks_uri, and login keeps working, so nobody notices otherwise
+    configured_realm_path ? Rails.logger.warn("#{message} at /#{configured_realm_path}") : Rails.logger.info(message)
+  end
+
+  # Keycloak serves one discovery document per realm, and the master realm always
+  # answers. When the configured endpoint paths name a realm, probe only that one:
+  # falling back to master would fill end_session_url and jwks_uri from the wrong
+  # realm, and logout would fail with "invalid redirect uri"
+  # (Samedis-care/samedis-care-issues#3849).
+  def discovery_probes
+    realm_path = configured_realm_path
+    return DISCOVERY_PROBES if realm_path.nil?
+
+    ["/#{realm_path}/.well-known/openid-configuration"]
+  end
+
+  def configured_realm_path
+    %i[authorize_url token_url userinfo_url].each do |attr|
+      match = KEYCLOAK_REALM_PATH.match(endpoint_path(self[attr]).to_s)
+      return match[:realm_path] if match
+    end
+    nil
+  end
+
+  def endpoint_path(value)
+    URI.parse(value).path if value.present?
+  rescue URI::InvalidURIError
+    nil
   end
 
   # Fetch and cache the OIDC discovery document
@@ -156,11 +189,17 @@ class CustomAuthProvider < ApplicationDocument
   end
 
   # issuer_url with a blank host means an earlier discovery failed, so every save
-  # retries it. Enabling always retries too: a host-only provider may have been
-  # preconfigured while its IdP could not be probed (discover! fills only blanks).
+  # retries it. The same goes for a blank issuer_url while the endpoint paths name
+  # a Keycloak realm: that realm's probe failed, and nothing else falls back to it.
+  # Enabling always retries too: a host-only provider may have been preconfigured
+  # while its IdP could not be probed (discover! fills only blanks).
   def discovery_due?
     issuer_url_changed? || (issuer_url.blank? && host_changed?) ||
-      (issuer_url.present? && host.blank?) || being_enabled?
+      (issuer_url.present? && host.blank?) || realm_probe_pending? || being_enabled?
+  end
+
+  def realm_probe_pending?
+    issuer_url.blank? && host.present? && configured_realm_path.present?
   end
 
   # disabled_was, not disabled_changed?: on records saved before the field existed,
