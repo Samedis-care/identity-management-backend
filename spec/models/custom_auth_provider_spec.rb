@@ -557,6 +557,35 @@ RSpec.describe CustomAuthProvider, type: :model do
     end
   end
 
+  # a realm that was down when the provider was created must be probed again,
+  # since no fallback fills end_session_url any more (#3849)
+  describe 'saving a host-only provider whose named realm did not answer' do
+    let(:sfx) { SecureRandom.hex(4) }
+    let(:issuer) { "https://idp-#{sfx}.example.com/realms/kh" }
+    let(:faraday_conn) { instance_double(Faraday::Connection) }
+
+    let!(:record) do
+      allow(Rails.cache).to receive(:fetch).and_yield
+      allow(Faraday).to receive(:new).and_return(faraday_conn)
+      allow(faraday_conn).to receive(:get).and_return(faraday_response(status: 503, body: {}))
+      described_class.create!(domain: "kunde-#{sfx}.de", host: "idp-#{sfx}.example.com", client_id: 'x',
+                              client_secret: 'y', authorize_url: '/realms/kh/protocol/openid-connect/auth')
+    end
+
+    before do
+      doc = { 'issuer' => issuer, 'end_session_endpoint' => "#{issuer}/protocol/openid-connect/logout" }
+      allow(faraday_conn).to receive(:get).and_return(faraday_response(status: 200, body: doc))
+      allow(Faraday).to receive(:get).and_return(faraday_response(status: 200, body: doc))
+    end
+
+    after { record.delete }
+
+    it 'probes the realm again on the next save' do
+      record.update!(client_id: 'z')
+      expect(record.reload.end_session_url).to eq("#{issuer}/protocol/openid-connect/logout")
+    end
+  end
+
   describe 'saving a provider stored before the disabled field existed' do
     # no host and no issuer_url, so saving triggers no OIDC discovery request
     let!(:record) do
