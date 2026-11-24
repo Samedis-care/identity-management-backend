@@ -78,6 +78,7 @@ RSpec.describe Api::V1::App::RecoveriesController, type: :controller do
 
   it 'treats a blank recovery email as not configured' do
     user = instance_double(User, is_a?: true, recovery_email: '')
+    allow(user).to receive(:app_context=)
     allow(user).to receive(:send_recovery_instructions)
     stub_lookup(user)
 
